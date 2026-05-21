@@ -1,0 +1,89 @@
+{
+    "message": "Products retrieved successfully.",
+    "data": [
+        {
+            "_id": "678a50c71a4995d56f3ca8ac",
+            "UserID": "6789295bd56a7dc9479a6e6d",
+            "ProductName": "Aquanaut Rose Gold 5261R-001",
+            "BrandID": "677d2d34afebf88d6ed8f2b5",
+            "CollectionID": "677d36099c802cde5f238bbe",
+            "CategoryID": "677d36a79c802cde5f238c3a",
+            "Price": 1200000,
+            "RecipientID": "677d36fb9c802cde5f238c49",
+            "IsAvailable": true,
+            "DateListed": "2025-01-17T12:44:55.556Z",
+            "Description": {
+                "_id": "678a50c71a4995d56f3ca8af",
+                "ProductID": "678a50c71a4995d56f3ca8ac",
+                "Title": "",
+                "Content": "The Aquanaut Luce collection for ladies welcomes a new, practical and easy-to-use complication: the patented Annual Calendar: a complete day/date/month calendar requiring only one manual correction per year, at the end of February. The manufacture is thus enriching its offer of complicated ladies' watches with a non-gemset model.",
+                "AdditionalDetails": "The iconic design of the rose gold case and bezel with a rounded octagonal shape is enhanced by the contrast between polished and satin-brushed finishes. The contemporary “sporty chic\" style is reinforced by the blue-gray dial and composite strap with Aquanaut pattern.",
+                "CreatedAt": "2025-01-17T12:44:55.714Z"
+            },
+            "Details": {
+                "_id": "678a50c71a4995d56f3ca8ae",
+                "ProductDetailID": "678a50c71a4995d56f3ca8ad",
+                "ProductID": "678a50c71a4995d56f3ca8ac",
+                "DialColorID": "677d37379c802cde5f238c53",
+                "Diameter": "40mm",
+                "WaterResistant": "Yes",
+                "MovementID": "677d380c9c802cde5f238c5d",
+                "StrapMaterialID": "677d38449c802cde5f238c6b",
+                "CaseMaterialID": "677d38809c802cde5f238c75",
+                "WatchMarkersID": "677d38c09c802cde5f238c84",
+                "ManufacturerProductNumber": "5261R-001",
+                "Guarantee": "",
+                "DeliveryOptionID": "677d3a007b943a9d86695740"
+            },
+            "Images": [],
+            "DeliveryAndReturns": [
+                {
+                    "_id": "678a50c71a4995d56f3ca8b0",
+                    "ProductID": "678a50c71a4995d56f3ca8ac",
+                    "DeliveryInformation": "Free Expedited Delivery on Orders $100 and Up (Estimated 1-3 Days)\nOur secure shipping service operates Monday through Saturday, from 8:00 a.m. to 6:00 p.m. For security reasons, an adult signature is required for every delivery. Watches of Switzerland does not deliver to P.O. boxes or third-party forwarding services. For more information about delivery, click here. Tracking information will be made available upon shipping.",
+                    "ReturnsPolicy": "Our commitment to you does not end at delivery. We offer the following return services to make your experience as pleasant as possible.\n\n10-Day Returns For Timepieces:\nTimepieces purchased online can be returned or exchanged within 10 days from when they are shipped or collected.\n\n30-Day Returns For All Other Purchases:\nAll other online purchases can be returned or exchanged within 30 days from when they are shipped or collected.\n\nOn presentation of the original receipt, your purchases may be returned or exchanged at any of our store locations. Alternatively, you may elect shipping to our facility with all the original paperwork. All refunds must be credited to the same tender used for the original purchase. To return the online purchases through secure shipping service, please contact our client service team who will provide you the shipping label.\n\nAll returns or exchanges must be in new, unworn condition, with no scratches or markings, not sized or adjusted and in their original packaging and with warranty cards / certificated and instruction booklets.",
+                    "CreatedAt": "2025-01-17T12:44:55.771Z"
+                },
+                {
+                    "_id": "678a50c71a4995d56f3ca8b1",
+                    "ProductID": "678a50c71a4995d56f3ca8ac",
+                    "DeliveryInformation": "Free Expedited Delivery on Orders $100 and Up (Estimated 1-3 Days)\nOur secure shipping service operates Monday through Saturday, from 8:00 a.m. to 6:00 p.m. For security reasons, an adult signature is required for every delivery. Watches of Switzerland does not deliver to P.O. boxes or third-party forwarding services. For more information about delivery, click here. Tracking information will be made available upon shipping.",
+                    "ReturnsPolicy": "Our commitment to you does not end at delivery. We offer the following return services to make your experience as pleasant as possible.\n\n10-Day Returns For Timepieces:\nTimepieces purchased online can be returned or exchanged within 10 days from when they are shipped or collected.\n\n30-Day Returns For All Other Purchases:\nAll other online purchases can be returned or exchanged within 30 days from when they are shipped or collected.\n\nOn presentation of the original receipt, your purchases may be returned or exchanged at any of our store locations. Alternatively, you may elect shipping to our facility with all the original paperwork. All refunds must be credited to the same tender used for the original purchase. To return the online purchases through secure shipping service, please contact our client service team who will provide you the shipping label.\n\nAll returns or exchanges must be in new, unworn condition, with no scratches or markings, not sized or adjusted and in their original packaging and with warranty cards / certificated and instruction booklets.",
+                    "CreatedAt": "2025-01-17T12:44:55.824Z"
+                }
+            ],
+            "Collection": {
+                "_id": "677d36099c802cde5f238bbe",
+                "CollectionName": "Aquanaut"
+            },
+            "Category": {
+                "_id": "677d36a79c802cde5f238c3a",
+                "CategoryName": "Watches"
+            },
+            "Recipient": {
+                "_id": "677d36fb9c802cde5f238c49",
+                "RecipientName": "For Him"
+            },
+            "DialColor": {
+                "_id": "677d37379c802cde5f238c53",
+                "DialColorName": "Blue"
+            },
+            "Movement": {
+                "_id": "677d380c9c802cde5f238c5d",
+                "MovementName": "Automatic"
+            },
+            "StrapMaterial": {
+                "_id": "677d38449c802cde5f238c6b",
+                "StrapMaterialName": "Rubber"
+            },
+            "CaseMaterial": {
+                "_id": "677d38809c802cde5f238c75",
+                "CaseMaterialName": "Gold"
+            },
+            "WatchMarkers": {
+                "_id": "677d38c09c802cde5f238c84",
+                "WatchMarkerName": "Arabic Numerals"
+            }
+        }
+    ]
+}

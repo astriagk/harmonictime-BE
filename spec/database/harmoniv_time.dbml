@@ -1,0 +1,478 @@
+// ============================================================================
+//  Harmoniv Time — Watch Selling Marketplace
+//  MongoDB Database Design (DBML)
+// ----------------------------------------------------------------------------
+//  This file is the authoritative schema for the harmoniv_time database.
+//  It models a CLEAN / CORRECT design (consistent ObjectId foreign keys and
+//  canonical collection names). Where the current backend code deviates from
+//  this design, an inline `// FIXME:` note marks the exact spot so it can be
+//  fixed. MongoDB is schemaless; "tables" below = MongoDB collections,
+//  "Ref" lines = logical references resolved in code / $lookup aggregations.
+//
+//  Tip: paste into https://dbdiagram.io  or run
+//       npx @dbml/cli validate spec/database/harmoniv_time.dbml
+// ============================================================================
+
+Project harmoniv_time {
+  database_type: 'MongoDB'
+  Note: '''
+    # Harmoniv Time
+
+    A watch-selling marketplace. Sellers (Users) list watches (Products) enriched
+    with descriptions, technical details, images and delivery/returns policy.
+    Buyers browse the catalog, add to Cart / Wishlist, Checkout, pay (Razorpay)
+    and a Sale is recorded.
+
+    ## Domains
+    - **Identity**  : Users, Roles, UserRoles, Address
+    - **Catalog**   : Products + ProductDescription / ProductDetails / ProductImages /
+                      DeliveryReturns, plus lookup tables (Brands, Collections,
+                      Categories, Recipients, DialColors, Movements, StrapMaterials,
+                      CaseMaterials, WatchMarkers, DeliveryOptions)
+    - **Shopping**  : Cart, Wishlist, RecentlyViewedProducts
+    - **Commerce**  : Checkout, CheckoutItems, Sales, Offers
+
+    ## Note on "orders"
+    There is no `Orders` collection (orderModel/orderService are empty stubs).
+    `Checkout` + `CheckoutItems` together act as the order record.
+  '''
+}
+
+// ============================================================================
+//  DOMAIN: IDENTITY
+// ============================================================================
+
+Table Users {
+  _id           objectid    [pk]
+  email         string      [unique, not null]
+  password      string      [not null, note: 'bcrypt hash']
+  phone         string      [null]
+  dateCreated   timestamp   [note: 'set to new Date() on register']
+  otp           string      [null, note: 'sha256 hash of OTP, transient']
+  otpExpiry     timestamp   [null, note: 'OTP valid 10 min']
+
+  Note: '''
+    Created via POST /api/users/register (validated: email + password>=8).
+    // FIXME: userController.resetPassword queries db.collection("users")
+    //        (lowercase) instead of "Users" — reset can never find the user.
+  '''
+}
+
+Table Roles {
+  _id        objectid   [pk]
+  RoleID     int        [unique, not null, note: 'business id, e.g. 1=admin,3=customer']
+  RoleName   string     [unique, not null]
+}
+
+Table UserRoles {
+  _id          objectid   [pk]
+  UserRoleID   int        [note: 'business id supplied by client']
+  UserID       objectid   [not null]
+  RoleID       int        [not null, note: 'references Roles.RoleID (the int), not _id']
+
+  Note: 'On register a UserRoles row {RoleID:3} is auto-created for the new user.'
+}
+
+Table Address {
+  _id            objectid   [pk]
+  UserID         objectid   [not null]
+  FirstName      string     [not null]
+  LastName       string     [not null]
+  Country        string     [not null]
+  AddressLine1   string     [not null]
+  AddressLine2   string     [null]
+  City           string     [not null]
+  State          string     [not null]
+  PostalCode     string     [not null]
+  Phone          string     [not null]
+  orderNotes     string     [null]
+  IsDefault      boolean    [default: false]
+
+  Note: '''
+    // FIXME: routes GET /api/users/address/:addressID and /address/:userID
+    //        share the same pattern — the second handler is unreachable.
+  '''
+}
+
+// ============================================================================
+//  DOMAIN: CATALOG — core product
+// ============================================================================
+
+Table Products {
+  _id            objectid    [pk]
+  UserID         objectid    [not null, note: 'seller']
+  ProductName    string      [not null]
+  BrandID        objectid    [not null]
+  CollectionID   objectid    [not null]
+  CategoryID     objectid    [not null]
+  RecipientID    objectid    [not null]
+  Price          decimal     [not null]
+  IsAvailable    boolean     [default: true]
+  DateListed     timestamp
+
+  Note: '''
+    // FIXME: BrandID / CollectionID / CategoryID / RecipientID are stored as
+    //        STRINGS in the code, so productController aggregations must wrap
+    //        them in $toObjectId. Modelled here as objectid (the correct form).
+    // FIXME: deleteProduct matches { ProductID: <int> } but documents have no
+    //        ProductID field (PK is _id) — delete by id never matches.
+  '''
+}
+
+Table ProductDescription {
+  _id                 objectid    [pk]
+  ProductID           objectid    [not null]
+  Title               string
+  Content             string
+  AdditionalDetails   string
+  CreatedAt           timestamp
+
+  Note: 'One-to-one with Products (joined by ProductID).'
+}
+
+Table ProductDetails {
+  _id                          objectid   [pk]
+  ProductID                    objectid   [not null]
+  DialColorID                  objectid   [null]
+  MovementID                   objectid   [null]
+  StrapMaterialID              objectid   [null]
+  CaseMaterialID               objectid   [null]
+  WatchMarkersID               objectid   [null]
+  DeliveryOptionID             objectid   [null]
+  Diameter                     string     [null]
+  WaterResistant               string     [null]
+  ManufacturerProductNumber    string     [null]
+  Guarantee                    string     [null]
+
+  Note: '''
+    One-to-one with Products (joined by ProductID).
+    // FIXME: every *ID lookup key is stored as a STRING; aggregations convert
+    //        with $toObjectId and treat "" / null as "no reference".
+  '''
+}
+
+Table ProductImages {
+  _id          objectid   [pk]
+  ProductID    objectid   [not null]
+  ImageURL     string     [not null, note: 'hosted on ImgBB']
+  key          string     [null, note: 'ImgBB delete key']
+  IsPrimary    boolean    [default: false, note: 'first uploaded image = primary']
+  AltText      string     [null]
+
+  Note: 'One Products → many ProductImages. Uploaded via POST /api/products/upload-images.'
+}
+
+Table DeliveryReturns {
+  _id                   objectid   [pk]
+  ProductID             objectid   [not null]
+  DeliveryInformation   string
+  ReturnsPolicy         string
+  CreatedAt             timestamp
+
+  Note: 'One-to-one with Products (joined by ProductID).'
+}
+
+// ============================================================================
+//  DOMAIN: CATALOG — lookup / reference tables
+// ============================================================================
+
+Table Brands {
+  _id         objectid   [pk]
+  BrandName   string     [unique, not null]
+}
+
+Table Collections {
+  _id              objectid   [pk]
+  BrandID          objectid   [not null]
+  CollectionName   string     [unique, not null]
+}
+
+Table Categories {
+  _id            objectid   [pk]
+  CategoryName   string     [unique, not null]
+}
+
+Table Recipients {
+  _id             objectid   [pk]
+  RecipientName   string     [unique, not null]
+}
+
+Table DialColors {
+  _id             objectid   [pk]
+  DialColorName   string     [unique, not null]
+}
+
+Table Movements {
+  _id            objectid   [pk]
+  MovementName   string     [unique, not null]
+}
+
+Table StrapMaterials {
+  _id                 objectid   [pk]
+  StrapMaterialName   string     [unique, not null]
+}
+
+Table CaseMaterials {
+  _id                objectid   [pk]
+  CaseMaterialName   string     [unique, not null]
+}
+
+Table WatchMarkers {
+  _id               objectid   [pk]
+  WatchMarkerName   string     [unique, not null]
+}
+
+Table DeliveryOptions {
+  _id                  objectid   [pk]
+  DeliveryOptionName   string     [unique, not null]
+
+  Note: '''
+    // FIXME: deliveryOptionsController creates/reads this collection as
+    //        "DeliveryOption" (SINGULAR), but productController $lookup reads
+    //        "DeliveryOptions" (PLURAL). The join never matches. Canonical
+    //        name here = DeliveryOptions; align the controller to match.
+  '''
+}
+
+// ============================================================================
+//  DOMAIN: SHOPPING
+// ============================================================================
+
+Table Cart {
+  _id          objectid   [pk]
+  UserID       objectid   [not null]
+  ProductID    objectid   [not null]
+  Quantity     int        [null, default: 1, note: 'set/updated via PUT /api/cart/:cartID']
+
+  Note: 'Unique (UserID, ProductID) — code rejects adding a duplicate product.'
+}
+
+Table Wishlist {
+  _id          objectid   [pk]
+  UserID       objectid   [not null]
+  ProductID    objectid   [not null]
+
+  Note: '''
+    Unique (UserID, ProductID).
+    // FIXME: addProductToWishlist requires a client-supplied WishlistID and uses
+    //        it as _id (new ObjectId(WishlistID)) — must be a valid 24-hex string.
+    // FIXME: uses result.ops[0] (removed in mongodb driver v4).
+  '''
+}
+
+Table RecentlyViewedProducts {
+  _id          objectid   [pk]
+  UserID       objectid   [not null]
+  ProductID    objectid   [not null]
+  ViewedAt     timestamp  [not null]
+
+  Note: 'Listed newest-first (sort ViewedAt desc).'
+}
+
+// ============================================================================
+//  DOMAIN: COMMERCE
+// ============================================================================
+
+Table Checkout {
+  _id              objectid    [pk]
+  UserID           objectid    [not null]
+  AddressID        objectid    [not null]
+  TotalAmount      decimal     [not null]
+  PaymentStatus    string      [not null, note: 'e.g. Pending / Paid / Failed']
+  DeliveryStatus   string      [not null, note: 'e.g. Processing / Shipped / Delivered']
+  CheckoutDate     timestamp   [not null]
+  ProductIDs       string      [note: 'ARRAY of Product ObjectIds (DBML has no array-ref type). See Ref note below.']
+
+  Note: '''
+    Acts as the ORDER record (no separate Orders collection).
+    ProductIDs is an array → resolved in code via $map + $toObjectId then
+    $lookup into Products. See "Checkout.ProductIDs (array)" ref note.
+  '''
+}
+
+Table CheckoutItems {
+  _id           objectid    [pk]
+  CheckoutID    objectid     [not null]
+  ProductIDs    string       [note: 'ARRAY of Product ObjectIds']
+  Price         decimal      [not null]
+  Quantity      int          [null]
+
+  Note: 'Line-item grouping under a Checkout. ProductIDs is an array of Product _ids.'
+}
+
+Table Sales {
+  _id              objectid    [pk]
+  BuyerID          objectid    [not null]
+  SellerID         objectid    [not null]
+  ProductID        objectid    [not null]
+  OfferID          objectid    [null]
+  SaleDate         timestamp   [not null]
+  SalePrice        decimal     [not null]
+  DiscountAmount   decimal     [default: 0]
+  FinalPrice       decimal     [not null]
+
+  Note: '''
+    // FIXME: requires client-supplied SaleID used as _id; uses result.ops[0]
+    //        (removed in driver v4).
+  '''
+}
+
+Table Offers {
+  _id                  objectid    [pk]
+  OfferName            string      [unique, not null]
+  Description          string      [null]
+  DiscountPercentage   decimal     [not null]
+  StartDate            timestamp   [not null]
+  EndDate              timestamp   [not null]
+  IsActive             boolean     [default: true]
+}
+
+Table Payments {
+  _id                 objectid    [pk]
+  CheckoutID          objectid    [not null, note: 'the order being paid for']
+  UserID              objectid    [not null, note: 'buyer who paid']
+  Amount              decimal     [not null]
+  Currency            string      [default: 'INR']
+  RazorpayOrderID     string      [note: 'order.id returned by Razorpay createOrder']
+  RazorpayPaymentID   string      [null, note: 'razorpay_payment_id from client on success']
+  RazorpaySignature   string      [null, note: 'razorpay_signature, HMAC-verified server-side']
+  PaymentMethod       string      [null, note: 'card / upi / netbanking ...']
+  PaymentStatus       string      [not null, note: 'Created / Paid / Verified / Failed']
+  Receipt             string      [null, note: 'receipt id sent to Razorpay']
+  PaidAt              timestamp   [null]
+  CreatedAt           timestamp
+
+  Note: '''
+    Persists the result of the post-checkout payment flow.
+    Flow: POST /api/payments/create-order (razorpay.orders.create) →
+          client pays → POST /api/payments/verify (HMAC signature check).
+    On successful verify, set PaymentStatus = 'Verified' and update the parent
+    Checkout.PaymentStatus to 'Paid'.
+    // FIXME: paymentController currently persists NOTHING — it creates the
+    //        Razorpay order and verifies the signature but never writes a
+    //        Payments document. Add the insert/update when wiring this up.
+    // FIXME: Razorpay key_id/key_secret are hard-coded in paymentController;
+    //        move them to env vars.
+  '''
+}
+
+Table Shipments {
+  _id                 objectid    [pk]
+  CheckoutID          objectid    [not null, note: 'order being shipped']
+  SellerID            objectid    [not null, note: 'seller entering the tracking details']
+  Courier             string      [not null, note: 'carrier, e.g. BlueDart / Delhivery / DHL']
+  TrackingNumber      string      [not null]
+  TrackingURL         string      [null, note: 'public carrier tracking link']
+  ShipmentStatus      string      [not null, note: 'Pending / Shipped / InTransit / OutForDelivery / Delivered']
+  ShippedAt           timestamp   [null]
+  EstimatedDelivery   timestamp   [null]
+  DeliveredAt         timestamp   [null]
+  Notes               string      [null]
+  CreatedAt           timestamp
+
+  Note: '''
+    Seller-entered tracking, available only AFTER payment is confirmed for the
+    Checkout. Updating ShipmentStatus should also update the parent
+    Checkout.DeliveryStatus so buyers see consistent status.
+  '''
+}
+
+// ============================================================================
+//  RELATIONSHIPS
+// ============================================================================
+
+// --- Identity ---
+Ref: UserRoles.UserID > Users._id          // many user-roles → one user
+Ref: UserRoles.RoleID > Roles.RoleID        // references the business RoleID (int)
+Ref: Address.UserID  > Users._id            // many addresses → one user
+
+// --- Catalog: product → lookups ---
+Ref: Products.UserID       > Users._id      // seller
+Ref: Products.BrandID      > Brands._id
+Ref: Products.CollectionID > Collections._id
+Ref: Products.CategoryID   > Categories._id
+Ref: Products.RecipientID  > Recipients._id
+Ref: Collections.BrandID   > Brands._id
+
+// --- Catalog: product 1:1 / 1:N satellites ---
+Ref: ProductDescription.ProductID - Products._id   // one-to-one
+Ref: ProductDetails.ProductID     - Products._id   // one-to-one
+Ref: DeliveryReturns.ProductID    - Products._id   // one-to-one
+Ref: ProductImages.ProductID      > Products._id   // one-to-many
+
+// --- Catalog: ProductDetails → lookups ---
+Ref: ProductDetails.DialColorID      > DialColors._id
+Ref: ProductDetails.MovementID       > Movements._id
+Ref: ProductDetails.StrapMaterialID  > StrapMaterials._id
+Ref: ProductDetails.CaseMaterialID   > CaseMaterials._id
+Ref: ProductDetails.WatchMarkersID   > WatchMarkers._id
+Ref: ProductDetails.DeliveryOptionID > DeliveryOptions._id
+
+// --- Shopping ---
+Ref: Cart.UserID       > Users._id
+Ref: Cart.ProductID    > Products._id
+Ref: Wishlist.UserID   > Users._id
+Ref: Wishlist.ProductID > Products._id
+Ref: RecentlyViewedProducts.UserID    > Users._id
+Ref: RecentlyViewedProducts.ProductID > Products._id
+
+// --- Commerce ---
+Ref: Checkout.UserID       > Users._id
+Ref: Checkout.AddressID    > Address._id
+Ref: CheckoutItems.CheckoutID > Checkout._id
+// Note: Checkout.ProductIDs and CheckoutItems.ProductIDs are ARRAYS of
+//       Products._id (modelled as a note, not a single-column Ref).
+Ref: Sales.BuyerID   > Users._id
+Ref: Sales.SellerID  > Users._id
+Ref: Sales.ProductID > Products._id
+Ref: Sales.OfferID   > Offers._id
+
+// --- Commerce: payment & shipping ---
+Ref: Payments.CheckoutID   > Checkout._id   // many payment attempts → one checkout
+Ref: Payments.UserID       > Users._id      // buyer
+Ref: Shipments.CheckoutID  > Checkout._id   // one shipment → one checkout
+Ref: Shipments.SellerID    > Users._id      // seller who entered tracking
+
+// ============================================================================
+//  TABLE GROUPS (visual organisation)
+// ============================================================================
+
+TableGroup Identity {
+  Users
+  Roles
+  UserRoles
+  Address
+}
+
+TableGroup Catalog {
+  Products
+  ProductDescription
+  ProductDetails
+  ProductImages
+  DeliveryReturns
+  Brands
+  Collections
+  Categories
+  Recipients
+  DialColors
+  Movements
+  StrapMaterials
+  CaseMaterials
+  WatchMarkers
+  DeliveryOptions
+}
+
+TableGroup Shopping {
+  Cart
+  Wishlist
+  RecentlyViewedProducts
+}
+
+TableGroup Commerce {
+  Checkout
+  CheckoutItems
+  Sales
+  Offers
+  Payments
+  Shipments
+}
