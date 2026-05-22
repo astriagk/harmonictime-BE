@@ -21,6 +21,21 @@ export const uploadImages = asyncHandler(async (req: Request, res: Response) => 
   sendResponse(res, HTTP_STATUS.OK, "Images uploaded successfully", { urls });
 });
 
+// Upload a single image to S3 and return its hosted URL. Used by the CMS flow:
+// the admin uploads an image, then pastes the returned `url` into the content
+// JSON. Multipart field `image`, optional body `folder` (defaults to "cms").
+export const uploadSingleImage = asyncHandler(
+  async (req: Request, res: Response) => {
+    const file = req.file;
+    if (!file) throw ApiError.badRequest("No file uploaded");
+
+    const folder = (req.body.folder as string) || "cms";
+    const url = await uploadFile(file, folder);
+
+    sendResponse(res, HTTP_STATUS.OK, "Image uploaded successfully", { url });
+  }
+);
+
 // Delete a hosted image. `imageId` is the S3 object key or full URL (the same
 // value the frontend received as a `url`). S3 deletes are idempotent.
 export const deleteImage = asyncHandler(async (req: Request, res: Response) => {

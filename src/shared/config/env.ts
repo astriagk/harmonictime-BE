@@ -7,10 +7,12 @@ export const env = {
   MONGO_URI: process.env.MONGO_URI || "",
   DB_NAME: process.env.DB_NAME || "harmoniv_time",
   JWT_SECRET: process.env.JWT_SECRET || "harmonic_time",
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "24h",
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "15d",
 
   EMAIL_USER: process.env.EMAIL_USER || "",
   EMAIL_PASS: process.env.EMAIL_PASS || "",
+  // Where contact-form submissions are emailed. Falls back to the sender account.
+  CONTACT_RECIPIENT: process.env.CONTACT_RECIPIENT || process.env.EMAIL_USER || "",
 
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || "",
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || "",
