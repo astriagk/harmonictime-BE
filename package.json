@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "start": "nodemon --watch src --exec ts-node src/server.ts",
+    "start": "node dist/server.js",
     "build": "tsc",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "docs:generate": "node postman/generate-api-docs.js",
