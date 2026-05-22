@@ -14,6 +14,30 @@ class CheckoutRepository extends BaseRepository<Checkout> {
       { $match: { UserID: userId } },
       { $lookup: { from: COLLECTIONS.PRODUCTS, localField: "ProductIDs", foreignField: "_id", as: "Products" } },
       { $lookup: { from: COLLECTIONS.PRODUCT_IMAGES, localField: "ProductIDs", foreignField: "ProductID", as: "ProductImages" } },
+      // Shipment / tracking details for this checkout (latest first).
+      {
+        $lookup: {
+          from: COLLECTIONS.SHIPMENTS,
+          let: { cid: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$CheckoutID", "$$cid"] } } },
+            { $sort: { CreatedAt: -1 } },
+            {
+              $project: {
+                _id: 1,
+                Courier: 1,
+                TrackingNumber: 1,
+                TrackingURL: 1,
+                ShipmentStatus: 1,
+                ShippedAt: 1,
+                EstimatedDelivery: 1,
+                DeliveredAt: 1,
+              },
+            },
+          ],
+          as: "Shipments",
+        },
+      },
       { $unwind: "$Products" },
       {
         $addFields: {
@@ -38,6 +62,7 @@ class CheckoutRepository extends BaseRepository<Checkout> {
           PaymentStatus: { $first: "$PaymentStatus" },
           CheckoutDate: { $first: "$CheckoutDate" },
           DeliveryStatus: { $first: "$DeliveryStatus" },
+          Shipments: { $first: "$Shipments" },
           Products: {
             $push: {
               ProductName: "$Products.ProductName",

@@ -36,4 +36,7 @@ export const COLLECTIONS = {
   OFFERS: "Offers",
 
   REVIEWS: "Reviews",
+
+  SITE_CONTENT: "SiteContent",
+  CONTACT_MESSAGES: "ContactMessages",
 } as const;

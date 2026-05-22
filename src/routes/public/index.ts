@@ -16,8 +16,11 @@ import { watchMarkerRouter } from "../../modules/catalog/watch_marker";
 import { deliveryOptionRouter } from "../../modules/catalog/delivery_option";
 import { offerRouter } from "../../modules/commerce/offer";
 import { reviewRouter } from "../../modules/catalog/review";
+import { siteContentRouter } from "../../modules/cms/site_content";
+import { contactRouter } from "../../modules/support/contact";
+import { fileUploadRouter } from "../../modules/file-upload";
 
-// Catalog browse + reference data + active offers.
+// Catalog browse + reference data + active offers + CMS content/uploads.
 const router: Router = Router();
 
 router.use("/products", productRouter);
@@ -37,5 +40,8 @@ router.use("/watch-markers", watchMarkerRouter);
 router.use("/delivery-options", deliveryOptionRouter);
 router.use("/offers", offerRouter);
 router.use("/reviews", reviewRouter);
+router.use("/site-content", siteContentRouter);
+router.use("/contact", contactRouter);
+router.use("/uploads", fileUploadRouter);
 
 export default router;
