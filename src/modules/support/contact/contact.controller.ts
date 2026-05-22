@@ -4,7 +4,8 @@ import { asyncHandler } from "../../../shared/middlewares/asyncHandler";
 import { ApiError } from "../../../shared/utils/apiError";
 import { sendResponse } from "../../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
-import { sendEmail } from "../../../shared/services/email.service";
+import { sendTemplateEmail } from "../../../shared/services/email.service";
+import { contactNotificationEmail } from "../../../shared/email-templates";
 import { env } from "../../../shared/config/env";
 import { contactRepository } from "./contact.repository";
 import { ContactMessage } from "./contact.types";
@@ -28,25 +29,18 @@ export const createContactMessage = asyncHandler(
     await contactRepository.insertOne(doc);
 
     if (env.CONTACT_RECIPIENT) {
-      const body = [
-        `Name: ${name}`,
-        `Email: ${email}`,
-        phone ? `Phone: ${phone}` : null,
-        subject ? `Subject: ${subject}` : null,
-        "",
-        message,
-      ]
-        .filter((line) => line !== null)
-        .join("\n");
-      await sendEmail(
+      const ok = await sendTemplateEmail(
         env.CONTACT_RECIPIENT,
-        subject ? `Contact form: ${subject}` : `New contact form submission from ${name}`,
-        body
+        contactNotificationEmail({ name, email, phone, subject, message }),
+      );
+    } else {
+      console.warn(
+        "[contact] CONTACT_RECIPIENT/EMAIL_USER not set — skipping email",
       );
     }
 
     sendResponse(res, HTTP_STATUS.CREATED, "Message sent successfully", doc);
-  }
+  },
 );
 
 // List submissions (newest first). Optional `?isRead=true|false` filter.
@@ -59,7 +53,7 @@ export const getContactMessages = asyncHandler(
 
     const messages = await contactRepository.findMessages(filter);
     sendResponse(res, HTTP_STATUS.OK, "", messages);
-  }
+  },
 );
 
 export const getContactMessageById = asyncHandler(
@@ -67,7 +61,7 @@ export const getContactMessageById = asyncHandler(
     const message = await contactRepository.findById(req.params.id);
     if (!message) throw ApiError.notFound("Message not found");
     sendResponse(res, HTTP_STATUS.OK, "", message);
-  }
+  },
 );
 
 export const markContactMessageRead = asyncHandler(
@@ -77,7 +71,7 @@ export const markContactMessageRead = asyncHandler(
     });
     if (result.matchedCount === 0) throw ApiError.notFound("Message not found");
     sendResponse(res, HTTP_STATUS.OK, "Message marked as read");
-  }
+  },
 );
 
 export const deleteContactMessage = asyncHandler(
@@ -85,5 +79,5 @@ export const deleteContactMessage = asyncHandler(
     const result = await contactRepository.deleteById(req.params.id);
     if (result.deletedCount === 0) throw ApiError.notFound("Message not found");
     sendResponse(res, HTTP_STATUS.OK, "Message deleted successfully");
-  }
+  },
 );

@@ -21,8 +21,8 @@ export const verifyPhoneSchema = Joi.object({
 });
 
 export const resetPasswordSchema = Joi.object({
-  email: Joi.string().email().optional(),
-  phone: Joi.string().optional(),
+  // Signed token from the reset link — identifies the user (replaces email/phone).
+  token: Joi.string().required(),
   otp: Joi.string().required(),
   newPassword: Joi.string().min(8).required(),
-}).or("email", "phone");
+});
