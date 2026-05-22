@@ -23,7 +23,13 @@ In Postman:
 | Key      | Type | Value                          |
 | -------- | ---- | ------------------------------ |
 | `image`  | File | (click the dropdown on the key, choose **File**, then select your image) |
-| `folder` | Text | `hero` (optional — defaults to `cms`) |
+| `folder` | Text | `hero` (optional breadcrumb subpath; may be nested like `hero/banners`) |
+
+> All site-content uploads are automatically grouped under a top-level
+> `site-content/` folder in S3. The `folder` value becomes a subfolder, so
+> `folder=hero` stores the object at `site-content/hero/<file>` (and `folder` omitted
+> stores it at `site-content/<file>`). Product images uploaded via
+> `POST /api/seller/upload/images` are likewise grouped under `products/`.
 
 > Do **not** set a `Content-Type` header manually — Postman sets the multipart boundary
 > automatically when you use form-data.
@@ -32,7 +38,7 @@ In Postman:
 ```json
 {
   "message": "Image uploaded successfully",
-  "data": { "url": "https://harmonic-time.s3.us-east-1.amazonaws.com/hero/..." }
+  "data": { "url": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/hero/..." }
 }
 ```
 
