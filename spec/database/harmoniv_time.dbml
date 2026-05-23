@@ -30,7 +30,8 @@ Project harmoniv_time {
                       Categories, Recipients, DialColors, Movements, StrapMaterials,
                       CaseMaterials, WatchMarkers, DeliveryOptions)
     - **Shopping**  : Cart, Wishlist, RecentlyViewedProducts
-    - **Commerce**  : Checkout, CheckoutItems, Sales, Offers
+    - **Commerce**  : Checkout, CheckoutItems, Sales, Offers, Payments, Shipments
+    - **Settlement**: SellerEarnings (wallet ledger), SellerBankAccounts, Withdrawals (payout history)
 
     ## Note on "orders"
     There is no `Orders` collection (orderModel/orderService are empty stubs).
@@ -378,6 +379,79 @@ Table Shipments {
 }
 
 // ============================================================================
+//  DOMAIN: SETTLEMENT — seller wallet, earnings ledger & payouts
+// ----------------------------------------------------------------------------
+//  Sellers earn from sold items (net of platform commission). An item's amount
+//  becomes withdrawable only after the seller's Shipment is Delivered AND a hold
+//  window (PAYOUT_HOLD_DAYS) has elapsed. Sellers request withdrawals; an admin
+//  deposits the money externally and marks the withdrawal Paid, settling the
+//  covered earnings. Bank details are stored in SellerBankAccounts. The
+//  Withdrawals collection is retained permanently and serves as the payout
+//  history (filter by Status = Paid for completed payouts).
+// ============================================================================
+
+Table SellerEarnings {
+  _id                objectid    [pk]
+  SellerID           objectid    [not null, note: 'Products.UserID at sale time']
+  CheckoutID         objectid    [not null, note: 'the paid order this earning came from']
+  ProductID          objectid    [not null, note: 'the sold product']
+  GrossAmount        decimal     [not null, note: 'snapshot of Products.Price at sale time']
+  CommissionRate     decimal     [not null, note: 'platform rate applied, e.g. 0.10']
+  CommissionAmount   decimal     [not null, note: 'GrossAmount * CommissionRate']
+  NetAmount          decimal     [not null, note: 'GrossAmount - CommissionAmount = seller earning']
+  Status             string      [not null, note: 'Pending / Available / Requested / Settled']
+  SaleDate           timestamp   [not null]
+  AvailableAt        timestamp   [null, note: 'set when promoted to Available = DeliveredAt + hold']
+  WithdrawalID       objectid    [null, note: 'set when locked into a Withdrawal; traces a settled item to its payout']
+  CreatedAt          timestamp
+
+  Note: '''
+    Per-item earnings ledger — the SOURCE OF TRUTH for the seller wallet. One row
+    per sold product, created in payment verifyPayment after the Checkout is made.
+    Amount is SNAPSHOTTED so later edits to Products.Price never rewrite history.
+    Lifecycle: Pending (sold, not yet eligible) -> Available (Shipment Delivered +
+    PAYOUT_HOLD_DAYS elapsed) -> Requested (locked in a pending Withdrawal) ->
+    Settled (paid out). Reject releases Requested -> Available.
+  '''
+}
+
+Table SellerBankAccounts {
+  _id                 objectid    [pk]
+  SellerID            objectid    [not null]
+  AccountHolderName   string      [not null]
+  AccountNumber       string      [not null]
+  IFSC                string      [not null]
+  BankName            string      [not null]
+  IsDefault           boolean     [default: false]
+  CreatedAt           timestamp
+
+  Note: 'Seller payout destinations. Ownership scoped to the authenticated seller.'
+}
+
+Table Withdrawals {
+  _id            objectid    [pk]
+  SellerID       objectid    [not null]
+  BankAccountID  objectid    [not null, note: 'destination at request time']
+  BankSnapshot   string      [note: 'embedded copy of bank details at request time']
+  Amount         decimal     [not null, note: 'sum of covered earnings NetAmount']
+  EarningIDs     string      [note: 'ARRAY of SellerEarnings._id covered by this payout']
+  Status         string      [not null, note: 'Pending / Approved / Paid / Rejected']
+  Reference      string      [null, note: 'UTR / bank txn id captured on Paid']
+  Notes          string      [null, note: 'admin note, e.g. reason on Reject']
+  RequestedAt    timestamp   [not null]
+  ProcessedAt    timestamp   [null]
+  ProcessedBy    objectid    [null, note: 'admin user who paid/rejected']
+
+  Note: '''
+    Seller-initiated payout request AND the permanent payout-history record.
+    POST locks all current Available earnings (Status -> Requested) into a Pending
+    withdrawal. Admin marks Paid (+Reference) -> covered earnings become Settled;
+    or Reject -> earnings released to Available. Rows are never deleted; the
+    seller/admin payout history is GET /withdrawals filtered by Status.
+  '''
+}
+
+// ============================================================================
 //  RELATIONSHIPS
 // ============================================================================
 
@@ -433,6 +507,16 @@ Ref: Payments.UserID       > Users._id      // buyer
 Ref: Shipments.CheckoutID  > Checkout._id   // one shipment → one checkout
 Ref: Shipments.SellerID    > Users._id      // seller who entered tracking
 
+// --- Settlement: seller wallet, earnings & payouts ---
+Ref: SellerEarnings.SellerID      > Users._id       // earnings belong to a seller
+Ref: SellerEarnings.CheckoutID    > Checkout._id    // sourced from a paid order
+Ref: SellerEarnings.ProductID     > Products._id    // the sold product
+Ref: SellerEarnings.WithdrawalID  > Withdrawals._id // many earnings → one payout
+Ref: SellerBankAccounts.SellerID  > Users._id       // payout destinations per seller
+Ref: Withdrawals.SellerID         > Users._id       // payout requested by seller
+Ref: Withdrawals.BankAccountID    > SellerBankAccounts._id
+Ref: Withdrawals.ProcessedBy      > Users._id        // admin who paid/rejected
+
 // ============================================================================
 //  TABLE GROUPS (visual organisation)
 // ============================================================================
@@ -475,4 +559,10 @@ TableGroup Commerce {
   Offers
   Payments
   Shipments
+}
+
+TableGroup Settlement {
+  SellerEarnings
+  SellerBankAccounts
+  Withdrawals
 }

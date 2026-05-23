@@ -15,6 +15,8 @@ export const updateAvailabilitySchema = Joi.object({
 });
 
 // Edit core product fields. Every field optional, but at least one required.
+// RemovedImageIDs lets the edit screen report images the user deleted; each is
+// removed from S3 and the DB.
 export const updateProductSchema = Joi.object({
   ProductName: Joi.string(),
   BrandID: Joi.string(),
@@ -23,4 +25,5 @@ export const updateProductSchema = Joi.object({
   RecipientID: Joi.string(),
   Price: Joi.number(),
   IsAvailable: Joi.boolean(),
+  RemovedImageIDs: Joi.array().items(Joi.string()),
 }).min(1);

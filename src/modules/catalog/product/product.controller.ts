@@ -6,6 +6,8 @@ import { sendResponse } from "../../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { productRepository } from "./product.repository";
 import { Product } from "./product.types";
+import { productImageRepository } from "../product_image/product_image.repository";
+import { deleteFile } from "../../../shared/services/file-storage.service";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
@@ -109,6 +111,7 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
     RecipientID,
     Price,
     IsAvailable,
+    RemovedImageIDs,
   } = req.body;
 
   const idFields: [string, unknown][] = [
@@ -122,6 +125,22 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
       throw ApiError.badRequest(`Invalid ${name}`);
   }
 
+  // Images the user removed on the edit screen. For each, delete the S3 object
+  // (deleteFile is idempotent and error-safe) then the DB record. Scoped to
+  // this product so an id from another product can't be used to delete its
+  // image.
+  if (Array.isArray(RemovedImageIDs) && RemovedImageIDs.length > 0) {
+    await Promise.all(
+      (RemovedImageIDs as string[]).map(async (imageID) => {
+        if (!ObjectId.isValid(imageID)) return;
+        const image = await productImageRepository.findById(imageID);
+        if (!image || image.ProductID.toString() !== productID) return;
+        await deleteFile(image.key || image.ImageURL);
+        await productImageRepository.deleteById(imageID);
+      })
+    );
+  }
+
   const update: Partial<Product> = {};
   if (ProductName !== undefined) update.ProductName = ProductName;
   if (Price !== undefined) update.Price = Price;
@@ -132,8 +151,16 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
   if (CategoryID !== undefined) update.CategoryID = new ObjectId(CategoryID);
   if (RecipientID !== undefined) update.RecipientID = new ObjectId(RecipientID);
 
-  const result = await productRepository.updateById(productID, update);
-  if (result.matchedCount === 0) throw ApiError.notFound("Product not found");
+  // The request may carry only RemovedImageIDs (no core field changes), which
+  // leaves `update` empty. Skip the write in that case — an empty $set errors
+  // in MongoDB — but still confirm the product exists.
+  if (Object.keys(update).length > 0) {
+    const result = await productRepository.updateById(productID, update);
+    if (result.matchedCount === 0) throw ApiError.notFound("Product not found");
+  } else {
+    const exists = await productRepository.findById(productID);
+    if (!exists) throw ApiError.notFound("Product not found");
+  }
 
   const [updated] = await productRepository.getEnriched({
     _id: new ObjectId(productID),
