@@ -11,7 +11,7 @@ export const createAddressSchema = Joi.object({
   State: Joi.string().required(),
   PostalCode: Joi.string().required(),
   Phone: Joi.string().required(),
-  orderNotes: Joi.string().allow("").optional(),
+  orderNotes: Joi.string().allow("", null).optional(),
   IsDefault: Joi.boolean().optional(),
 });
 
@@ -25,6 +25,6 @@ export const updateAddressSchema = Joi.object({
   State: Joi.string().optional(),
   PostalCode: Joi.string().optional(),
   Phone: Joi.string().optional(),
-  orderNotes: Joi.string().allow("").optional(),
+  orderNotes: Joi.string().allow("", null).optional(),
   IsDefault: Joi.boolean().optional(),
 }).min(1);
