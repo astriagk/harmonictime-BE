@@ -10,7 +10,7 @@ const addressSchema = Joi.object({
   State: Joi.string().required(),
   PostalCode: Joi.string().required(),
   Phone: Joi.string().required(),
-  orderNotes: Joi.string().allow("").optional(),
+  orderNotes: Joi.string().allow("", null).optional(),
   IsDefault: Joi.boolean().optional(),
 });
 
