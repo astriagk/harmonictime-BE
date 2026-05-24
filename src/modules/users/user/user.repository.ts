@@ -1,6 +1,7 @@
+import { ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
-import { User } from "./user.types";
+import { User, UserStatus } from "./user.types";
 
 class UserRepository extends BaseRepository<User> {
   constructor() {
@@ -13,6 +14,14 @@ class UserRepository extends BaseRepository<User> {
 
   findByPhone(phone: string) {
     return this.findOne({ phone });
+  }
+
+  findByStatus(status: UserStatus) {
+    return this.find({ status });
+  }
+
+  setStatus(userId: ObjectId | string, status: UserStatus) {
+    return this.updateById(userId, { status });
   }
 }
 

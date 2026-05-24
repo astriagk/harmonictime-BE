@@ -11,6 +11,8 @@ import { paymentRepository } from "./payment.repository";
 import { addressRepository } from "../../users/address/address.repository";
 import { checkoutRepository } from "../checkout/checkout.repository";
 import { userRepository } from "../../users/user/user.repository";
+import { productRepository } from "../../catalog/product/product.repository";
+import { earningRepository } from "../../wallet/earning";
 
 // Create a Razorpay order for a checkout. The address + checkout data is stashed
 // as a draft on a pending Payment record and is NOT written to the Address /
@@ -20,6 +22,21 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
 
   if (!(await userRepository.findById(UserID)))
     throw ApiError.badRequest("Invalid UserID");
+
+  // Stock/availability gate: never let the user reach the payment sheet for
+  // products that are sold out, hidden, or deleted. Checked here, BEFORE the
+  // Razorpay order exists, and re-checked at verifyPayment to close the race
+  // window where stock is depleted between order creation and payment.
+  const productIds: string[] = checkout?.ProductIDs ?? [];
+  if (!Array.isArray(productIds) || productIds.length === 0)
+    throw ApiError.badRequest("No products in the order");
+
+  const issues = await productRepository.checkAvailability(productIds);
+  if (issues.length > 0)
+    throw ApiError.badRequest(
+      "Some items can no longer be purchased. Please review your cart.",
+      issues
+    );
 
   // Razorpay requires the amount as a positive integer in the smallest currency
   // unit (paise). Round to absorb float artifacts like 514897.99999999994.
@@ -86,6 +103,24 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   const draft = payment.Draft;
   if (!draft) throw ApiError.badRequest("No draft order data found for this payment");
 
+  // Re-validate stock now that money has been captured. Another buyer may have
+  // taken the last unit between createOrder and here. If so, do NOT materialize
+  // the checkout — flag the payment for refund and surface the issues. The
+  // failing items are stored on the payment so a refund/ops flow can act on it.
+  const stockIssues = await productRepository.checkAvailability(
+    draft.checkout.ProductIDs
+  );
+  if (stockIssues.length > 0) {
+    await paymentRepository.updateById(payment._id!, {
+      PaymentStatus: "RefundPending",
+      RazorpayPaymentID: razorpay_payment_id,
+      RazorpaySignature: razorpay_signature,
+    });
+    throw ApiError.conflict(
+      "Payment received, but some items sold out before the order could be confirmed. A refund will be issued."
+    );
+  }
+
   // 1. Create the address now that payment has succeeded.
   const addressResult = await addressRepository.insertOne({
     UserID: payment.UserID,
@@ -116,6 +151,16 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
     ProductIDs: draft.checkout.ProductIDs.map((id) => new ObjectId(id)),
   });
   const CheckoutID = checkoutResult.insertedId;
+
+  // 2b. Credit each seller's wallet: one Pending earning per sold product, with
+  //     the sale price snapshotted and the platform commission applied. Becomes
+  //     withdrawable only after delivery + the hold window (see earning module).
+  const soldProductIds = draft.checkout.ProductIDs.map((id) => new ObjectId(id));
+  const soldProducts = await productRepository.find({ _id: { $in: soldProductIds } });
+  await earningRepository.createForCheckout(
+    CheckoutID,
+    soldProducts.map((p) => ({ _id: p._id, UserID: p.UserID, Price: p.Price }))
+  );
 
   // 3. Finalize the payment and link the records it produced.
   await paymentRepository.updateById(payment._id!, {

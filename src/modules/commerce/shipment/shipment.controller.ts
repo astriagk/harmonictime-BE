@@ -19,8 +19,17 @@ const DELIVERY_STATUS: Record<string, string> = {
 };
 
 export const createShipment = asyncHandler(async (req: Request, res: Response) => {
-  const { CheckoutID, SellerID, ShipmentStatus, ShippedAt, EstimatedDelivery, ...rest } =
-    req.body;
+  // DeliveredAt is intentionally pulled out and ignored — it's stamped
+  // server-side below so a client can't backdate/forge payout eligibility.
+  const {
+    CheckoutID,
+    SellerID,
+    ShipmentStatus,
+    ShippedAt,
+    EstimatedDelivery,
+    DeliveredAt: _ignoredDeliveredAt,
+    ...rest
+  } = req.body;
 
   if (!(await checkoutRepository.findById(CheckoutID)))
     throw ApiError.badRequest("Invalid CheckoutID");
@@ -28,13 +37,25 @@ export const createShipment = asyncHandler(async (req: Request, res: Response) =
     throw ApiError.badRequest("Invalid SellerID");
 
   const status = ShipmentStatus || "Pending";
+  // Stamp lifecycle timestamps server-side from the status, so wallet payout
+  // eligibility (which keys off DeliveredAt) never depends on the client. A
+  // shipment created directly as Shipped/Delivered still gets the right marks.
+  const now = new Date();
+  const shippedAt = ShippedAt
+    ? new Date(ShippedAt)
+    : status === "Shipped" || status === "Delivered"
+      ? now
+      : undefined;
+  const deliveredAt = status === "Delivered" ? now : undefined;
+
   const result = await shipmentRepository.insertOne({
     CheckoutID: new ObjectId(CheckoutID),
     SellerID: new ObjectId(SellerID),
     ShipmentStatus: status,
-    ShippedAt: ShippedAt ? new Date(ShippedAt) : undefined,
+    ShippedAt: shippedAt,
     EstimatedDelivery: EstimatedDelivery ? new Date(EstimatedDelivery) : undefined,
-    CreatedAt: new Date(),
+    DeliveredAt: deliveredAt,
+    CreatedAt: now,
     ...rest,
   });
 
@@ -63,7 +84,21 @@ export const updateShipment = asyncHandler(async (req: Request, res: Response) =
   const shipment = await shipmentRepository.findById(req.params.shipmentID);
   if (!shipment) throw ApiError.notFound("Shipment not found");
 
-  await shipmentRepository.updateById(req.params.shipmentID, req.body);
+  // Never let the client set delivery timestamps — they gate wallet payouts.
+  const { DeliveredAt: _ignoredDeliveredAt, ShippedAt: _ignoredShippedAt, ...update } =
+    req.body as Record<string, unknown>;
+
+  // Stamp lifecycle timestamps server-side when the status transitions, so the
+  // wallet's delivery-based payout eligibility fires without relying on the client.
+  const now = new Date();
+  if (req.body.ShipmentStatus === "Delivered" && !shipment.DeliveredAt) {
+    update.DeliveredAt = now;
+    if (!shipment.ShippedAt) update.ShippedAt = now;
+  } else if (req.body.ShipmentStatus === "Shipped" && !shipment.ShippedAt) {
+    update.ShippedAt = now;
+  }
+
+  await shipmentRepository.updateById(req.params.shipmentID, update);
 
   if (req.body.ShipmentStatus) {
     await checkoutRepository.updateById(shipment.CheckoutID, {

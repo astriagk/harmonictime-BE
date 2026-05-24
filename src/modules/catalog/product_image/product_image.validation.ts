@@ -7,6 +7,7 @@ export const createProductImageSchema = Joi.object({
       Joi.object({
         url: Joi.string().required(),
         key: Joi.string().allow("").optional(),
+        IsPrimary: Joi.boolean().optional(),
       })
     )
     .min(1)

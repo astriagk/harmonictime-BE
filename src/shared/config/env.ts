@@ -32,6 +32,9 @@ export const env = {
 
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "",
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "",
+  // Your Razorpay X current account number — required for penny-drop verification.
+  // Activate Fund Account Validation in your Razorpay X dashboard before using.
+  RAZORPAY_ACCOUNT_NUMBER: process.env.RAZORPAY_ACCOUNT_NUMBER || "",
 
   IMGBB_API_KEY: process.env.IMGBB_API_KEY || "",
 
@@ -39,4 +42,10 @@ export const env = {
   STORAGE_ACCESS_KEY: process.env.STORAGE_ACCESS_KEY || "",
   STORAGE_SECRET_KEY: process.env.STORAGE_SECRET_KEY || "",
   STORAGE_BUCKET_NAME: process.env.STORAGE_BUCKET_NAME || "driver-documents",
+
+  // Seller settlement. Commission is the platform's cut of each sale (0.1 = 10%);
+  // the seller's wallet credit is the sale price net of it. Hold days is how long
+  // after delivery a sale's amount is locked before it becomes withdrawable.
+  PLATFORM_COMMISSION_RATE: Number(process.env.PLATFORM_COMMISSION_RATE ?? 0.1),
+  PAYOUT_HOLD_DAYS: Number(process.env.PAYOUT_HOLD_DAYS ?? 7),
 };

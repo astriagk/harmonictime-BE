@@ -35,7 +35,9 @@ export const addProductToWishlist = asyncHandler(
 
 export const getWishlistByUserID = asyncHandler(
   async (req: Request, res: Response) => {
-    const items = await wishlistRepository.findByUser(req.params.userID);
+    const items = await wishlistRepository.getEnrichedByUser(
+      new ObjectId(req.params.userID)
+    );
     sendResponse(res, HTTP_STATUS.OK, "Wishlist retrieved successfully", items);
   }
 );

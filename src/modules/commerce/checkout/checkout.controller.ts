@@ -7,6 +7,7 @@ import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { checkoutRepository } from "./checkout.repository";
 import { userRepository } from "../../users/user/user.repository";
 import { addressRepository } from "../../users/address/address.repository";
+import { productRepository } from "../../catalog/product/product.repository";
 
 export const createCheckout = asyncHandler(async (req: Request, res: Response) => {
   const { UserID, AddressID, TotalAmount, PaymentStatus, DeliveryStatus, CheckoutDate, ProductIDs } =
@@ -16,6 +17,16 @@ export const createCheckout = asyncHandler(async (req: Request, res: Response) =
     throw ApiError.badRequest("Invalid UserID");
   if (!(await addressRepository.findById(AddressID)))
     throw ApiError.badRequest("Invalid AddressID");
+
+  // Same stock/availability gate as the payment flow: reject the checkout if any
+  // product is sold out, hidden, or deleted. ProductIDs is a flat array where a
+  // product appearing N times means N units requested.
+  const issues = await productRepository.checkAvailability(ProductIDs as string[]);
+  if (issues.length > 0)
+    throw ApiError.badRequest(
+      "Some items can no longer be purchased. Please review your cart.",
+      issues
+    );
 
   const result = await checkoutRepository.insertOne({
     UserID: new ObjectId(UserID),
