@@ -6,6 +6,7 @@ import {
   getBankAccounts,
   updateBankAccount,
   deleteBankAccount,
+  verifyBankAccount,
 } from "./bank_account.controller";
 import {
   createBankAccountSchema,
@@ -19,5 +20,6 @@ router.post("/", authMiddleware, validate(createBankAccountSchema), createBankAc
 router.get("/", authMiddleware, getBankAccounts);
 router.put("/:accountID", authMiddleware, validate(updateBankAccountSchema), updateBankAccount);
 router.delete("/:accountID", authMiddleware, deleteBankAccount);
+router.post("/:accountID/verify", authMiddleware, verifyBankAccount);
 
 export default router;

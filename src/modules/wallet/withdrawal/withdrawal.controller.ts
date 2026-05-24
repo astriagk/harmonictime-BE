@@ -8,6 +8,12 @@ import { withdrawalRepository } from "./withdrawal.repository";
 import { earningRepository } from "../earning/earning.repository";
 import { bankAccountRepository } from "../bank_account/bank_account.repository";
 import { WithdrawalStatus } from "./withdrawal.types";
+import { userRepository } from "../../users/user/user.repository";
+import { sendTemplateEmail } from "../../../shared/services/email.service";
+import {
+  withdrawalPaidEmail,
+  withdrawalRejectedEmail,
+} from "../../../shared/email-templates";
 
 const authedObjectId = (req: Request): ObjectId => {
   const userId = req.user?.userId;
@@ -29,6 +35,10 @@ export const requestWithdrawal = asyncHandler(
     const account = await bankAccountRepository.findById(BankAccountID);
     if (!account || account.SellerID.toString() !== sellerId.toString())
       throw ApiError.badRequest("Bank account not found");
+    if (!account.IsVerified)
+      throw ApiError.badRequest(
+        "Bank account must be verified before requesting a withdrawal. Please verify your account first."
+      );
 
     // Promote any newly-eligible earnings, then take everything available.
     await earningRepository.refreshEligibility(sellerId);
@@ -130,6 +140,14 @@ export const payWithdrawal = asyncHandler(
     });
     await earningRepository.settle(withdrawal._id!);
 
+    userRepository.findById(withdrawal.SellerID).then((seller) => {
+      if (seller)
+        sendTemplateEmail(
+          seller.email,
+          withdrawalPaidEmail(withdrawal.Amount, req.body.Reference)
+        ).catch(() => {});
+    }).catch(() => {});
+
     sendResponse(res, HTTP_STATUS.OK, "Withdrawal marked as paid");
   }
 );
@@ -154,6 +172,14 @@ export const rejectWithdrawal = asyncHandler(
       ProcessedAt: new Date(),
       ProcessedBy: adminId,
     });
+
+    userRepository.findById(withdrawal.SellerID).then((seller) => {
+      if (seller)
+        sendTemplateEmail(
+          seller.email,
+          withdrawalRejectedEmail(withdrawal.Amount, req.body.Notes)
+        ).catch(() => {});
+    }).catch(() => {});
 
     sendResponse(res, HTTP_STATUS.OK, "Withdrawal rejected");
   }

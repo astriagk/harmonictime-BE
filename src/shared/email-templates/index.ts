@@ -8,3 +8,5 @@ export * from "./types";
 export * from "./welcome.template";
 export * from "./passwordResetOtp.template";
 export * from "./contactNotification.template";
+export * from "./accountStatus.template";
+export * from "./withdrawal.template";

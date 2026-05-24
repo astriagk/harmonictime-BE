@@ -32,6 +32,9 @@ export const env = {
 
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "",
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "",
+  // Your Razorpay X current account number — required for penny-drop verification.
+  // Activate Fund Account Validation in your Razorpay X dashboard before using.
+  RAZORPAY_ACCOUNT_NUMBER: process.env.RAZORPAY_ACCOUNT_NUMBER || "",
 
   IMGBB_API_KEY: process.env.IMGBB_API_KEY || "",
 
