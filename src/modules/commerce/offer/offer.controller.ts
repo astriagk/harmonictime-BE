@@ -39,6 +39,27 @@ export const getAllActiveOffers = asyncHandler(
   }
 );
 
+export const getAllOffers = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const offers = await offerRepository.findAll();
+    sendResponse(res, HTTP_STATUS.OK, "Offers retrieved successfully", offers);
+  }
+);
+
+// Dedicated enable/disable toggle, clearer in intent than the generic update.
+export const setOfferStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { IsActive } = req.body;
+    const result = await offerRepository.setActive(req.params.offerID, IsActive);
+    if (result.matchedCount === 0) throw ApiError.notFound("Offer not found");
+    sendResponse(
+      res,
+      HTTP_STATUS.OK,
+      `Offer ${IsActive ? "enabled" : "disabled"} successfully`
+    );
+  }
+);
+
 export const updateOffer = asyncHandler(async (req: Request, res: Response) => {
   const result = await offerRepository.updateById(req.params.offerID, req.body);
   if (result.matchedCount === 0) throw ApiError.notFound("Offer not found");

@@ -6,12 +6,14 @@ import {
   getProductById,
   updateProduct,
   editProduct,
+  bulkUpdateProductOffer,
   deleteProduct,
 } from "./product.controller";
 import {
   createProductSchema,
   updateAvailabilitySchema,
   updateProductSchema,
+  bulkOfferSchema,
 } from "./product.validation";
 
 const router: Router = Router();
@@ -20,6 +22,7 @@ router.post("/", validate(createProductSchema), createProduct);
 router.get("/", getAllProducts);
 router.get("/:productID", getProductById);
 router.put("/availability", validate(updateAvailabilitySchema), updateProduct);
+router.put("/bulk-offer", validate(bulkOfferSchema), bulkUpdateProductOffer);
 router.put("/:productID", validate(updateProductSchema), editProduct);
 router.delete("/:productID", deleteProduct);
 

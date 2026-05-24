@@ -1,6 +1,12 @@
 import { ObjectId } from "mongodb";
 
-export type PaymentStatus = "Created" | "Verified" | "Failed";
+// "RefundPending": payment captured, but stock sold out before the order could
+// be confirmed at verifyPayment — awaiting refund, no Checkout was created.
+export type PaymentStatus =
+  | "Created"
+  | "Verified"
+  | "Failed"
+  | "RefundPending";
 
 // Address fields captured at order time but NOT persisted to the Address
 // collection until the payment is verified.

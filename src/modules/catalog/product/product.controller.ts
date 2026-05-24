@@ -7,6 +7,7 @@ import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { productRepository } from "./product.repository";
 import { Product } from "./product.types";
 import { productImageRepository } from "../product_image/product_image.repository";
+import { offerRepository } from "../../commerce/offer";
 import { deleteFile } from "../../../shared/services/file-storage.service";
 
 export const createProduct = asyncHandler(
@@ -19,7 +20,12 @@ export const createProduct = asyncHandler(
       CategoryID,
       Price,
       RecipientID,
+      Quantity,
+      OfferID,
     } = req.body;
+
+    if (OfferID && !ObjectId.isValid(OfferID))
+      throw ApiError.badRequest("Invalid OfferID");
 
     const doc: Product = {
       UserID: new ObjectId(UserID),
@@ -29,6 +35,8 @@ export const createProduct = asyncHandler(
       CategoryID: new ObjectId(CategoryID),
       RecipientID: new ObjectId(RecipientID),
       Price,
+      Quantity,
+      OfferID: OfferID ? new ObjectId(OfferID) : null,
       IsAvailable: true,
       DateListed: new Date(),
     };
@@ -110,6 +118,8 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
     CategoryID,
     RecipientID,
     Price,
+    Quantity,
+    OfferID,
     IsAvailable,
     RemovedImageIDs,
   } = req.body;
@@ -124,6 +134,11 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
     if (value !== undefined && !ObjectId.isValid(value as string))
       throw ApiError.badRequest(`Invalid ${name}`);
   }
+
+  // OfferID is optional and nullable: a non-empty string must be a valid id
+  // (attach/replace the offer); null or "" detaches any existing offer.
+  if (OfferID !== undefined && OfferID !== null && OfferID !== "" && !ObjectId.isValid(OfferID))
+    throw ApiError.badRequest("Invalid OfferID");
 
   // Images the user removed on the edit screen. For each, delete the S3 object
   // (deleteFile is idempotent and error-safe) then the DB record. Scoped to
@@ -144,6 +159,9 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
   const update: Partial<Product> = {};
   if (ProductName !== undefined) update.ProductName = ProductName;
   if (Price !== undefined) update.Price = Price;
+  if (Quantity !== undefined) update.Quantity = Quantity;
+  if (OfferID !== undefined)
+    update.OfferID = OfferID ? new ObjectId(OfferID) : null;
   if (IsAvailable !== undefined) update.IsAvailable = IsAvailable;
   if (BrandID !== undefined) update.BrandID = new ObjectId(BrandID);
   if (CollectionID !== undefined)
@@ -167,6 +185,56 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
   });
   sendResponse(res, HTTP_STATUS.OK, "Product updated successfully", updated);
 });
+
+// Bulk offer assignment: attach one offer to many products and/or clear the
+// offer from many products in a single request.
+//   - AssignProductIDs + OfferID → set OfferID on those products
+//   - RemoveProductIDs           → clear OfferID on those products (set null)
+// Both arrays are optional but at least one must be present (enforced by schema).
+export const bulkUpdateProductOffer = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { OfferID, AssignProductIDs, RemoveProductIDs } = req.body;
+
+    const assignIds = (AssignProductIDs ?? []) as string[];
+    const removeIds = (RemoveProductIDs ?? []) as string[];
+
+    for (const id of [...assignIds, ...removeIds]) {
+      if (!ObjectId.isValid(id))
+        throw ApiError.badRequest(`Invalid ProductID: ${id}`);
+    }
+
+    let assigned = 0;
+    let removed = 0;
+
+    if (assignIds.length > 0) {
+      if (!OfferID || !ObjectId.isValid(OfferID))
+        throw ApiError.badRequest(
+          "A valid OfferID is required to assign an offer"
+        );
+      if (!(await offerRepository.findById(OfferID)))
+        throw ApiError.notFound("Offer not found");
+
+      const result = await productRepository.setOffer(
+        assignIds.map((id) => new ObjectId(id)),
+        new ObjectId(OfferID)
+      );
+      assigned = result.modifiedCount;
+    }
+
+    if (removeIds.length > 0) {
+      const result = await productRepository.setOffer(
+        removeIds.map((id) => new ObjectId(id)),
+        null
+      );
+      removed = result.modifiedCount;
+    }
+
+    sendResponse(res, HTTP_STATUS.OK, "Product offers updated successfully", {
+      assigned,
+      removed,
+    });
+  }
+);
 
 export const deleteProduct = asyncHandler(
   async (req: Request, res: Response) => {

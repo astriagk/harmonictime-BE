@@ -23,6 +23,21 @@ export const createOrder = asyncHandler(async (req: Request, res: Response) => {
   if (!(await userRepository.findById(UserID)))
     throw ApiError.badRequest("Invalid UserID");
 
+  // Stock/availability gate: never let the user reach the payment sheet for
+  // products that are sold out, hidden, or deleted. Checked here, BEFORE the
+  // Razorpay order exists, and re-checked at verifyPayment to close the race
+  // window where stock is depleted between order creation and payment.
+  const productIds: string[] = checkout?.ProductIDs ?? [];
+  if (!Array.isArray(productIds) || productIds.length === 0)
+    throw ApiError.badRequest("No products in the order");
+
+  const issues = await productRepository.checkAvailability(productIds);
+  if (issues.length > 0)
+    throw ApiError.badRequest(
+      "Some items can no longer be purchased. Please review your cart.",
+      issues
+    );
+
   // Razorpay requires the amount as a positive integer in the smallest currency
   // unit (paise). Round to absorb float artifacts like 514897.99999999994.
   const amountInPaise = Math.round(amount);
@@ -87,6 +102,24 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
 
   const draft = payment.Draft;
   if (!draft) throw ApiError.badRequest("No draft order data found for this payment");
+
+  // Re-validate stock now that money has been captured. Another buyer may have
+  // taken the last unit between createOrder and here. If so, do NOT materialize
+  // the checkout — flag the payment for refund and surface the issues. The
+  // failing items are stored on the payment so a refund/ops flow can act on it.
+  const stockIssues = await productRepository.checkAvailability(
+    draft.checkout.ProductIDs
+  );
+  if (stockIssues.length > 0) {
+    await paymentRepository.updateById(payment._id!, {
+      PaymentStatus: "RefundPending",
+      RazorpayPaymentID: razorpay_payment_id,
+      RazorpaySignature: razorpay_signature,
+    });
+    throw ApiError.conflict(
+      "Payment received, but some items sold out before the order could be confirmed. A refund will be issued."
+    );
+  }
 
   // 1. Create the address now that payment has succeeded.
   const addressResult = await addressRepository.insertOne({
