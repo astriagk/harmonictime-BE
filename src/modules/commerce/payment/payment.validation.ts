@@ -1,6 +1,12 @@
 import Joi from "joi";
 
-const addressSchema = Joi.object({
+// Existing saved address — only the ID is needed.
+const existingAddressSchema = Joi.object({
+  _id: Joi.string().required(),
+}).unknown(false);
+
+// Brand-new address fields.
+const newAddressSchema = Joi.object({
   FirstName: Joi.string().required(),
   LastName: Joi.string().required(),
   Country: Joi.string().required(),
@@ -21,13 +27,16 @@ const checkoutSchema = Joi.object({
   CheckoutDate: Joi.string().optional(),
 });
 
-// Order creation now carries the address + checkout data so nothing is
-// persisted until the payment is verified.
+// Order creation carries address + checkout data; nothing is persisted until
+// payment is verified. Address can be an existing saved address (pass _id only)
+// or a new one (pass full fields — created only on successful payment).
 export const createOrderSchema = Joi.object({
   UserID: Joi.string().required(),
   amount: Joi.number().required(),
   currency: Joi.string().optional(),
-  address: addressSchema.required(),
+  address: Joi.alternatives()
+    .try(existingAddressSchema, newAddressSchema)
+    .required(),
   checkout: checkoutSchema.required(),
 });
 

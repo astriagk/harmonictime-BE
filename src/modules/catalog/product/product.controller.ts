@@ -60,10 +60,11 @@ export const getAllProducts = asyncHandler(
     //   "true"  → only available
     //   "false" → only unavailable
     //   "all"   → no availability filter (every product)
-    //   omitted → default to available only
+    //   omitted + UserID present  → no filter (sellers see all their listings)
+    //   omitted + no UserID       → default to available only (buyer marketplace)
     if (IsAvailable === "true") match.IsAvailable = true;
     else if (IsAvailable === "false") match.IsAvailable = false;
-    else if (IsAvailable !== "all") match.IsAvailable = true;
+    else if (IsAvailable !== "all" && !UserID) match.IsAvailable = true;
 
     // getEnrichedWithStatus tags each product with Status (Sold / Available /
     // Unavailable) and IsSold, derived from paid checkouts.
