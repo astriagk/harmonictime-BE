@@ -153,13 +153,19 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   const CheckoutID = checkoutResult.insertedId;
 
   // 2b. Credit each seller's wallet: one Pending earning per sold product, with
-  //     the sale price snapshotted and the platform commission applied. Becomes
-  //     withdrawable only after delivery + the hold window (see earning module).
+  //     the sale price and active offer snapshotted at this moment so later
+  //     price/offer changes never rewrite history. Becomes withdrawable only
+  //     after delivery + the hold window (see earning module).
   const soldProductIds = draft.checkout.ProductIDs.map((id) => new ObjectId(id));
-  const soldProducts = await productRepository.find({ _id: { $in: soldProductIds } });
+  const soldProducts = await productRepository.findWithActiveOffer(soldProductIds);
   await earningRepository.createForCheckout(
     CheckoutID,
-    soldProducts.map((p) => ({ _id: p._id, UserID: p.UserID, Price: p.Price }))
+    soldProducts.map((p) => ({
+      _id: p._id,
+      UserID: p.UserID,
+      Price: p.Price,
+      OfferDiscountPercentage: p.OfferDiscountPercentage ?? 0,
+    }))
   );
 
   // 3. Finalize the payment and link the records it produced.

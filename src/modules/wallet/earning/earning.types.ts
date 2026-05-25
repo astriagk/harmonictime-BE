@@ -13,10 +13,13 @@ export interface SellerEarning {
   SellerID: ObjectId;
   CheckoutID: ObjectId;
   ProductID: ObjectId;
-  GrossAmount: number; // snapshot of Product.Price at sale time
-  CommissionRate: number; // platform rate applied (e.g. 0.1)
-  CommissionAmount: number; // GrossAmount * CommissionRate
-  NetAmount: number; // GrossAmount - CommissionAmount = seller's credit
+  // Offer state snapshotted at sale time so later offer changes never rewrite history.
+  OfferDiscountPercentage: number; // e.g. 10 for 10% off; 0 if no active offer
+  OfferDiscountAmount: number;     // Math.round(Price * OfferDiscountPercentage / 100)
+  GrossAmount: number;             // effective price buyer paid per unit = Price - OfferDiscountAmount
+  CommissionRate: number;          // seller commission rate applied (e.g. 0.02)
+  CommissionAmount: number;        // Math.round(GrossAmount * CommissionRate)
+  NetAmount: number;               // GrossAmount - CommissionAmount = seller's credit
   Status: EarningStatus;
   SaleDate: Date;
   AvailableAt?: Date; // when it became Available (DeliveredAt + hold)
