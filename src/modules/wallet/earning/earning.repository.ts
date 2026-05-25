@@ -7,34 +7,45 @@ import { EarningStatus, SellerEarning } from "./earning.types";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // A product as needed to mint an earning (subset of Product).
-type SoldProduct = { _id: ObjectId; UserID: ObjectId; Price: number };
+type SoldProduct = {
+  _id: ObjectId;
+  UserID: ObjectId;
+  Price: number;
+  OfferDiscountPercentage: number; // 0 if no active offer at sale time
+};
 
 class EarningRepository extends BaseRepository<SellerEarning> {
   constructor() {
     super(COLLECTIONS.SELLER_EARNINGS);
   }
 
-  // Mint one Pending earning per sold product, applying the platform commission.
-  // Amounts are snapshotted so later edits to Product.Price never rewrite history.
+  // Mint one Pending earning per sold product, applying the seller commission.
+  // Offer discount and all amounts are snapshotted so later price/offer changes
+  // never rewrite history. Buyer commission is NOT deducted here — it is added
+  // on top of the buyer's DisplayPrice and stays with the platform separately.
   async createForCheckout(
     checkoutId: ObjectId,
     products: SoldProduct[]
   ): Promise<void> {
     if (products.length === 0) return;
-    const rate = env.PLATFORM_COMMISSION_RATE;
+    const sellerRate = env.PLATFORM_COMMISSION_RATE;
     const now = new Date();
 
     const docs: SellerEarning[] = products.map((p) => {
-      const gross = p.Price;
-      const commission = Math.round(gross * rate);
+      const offerDiscount  = p.OfferDiscountPercentage ?? 0;
+      const discountAmount = Math.round(p.Price * offerDiscount / 100);
+      const effectivePrice = p.Price - discountAmount;
+      const commission     = Math.round(effectivePrice * sellerRate);
       return {
         SellerID: p.UserID,
         CheckoutID: checkoutId,
         ProductID: p._id,
-        GrossAmount: gross,
-        CommissionRate: rate,
+        OfferDiscountPercentage: offerDiscount,
+        OfferDiscountAmount: discountAmount,
+        GrossAmount: effectivePrice,
+        CommissionRate: sellerRate,
         CommissionAmount: commission,
-        NetAmount: gross - commission,
+        NetAmount: effectivePrice - commission,
         Status: "Pending",
         SaleDate: now,
         WithdrawalID: null,
@@ -153,7 +164,10 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           CheckoutID: 1,
           WithdrawalID: 1,
           Status: 1,
+          OfferDiscountPercentage: 1,
+          OfferDiscountAmount: 1,
           GrossAmount: 1,
+          CommissionRate: 1,
           CommissionAmount: 1,
           NetAmount: 1,
           SaleDate: 1,

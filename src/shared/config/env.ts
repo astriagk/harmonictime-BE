@@ -43,9 +43,13 @@ export const env = {
   STORAGE_SECRET_KEY: process.env.STORAGE_SECRET_KEY || "",
   STORAGE_BUCKET_NAME: process.env.STORAGE_BUCKET_NAME || "driver-documents",
 
-  // Seller settlement. Commission is the platform's cut of each sale (0.1 = 10%);
-  // the seller's wallet credit is the sale price net of it. Hold days is how long
-  // after delivery a sale's amount is locked before it becomes withdrawable.
+  // Commission rates (decimals: 0.02 = 2%).
+  // BUYER_COMMISSION_RATE  – added on top of the product price shown to buyers (DisplayPrice).
+  //                          Goes to the platform; never deducted from the seller.
+  // PLATFORM_COMMISSION_RATE – deducted from the seller's effective sale price.
+  //                            Goes to the platform.
+  // Hold days: how long after delivery a sale's amount is locked before it becomes withdrawable.
+  BUYER_COMMISSION_RATE: Number(process.env.BUYER_COMMISSION_RATE ?? 0.02),
   PLATFORM_COMMISSION_RATE: Number(process.env.PLATFORM_COMMISSION_RATE ?? 0.1),
   PAYOUT_HOLD_DAYS: Number(process.env.PAYOUT_HOLD_DAYS ?? 7),
 };

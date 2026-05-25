@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
+import { env } from "../../../shared/config/env";
 import { Checkout } from "./checkout.types";
 
 class CheckoutRepository extends BaseRepository<Checkout> {
@@ -8,8 +9,14 @@ class CheckoutRepository extends BaseRepository<Checkout> {
     super(COLLECTIONS.CHECKOUT);
   }
 
-  // Checkouts for a user with each product's name/price/primary image.
+  // Checkouts for a user with per-product price breakdown:
+  //   Price               – seller's original listed price
+  //   OfferApplied        – offer active at purchase time (null if none)
+  //   EffectivePrice      – Price after offer discount
+  //   BuyerCommissionAmount – platform's buyer-side cut
+  //   DisplayPrice        – what the buyer paid per unit (EffectivePrice + BuyerCommissionAmount)
   getEnrichedByUser(userId: ObjectId) {
+    const buyerRate = env.BUYER_COMMISSION_RATE;
     return this.aggregate([
       { $match: { UserID: userId } },
       { $lookup: { from: COLLECTIONS.PRODUCTS, localField: "ProductIDs", foreignField: "_id", as: "Products" } },
@@ -39,15 +46,43 @@ class CheckoutRepository extends BaseRepository<Checkout> {
         },
       },
       { $unwind: "$Products" },
+      // Join the earning snapshot for this product+checkout to get offer &
+      // commission amounts that were locked in at payment time.
+      {
+        $lookup: {
+          from: COLLECTIONS.SELLER_EARNINGS,
+          let: { cid: "$_id", pid: "$Products._id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$CheckoutID", "$$cid"] },
+                    { $eq: ["$ProductID", "$$pid"] },
+                  ],
+                },
+              },
+            },
+            { $limit: 1 },
+          ],
+          as: "Earning",
+        },
+      },
       {
         $addFields: {
-          ImageURL: {
+          Earning: { $arrayElemAt: ["$Earning", 0] },
+          PrimaryImage: {
             $arrayElemAt: [
               {
                 $filter: {
                   input: "$ProductImages",
                   as: "image",
-                  cond: { $eq: ["$$image.ProductID", "$Products._id"] },
+                  cond: {
+                    $and: [
+                      { $eq: ["$$image.ProductID", "$Products._id"] },
+                      { $eq: ["$$image.IsPrimary", true] },
+                    ],
+                  },
                 },
               },
               0,
@@ -66,12 +101,41 @@ class CheckoutRepository extends BaseRepository<Checkout> {
           Products: {
             $push: {
               ProductName: "$Products.ProductName",
-              Price: "$Products.Price",
-              ImageURL: "$ImageURL.ImageURL",
+              // Offer that was active when this unit was purchased (null if none).
+              OfferApplied: {
+                $cond: [
+                  { $gt: [{ $ifNull: ["$Earning.OfferDiscountPercentage", 0] }, 0] },
+                  {
+                    DiscountPercentage: "$Earning.OfferDiscountPercentage",
+                    DiscountAmount: "$Earning.OfferDiscountAmount",
+                  },
+                  null,
+                ],
+              },
+              BuyerCommissionAmount: {
+                $round: [
+                  { $multiply: [{ $ifNull: ["$Earning.GrossAmount", "$Products.Price"] }, buyerRate] },
+                  0,
+                ],
+              },
+              // DisplayPrice = EffectivePrice + BuyerCommissionAmount
+              DisplayPrice: {
+                $add: [
+                  { $ifNull: ["$Earning.GrossAmount", "$Products.Price"] },
+                  {
+                    $round: [
+                      { $multiply: [{ $ifNull: ["$Earning.GrossAmount", "$Products.Price"] }, buyerRate] },
+                      0,
+                    ],
+                  },
+                ],
+              },
+              ImageURL: "$PrimaryImage.ImageURL",
             },
           },
         },
       },
+      { $sort: { CheckoutDate: -1 } },
     ]);
   }
 
@@ -199,7 +263,12 @@ class CheckoutRepository extends BaseRepository<Checkout> {
                             $filter: {
                               input: "$ProductImages",
                               as: "im",
-                              cond: { $eq: ["$$im.ProductID", "$$p._id"] },
+                              cond: {
+                                $and: [
+                                  { $eq: ["$$im.ProductID", "$$p._id"] },
+                                  { $eq: ["$$im.IsPrimary", true] },
+                                ],
+                              },
                             },
                           },
                           0,

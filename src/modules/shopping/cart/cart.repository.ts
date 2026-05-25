@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
+import { env } from "../../../shared/config/env";
 import { CartItem } from "./cart.types";
 
 class CartRepository extends BaseRepository<CartItem> {
@@ -26,6 +27,8 @@ class CartRepository extends BaseRepository<CartItem> {
       { $lookup: { from: COLLECTIONS.PRODUCT_IMAGES, localField: "ProductID", foreignField: "ProductID", as: "Images" } },
       { $lookup: { from: COLLECTIONS.DELIVERY_RETURNS, localField: "ProductID", foreignField: "ProductID", as: "DeliveryAndReturns" } },
       { $unwind: { path: "$DeliveryAndReturns", preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: COLLECTIONS.OFFERS, localField: "ProductDetails.OfferID", foreignField: "_id", as: "Offer" } },
+      { $unwind: { path: "$Offer", preserveNullAndEmptyArrays: true } },
       {
         $project: {
           _id: 1,
@@ -34,6 +37,35 @@ class CartRepository extends BaseRepository<CartItem> {
           Quantity: 1,
           ProductName: "$ProductDetails.ProductName",
           Price: "$ProductDetails.Price",
+          DisplayPrice: {
+            $add: [
+              "$ProductDetails.Price",
+              { $round: [{ $multiply: ["$ProductDetails.Price", env.BUYER_COMMISSION_RATE] }, 0] },
+            ],
+          },
+          OfferID: "$ProductDetails.OfferID",
+          Offer: {
+            $cond: {
+              if: {
+                $and: [
+                  { $ifNull: ["$Offer._id", false] },
+                  { $eq: ["$Offer.IsActive", true] },
+                  { $lte: ["$Offer.StartDate", new Date()] },
+                  { $gte: ["$Offer.EndDate", new Date()] },
+                ],
+              },
+              then: {
+                _id: "$Offer._id",
+                OfferName: "$Offer.OfferName",
+                Description: "$Offer.Description",
+                DiscountPercentage: "$Offer.DiscountPercentage",
+                StartDate: "$Offer.StartDate",
+                EndDate: "$Offer.EndDate",
+                IsActive: "$Offer.IsActive",
+              },
+              else: "$$REMOVE",
+            },
+          },
           IsAvailable: "$ProductDetails.IsAvailable",
           DateListed: "$ProductDetails.DateListed",
           Description: {

@@ -1,6 +1,7 @@
 import { Document, Filter, ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
+import { env } from "../../../shared/config/env";
 import { Product } from "./product.types";
 
 // Joins Products to its description / details / images / delivery + every
@@ -42,6 +43,12 @@ const enrichmentStages = (): Document[] => [
       UserID: 1,
       ProductName: 1,
       Price: 1,
+      DisplayPrice: {
+        $add: [
+          "$Price",
+          { $round: [{ $multiply: ["$Price", env.BUYER_COMMISSION_RATE] }, 0] },
+        ],
+      },
       // Existing products predate the Quantity field; treat them as single-unit.
       Quantity: { $ifNull: ["$Quantity", 1] },
       OfferID: 1,
@@ -252,6 +259,51 @@ class ProductRepository extends BaseRepository<Product> {
       { _id: { $in: ids } } as Filter<Product>,
       { $set: { OfferID } }
     );
+  }
+
+  // Fetch minimal product fields plus the active offer's DiscountPercentage (0 if
+  // no active offer). Used at payment-verification time to snapshot the offer that
+  // was live when the buyer paid — so changing the offer later never rewrites
+  // historical earnings.
+  findWithActiveOffer(ids: ObjectId[]) {
+    return this.aggregate<{
+      _id: ObjectId;
+      UserID: ObjectId;
+      Price: number;
+      OfferDiscountPercentage: number;
+    }>([
+      { $match: { _id: { $in: ids } } },
+      {
+        $lookup: {
+          from: COLLECTIONS.OFFERS,
+          localField: "OfferID",
+          foreignField: "_id",
+          as: "Offer",
+        },
+      },
+      { $unwind: { path: "$Offer", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          UserID: 1,
+          Price: 1,
+          OfferDiscountPercentage: {
+            $cond: {
+              if: {
+                $and: [
+                  { $ifNull: ["$Offer._id", false] },
+                  { $eq: ["$Offer.IsActive", true] },
+                  { $lte: ["$Offer.StartDate", new Date()] },
+                  { $gte: ["$Offer.EndDate", new Date()] },
+                ],
+              },
+              then: "$Offer.DiscountPercentage",
+              else: 0,
+            },
+          },
+        },
+      },
+    ]);
   }
 }
 

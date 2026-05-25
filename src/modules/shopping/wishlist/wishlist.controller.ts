@@ -5,6 +5,7 @@ import { ApiError } from "../../../shared/utils/apiError";
 import { sendResponse } from "../../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { wishlistRepository } from "./wishlist.repository";
+import { cartRepository } from "../cart/cart.repository";
 import { userRepository } from "../../users/user/user.repository";
 import { productRepository } from "../../catalog/product/product.repository";
 
@@ -49,3 +50,24 @@ export const removeProductFromWishlist = asyncHandler(
     sendResponse(res, HTTP_STATUS.OK, "Product removed from wishlist successfully");
   }
 );
+
+export const moveToCart = asyncHandler(async (req: Request, res: Response) => {
+  const wishlistItem = await wishlistRepository.findById(req.params.wishlistID);
+  if (!wishlistItem) throw ApiError.notFound("Wishlist item not found");
+
+  const alreadyInCart = await cartRepository.findByUserAndProduct(
+    wishlistItem.UserID,
+    wishlistItem.ProductID
+  );
+  if (alreadyInCart) throw ApiError.conflict("Product already in cart");
+
+  await cartRepository.insertOne({
+    UserID: wishlistItem.UserID,
+    ProductID: wishlistItem.ProductID,
+    Quantity: 1,
+  });
+
+  await wishlistRepository.deleteById(req.params.wishlistID);
+
+  sendResponse(res, HTTP_STATUS.OK, "Product moved to cart successfully");
+});

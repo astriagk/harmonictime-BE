@@ -34,6 +34,15 @@ export const getCartByUserID = asyncHandler(async (req: Request, res: Response) 
   sendResponse(res, HTTP_STATUS.OK, "Cart retrieved successfully", items);
 });
 
+export const getCartItemByProduct = asyncHandler(async (req: Request, res: Response) => {
+  const item = await cartRepository.findByUserAndProduct(
+    new ObjectId(req.params.userID),
+    new ObjectId(req.params.productID)
+  );
+  if (!item) throw ApiError.notFound("Product not found in cart");
+  sendResponse(res, HTTP_STATUS.OK, "Cart item retrieved successfully", item);
+});
+
 export const updateCartProductQuantity = asyncHandler(
   async (req: Request, res: Response) => {
     const result = await cartRepository.updateById(req.params.cartID, {
