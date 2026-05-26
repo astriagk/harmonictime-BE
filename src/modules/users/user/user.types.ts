@@ -11,4 +11,7 @@ export interface User {
   dateCreated?: Date;
   otp?: string;
   otpExpiry?: Date;
+  refreshTokenHash?: string;
+  acceptedTerms?: boolean;
+  termsAcceptedAt?: Date;
 }

@@ -44,4 +44,7 @@ export const COLLECTIONS = {
 
   SITE_CONTENT: "SiteContent",
   CONTACT_MESSAGES: "ContactMessages",
+
+  CHAT_THREADS: "ChatThreads",
+  CHAT_MESSAGES: "ChatMessages",
 } as const;

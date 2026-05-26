@@ -1,3 +1,4 @@
+import http from "http";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -24,4 +25,5 @@ app.use("/api", routes);
 // Central error handler — must be registered last.
 app.use(errorMiddleware);
 
+export const httpServer = http.createServer(app);
 export default app;

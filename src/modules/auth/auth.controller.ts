@@ -5,7 +5,12 @@ import { ApiError } from "../../shared/utils/apiError";
 import { sendResponse } from "../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../shared/constants/httpStatus";
 import { DEFAULT_ROLE_ID } from "../../shared/constants/roles";
-import { signToken, verifyToken } from "../../shared/services/token.service";
+import {
+  signToken,
+  signRefreshToken,
+  verifyToken,
+  verifyRefreshToken,
+} from "../../shared/services/token.service";
 import { resetPasswordUrl } from "../../shared/constants/frontend";
 import { sendTemplateEmail } from "../../shared/services/email.service";
 import { sendSMS } from "../../shared/services/sms.service";
@@ -20,7 +25,7 @@ import { userRoleRepository } from "../users/role/role.repository";
 const OTP_TTL_MS = 10 * 60 * 1000;
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, phone } = req.body;
+  const { email, password, phone, acceptedTerms } = req.body;
 
   const existing = await userRepository.findByEmail(email);
   if (existing) throw ApiError.conflict("Email already exists");
@@ -30,6 +35,8 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     email,
     password: hashedPassword,
     phone,
+    acceptedTerms,
+    termsAcceptedAt: new Date(),
     dateCreated: new Date(),
   });
 
@@ -64,7 +71,14 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   if (!valid) throw ApiError.unauthorized("Invalid email or password");
 
   const token = signToken({ userId: user._id!.toString(), email: user.email });
-  sendResponse(res, HTTP_STATUS.OK, "Login successful", { token });
+  const refreshToken = signRefreshToken({ userId: user._id!.toString(), email: user.email });
+
+  await userRepository.updateOne(
+    { _id: user._id },
+    { $set: { refreshTokenHash: await bcrypt.hash(refreshToken, 10) } },
+  );
+
+  sendResponse(res, HTTP_STATUS.OK, "Login successful", { token, refreshToken });
 });
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
@@ -156,3 +170,24 @@ export const resetPassword = asyncHandler(
     sendResponse(res, HTTP_STATUS.OK, "Password reset successfully");
   },
 );
+
+export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
+  const { refreshToken: token } = req.body;
+
+  let payload: { userId: string; email: string };
+  try {
+    payload = verifyRefreshToken(token);
+  } catch {
+    throw ApiError.unauthorized("Invalid or expired refresh token");
+  }
+
+  const user = await userRepository.findById(payload.userId);
+  if (!user || !user.refreshTokenHash)
+    throw ApiError.unauthorized("Invalid or expired refresh token");
+
+  const valid = await bcrypt.compare(token, user.refreshTokenHash);
+  if (!valid) throw ApiError.unauthorized("Invalid or expired refresh token");
+
+  const newAccessToken = signToken({ userId: user._id!.toString(), email: user.email });
+  sendResponse(res, HTTP_STATUS.OK, "Token refreshed successfully", { token: newAccessToken });
+});

@@ -4,6 +4,7 @@ import { fileUploadRouter } from "../../modules/file-upload";
 import { walletRouter } from "../../modules/wallet/earning";
 import { bankAccountRouter } from "../../modules/wallet/bank_account";
 import { withdrawalRouter } from "../../modules/wallet/withdrawal";
+import { chatRouter } from "../../modules/chat";
 
 // Seller fulfilment surface: tracking + media upload + wallet/payouts.
 // (Product listing CRUD is mounted under the public/catalog gateway.)
@@ -14,5 +15,6 @@ router.use("/upload", fileUploadRouter);
 router.use("/wallet", walletRouter);
 router.use("/bank-accounts", bankAccountRouter);
 router.use("/withdrawals", withdrawalRouter);
+router.use("/chat", chatRouter);
 
 export default router;

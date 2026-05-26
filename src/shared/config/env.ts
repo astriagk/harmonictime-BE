@@ -8,6 +8,8 @@ export const env = {
   DB_NAME: process.env.DB_NAME || "harmoniv_time",
   JWT_SECRET: process.env.JWT_SECRET || "harmonic_time",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "15d",
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "harmonic_time_refresh",
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
 
   // Base URL of the frontend app — used to build links in emails. Override per
   // environment via the FRONTEND_URL env var.

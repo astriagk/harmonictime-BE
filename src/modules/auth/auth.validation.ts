@@ -4,6 +4,10 @@ export const registerSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(8).required(),
   phone: Joi.string().optional(),
+  acceptedTerms: Joi.boolean().valid(true).required().messages({
+    "any.only": "You must accept the terms and conditions",
+    "any.required": "acceptedTerms is required",
+  }),
 });
 
 export const loginSchema = Joi.object({
@@ -25,4 +29,8 @@ export const resetPasswordSchema = Joi.object({
   token: Joi.string().required(),
   otp: Joi.string().required(),
   newPassword: Joi.string().min(8).required(),
+});
+
+export const refreshTokenSchema = Joi.object({
+  refreshToken: Joi.string().required(),
 });
