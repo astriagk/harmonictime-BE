@@ -20,17 +20,30 @@ export const createProductImage = asyncHandler(
       url: string;
       key?: string;
       IsPrimary?: boolean;
+      mediaType?: "image" | "video";
     }[];
 
-    // Use the primary flag from the payload; if the frontend doesn't mark any
-    // image as primary, fall back to making the first image primary.
-    const hasExplicitPrimary = images.some((img) => img.IsPrimary);
+    // Fall back to making the first image primary only when the caller didn't
+    // provide IsPrimary on any image. If they explicitly sent false for all, respect it.
+    const noPrimaryFlagProvided = images.every((img) => img.IsPrimary === undefined);
+    const newPrimaryExists = images.some((img) => img.IsPrimary === true);
+
+    // If any new image is being set as primary, unset the existing primary first
+    // so there is never more than one primary per product.
+    if (newPrimaryExists) {
+      await productImageRepository.updateMany(
+        { ProductID: productObjectId, IsPrimary: true } as any,
+        { $set: { IsPrimary: false } } as any
+      );
+    }
+
     const docs = images.map((img, index) => ({
       ProductID: productObjectId,
       ImageURL: img.url,
       key: img.key,
-      IsPrimary: hasExplicitPrimary ? !!img.IsPrimary : index === 0,
+      IsPrimary: noPrimaryFlagProvided ? index === 0 : !!img.IsPrimary,
       AltText: AltText || "",
+      mediaType: img.mediaType ?? "image",
     }));
     await productImageRepository.insertMany(docs);
     sendResponse(res, HTTP_STATUS.CREATED, "Product images created successfully");
@@ -54,6 +67,17 @@ export const getAllProductImagesByProductID = asyncHandler(
 
 export const updateProductImage = asyncHandler(
   async (req: Request, res: Response) => {
+    if (req.body.IsPrimary === true) {
+      const image = await productImageRepository.findById(req.params.imageID);
+      if (!image) throw ApiError.notFound("Product image not found");
+
+      // Unset the existing primary before promoting this one.
+      await productImageRepository.updateMany(
+        { ProductID: image.ProductID, IsPrimary: true } as any,
+        { $set: { IsPrimary: false } } as any
+      );
+    }
+
     const result = await productImageRepository.updateById(req.params.imageID, req.body);
     if (result.matchedCount === 0) throw ApiError.notFound("Product image not found");
     sendResponse(res, HTTP_STATUS.OK, "Product image updated successfully");

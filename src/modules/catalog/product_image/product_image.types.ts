@@ -1,5 +1,7 @@
 import { ObjectId } from "mongodb";
 
+export type MediaType = "image" | "video";
+
 export interface ProductImage {
   _id?: ObjectId;
   ProductID: ObjectId;
@@ -7,4 +9,5 @@ export interface ProductImage {
   key?: string;
   IsPrimary: boolean;
   AltText?: string;
+  mediaType?: MediaType;
 }

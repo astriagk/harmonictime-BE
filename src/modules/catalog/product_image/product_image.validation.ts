@@ -8,6 +8,7 @@ export const createProductImageSchema = Joi.object({
         url: Joi.string().required(),
         key: Joi.string().allow("").optional(),
         IsPrimary: Joi.boolean().optional(),
+        mediaType: Joi.string().valid("image", "video").optional(),
       })
     )
     .min(1)
@@ -20,4 +21,5 @@ export const updateProductImageSchema = Joi.object({
   key: Joi.string().allow("").optional(),
   IsPrimary: Joi.boolean().optional(),
   AltText: Joi.string().allow("").optional(),
+  mediaType: Joi.string().valid("image", "video").optional(),
 }).min(1);

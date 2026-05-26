@@ -9,11 +9,12 @@ export const uploadMiddleware = multer({
   fileFilter: (_req, file, cb) => {
     if (
       file.mimetype.startsWith("image/") ||
+      file.mimetype.startsWith("video/") ||
       file.mimetype === "application/octet-stream"
     ) {
       cb(null, true);
     } else {
-      cb(new Error(`Invalid file type: ${file.mimetype}. Only images are allowed.`));
+      cb(new Error(`Invalid file type: ${file.mimetype}. Only images and videos are allowed.`));
     }
   },
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB

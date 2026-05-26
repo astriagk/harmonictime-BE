@@ -14,4 +14,5 @@ export interface User {
   refreshTokenHash?: string;
   acceptedTerms?: boolean;
   termsAcceptedAt?: Date;
+  profilePicUrl?: string;
 }

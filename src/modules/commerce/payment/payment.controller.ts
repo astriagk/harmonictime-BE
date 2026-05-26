@@ -255,7 +255,6 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       });
 
       const subtotal = lineItems.reduce((sum, i) => sum + i.amount, 0);
-      const platformCharges = 50;
       const gst = Math.round(subtotal * 0.18);
 
       await sendTemplateEmail(
@@ -276,9 +275,8 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
             : new Date(),
           items: lineItems,
           subtotal,
-          platformCharges,
           gst,
-          total: subtotal + platformCharges + gst,
+          total: subtotal + gst,
         })
       );
     } catch (err) {
