@@ -36,6 +36,7 @@ export const COLLECTIONS = {
   OFFERS: "Offers",
 
   REVIEWS: "Reviews",
+  USER_REVIEWS: "UserReviews",
 
   // Settlement: seller wallet ledger, payout destinations & payout history.
   SELLER_EARNINGS: "SellerEarnings",

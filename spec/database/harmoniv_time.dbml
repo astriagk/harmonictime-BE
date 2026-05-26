@@ -32,6 +32,7 @@ Project harmoniv_time {
     - **Shopping**  : Cart, Wishlist, RecentlyViewedProducts
     - **Commerce**  : Checkout, CheckoutItems, Sales, Offers, Payments, Shipments
     - **Settlement**: SellerEarnings (wallet ledger), SellerBankAccounts, Withdrawals (payout history)
+    - **Reviews**   : Reviews (product reviews), UserReviews (seller reviews)
 
     ## Note on "orders"
     There is no `Orders` collection (orderModel/orderService are empty stubs).
@@ -458,6 +459,41 @@ Table Withdrawals {
 }
 
 // ============================================================================
+//  DOMAIN: REVIEWS
+// ============================================================================
+
+Table Reviews {
+  _id         objectid    [pk]
+  ProductID   objectid    [not null]
+  Rating      int         [not null, note: '1–5 stars']
+  Name        string      [not null, note: 'reviewer display name (guest allowed)']
+  Email       string      [not null]
+  Comment     string      [not null]
+  CreatedAt   timestamp
+
+  Note: 'Buyer reviews for a product. POST /api/reviews validates the product exists before inserting.'
+}
+
+Table UserReviews {
+  _id         objectid    [pk]
+  UserID      objectid    [not null, note: 'seller being reviewed — resolved from ProductID server-side']
+  ProductID   objectid    [not null, note: 'product the buyer purchased; used to derive the seller']
+  Rating      int         [not null, note: '1–5 stars']
+  Subject     string      [not null, note: 'short title for the review']
+  Name        string      [null, note: 'reviewer display name (optional)']
+  Email       string      [not null]
+  Comment     string      [not null]
+  CreatedAt   timestamp
+
+  Note: '''
+    Buyer reviews for a seller (user). The client submits a ProductID; the server
+    looks up the product to resolve the seller UserID — the caller never needs to
+    know the UserID. POST /api/user-reviews.
+    GET /api/user-reviews/user/:userID returns all reviews + averageRating + totalReviews.
+  '''
+}
+
+// ============================================================================
 //  RELATIONSHIPS
 // ============================================================================
 
@@ -513,6 +549,11 @@ Ref: Payments.CheckoutID   > Checkout._id   // many payment attempts → one che
 Ref: Payments.UserID       > Users._id      // buyer
 Ref: Shipments.CheckoutID  > Checkout._id   // one shipment → one checkout
 Ref: Shipments.SellerID    > Users._id      // seller who entered tracking
+
+// --- Reviews ---
+Ref: Reviews.ProductID      > Products._id    // review belongs to a product
+Ref: UserReviews.UserID     > Users._id       // seller being reviewed
+Ref: UserReviews.ProductID  > Products._id    // product that triggered the review
 
 // --- Settlement: seller wallet, earnings & payouts ---
 Ref: SellerEarnings.SellerID      > Users._id       // earnings belong to a seller
@@ -572,4 +613,9 @@ TableGroup Settlement {
   SellerEarnings
   SellerBankAccounts
   Withdrawals
+}
+
+TableGroup Reviews {
+  Reviews
+  UserReviews
 }

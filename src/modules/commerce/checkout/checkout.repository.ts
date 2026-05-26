@@ -100,6 +100,7 @@ class CheckoutRepository extends BaseRepository<Checkout> {
           Shipments: { $first: "$Shipments" },
           Products: {
             $push: {
+              ProductID: "$Products._id",
               ProductName: "$Products.ProductName",
               // Offer that was active when this unit was purchased (null if none).
               OfferApplied: {
