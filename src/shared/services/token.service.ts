@@ -11,5 +11,11 @@ export const signToken = (
   expiresIn: string = env.JWT_EXPIRES_IN
 ): string => jwt.sign(payload, env.JWT_SECRET, { expiresIn } as jwt.SignOptions);
 
+export const signRefreshToken = (payload: TokenPayload): string =>
+  jwt.sign(payload, env.JWT_REFRESH_SECRET, { expiresIn: env.JWT_REFRESH_EXPIRES_IN } as jwt.SignOptions);
+
 export const verifyToken = (token: string): TokenPayload =>
   jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+
+export const verifyRefreshToken = (token: string): TokenPayload =>
+  jwt.verify(token, env.JWT_REFRESH_SECRET) as TokenPayload;

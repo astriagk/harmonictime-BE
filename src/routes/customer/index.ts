@@ -8,6 +8,7 @@ import { checkoutRouter } from "../../modules/commerce/checkout";
 import { checkoutItemRouter } from "../../modules/commerce/checkout_item";
 import { paymentRouter } from "../../modules/commerce/payment";
 import { saleRouter } from "../../modules/commerce/sale";
+import { chatRouter } from "../../modules/chat";
 
 // Authenticated buyer surface: account, shopping, checkout, payments, history.
 const router: Router = Router();
@@ -21,5 +22,6 @@ router.use("/checkout", checkoutRouter);
 router.use("/checkout-items", checkoutItemRouter);
 router.use("/payments", paymentRouter);
 router.use("/sales", saleRouter);
+router.use("/chat", chatRouter);
 
 export default router;

@@ -27,7 +27,6 @@ export interface OrderConfirmationData {
   issuedOn: Date;
   items: OrderConfirmationItem[];
   subtotal: number;
-  platformCharges: number;
   gst: number;
   total: number;
 }
@@ -196,10 +195,6 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
                         <td style="padding:5px 0;font-size:13px;color:#18181b;text-align:right;">${fmt(data.subtotal)}</td>
                       </tr>
                       <tr>
-                        <td style="padding:5px 0;font-size:13px;color:#18181b;">Platform Charges</td>
-                        <td style="padding:5px 0;font-size:13px;color:#18181b;text-align:right;">${fmt(data.platformCharges)}</td>
-                      </tr>
-                      <tr>
                         <td style="padding:5px 0;font-size:13px;color:#18181b;">GST (18%)</td>
                         <td style="padding:5px 0;font-size:13px;color:#18181b;text-align:right;">${fmt(data.gst)}</td>
                       </tr>
@@ -255,7 +250,6 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
       itemLines,
       ``,
       `Subtotal: ${fmt(data.subtotal)}`,
-      `Platform Charges: ${fmt(data.platformCharges)}`,
       `GST (18%): ${fmt(data.gst)}`,
       `Total Amount Paid: ${fmt(data.total)}`,
       ``,
