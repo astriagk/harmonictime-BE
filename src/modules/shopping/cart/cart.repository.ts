@@ -13,6 +13,10 @@ class CartRepository extends BaseRepository<CartItem> {
     return this.findOne({ UserID: userId, ProductID: productId });
   }
 
+  removeByUserAndProducts(userId: ObjectId, productIds: ObjectId[]) {
+    return this.collection.deleteMany({ UserID: userId, ProductID: { $in: productIds } } as any);
+  }
+
   // Cart lines joined to available product + description / details / images / delivery.
   getEnrichedByUser(userId: ObjectId) {
     return this.aggregate([

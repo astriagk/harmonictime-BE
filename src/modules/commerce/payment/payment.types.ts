@@ -9,17 +9,19 @@ export type PaymentStatus =
   | "RefundPending";
 
 // Address fields captured at order time but NOT persisted to the Address
-// collection until the payment is verified.
+// collection until the payment is verified. When _id is present the client
+// selected an existing saved address — no new record is created on verify.
 export interface DraftAddress {
-  FirstName: string;
-  LastName: string;
-  Country: string;
-  AddressLine1: string;
+  _id?: string;
+  FirstName?: string;
+  LastName?: string;
+  Country?: string;
+  AddressLine1?: string;
   AddressLine2?: string;
-  City: string;
-  State: string;
-  PostalCode: string;
-  Phone: string;
+  City?: string;
+  State?: string;
+  PostalCode?: string;
+  Phone?: string;
   orderNotes?: string;
   IsDefault?: boolean;
 }
