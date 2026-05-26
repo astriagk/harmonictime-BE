@@ -1,7 +1,10 @@
-import app from "./app";
+import { httpServer } from "./app";
 import { env } from "./shared/config/env";
 import logger from "./shared/utils/logger";
+import { initChatGateway } from "./modules/chat";
 
-app.listen(env.PORT, () => {
+initChatGateway(httpServer);
+
+httpServer.listen(env.PORT, () => {
   logger.info(`Server is running on port ${env.PORT}`);
 });
