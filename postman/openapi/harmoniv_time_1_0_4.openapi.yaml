@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Harmoniv Time API
-  version: 1.0.3
+  version: 1.0.4
   description: Watch-selling marketplace API
 servers:
   -
@@ -188,12 +188,248 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /admin/withdrawals:
+    get:
+      tags:
+        - Admin
+      summary: Get Withdrawals
+      description: GET /
+      operationId: get_admin_withdrawals
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/withdrawals/{withdrawalID}/pay:
+    put:
+      tags:
+        - Admin
+      summary: Update Pay
+      description: "PUT /:withdrawalID/pay\n\n\n📋 Request Body Fields:\n• Reference: string (required)\n• Notes: string (optional)"
+      operationId: put_admin_withdrawals__withdrawalID_pay
+      parameters:
+        -
+          name: withdrawalID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: WithdrawalID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Reference:
+                  type: string
+                Notes:
+                  type: string
+              required:
+                - Reference
+            example:
+              Reference: sample_string
+              Notes: Please deliver after 6 PM
+  /admin/withdrawals/{withdrawalID}/reject:
+    put:
+      tags:
+        - Admin
+      summary: Update Reject
+      description: "PUT /:withdrawalID/reject\n\n\n📋 Request Body Fields:\n• Notes: string (required)"
+      operationId: put_admin_withdrawals__withdrawalID_reject
+      parameters:
+        -
+          name: withdrawalID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: WithdrawalID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Notes:
+                  type: string
+              required:
+                - Notes
+            example:
+              Notes: Please deliver after 6 PM
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: Mounted at /admin/sellers
+      description: "Mounted at /admin/sellers\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_admin_users
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /admin/users/{sellerID}:
+    get:
+      tags:
+        - Admin
+      summary: Get Admin/User By Users
+      description: "GET /:sellerID\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_admin_users__sellerID
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /admin/users/{sellerID}/approve:
+    put:
+      tags:
+        - Admin
+      summary: Update Approve
+      description: "PUT /:sellerID/approve\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_admin_users__sellerID_approve
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /admin/users/{sellerID}/reject:
+    put:
+      tags:
+        - Admin
+      summary: Update Reject
+      description: "PUT /:sellerID/reject\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_admin_users__sellerID_reject
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /admin/users/{sellerID}/request-info:
+    put:
+      tags:
+        - Admin
+      summary: Update Request Info
+      description: "PUT /:sellerID/request-info\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_admin_users__sellerID_request_info
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
   /auth/register:
     post:
       tags:
         - Auth
       summary: Register
-      description: "POST /register\n\n\n📋 Request Body Fields:\n• email: string (required)\n• password: string (required)\n• phone: string (optional)"
+      description: "POST /register\n\n\n📋 Request Body Fields:\n• email: string (required)\n• password: string (required)\n• phone: string (optional)\n• acceptedTerms: boolean (required)\n• accountType: string (required)\n• businessName: string (required)\n• otherwise: string (optional)"
       operationId: post_auth_register
       responses:
         200:
@@ -221,13 +457,34 @@ paths:
                   minimum: 8
                 phone:
                   type: string
+                acceptedTerms:
+                  type: boolean
+                  enum:
+                    - true
+                accountType:
+                  type: string
+                  enum:
+                    - individual
+                    - business
+                businessName:
+                  type: string
+                  minimum: 1
+                otherwise:
+                  type: string
               required:
                 - email
                 - password
+                - acceptedTerms
+                - accountType
+                - businessName
             example:
               email: user@example.com
               password: Password@123
               phone: +919876543210
+              acceptedTerms: true
+              accountType: individual
+              businessName: sample_string
+              otherwise: sample_string
   /auth/login:
     post:
       tags:
@@ -336,7 +593,7 @@ paths:
       tags:
         - Auth
       summary: Reset Password
-      description: "POST /reset-password\n\n\n📋 Request Body Fields:\n• email: string (optional)\n• phone: string (optional)\n• otp: string (required)\n• newPassword: string (required)"
+      description: "POST /reset-password\n\n\n📋 Request Body Fields:\n• token: string (required)\n• otp: string (required)\n• newPassword: string (required)"
       operationId: post_auth_reset_password
       responses:
         200:
@@ -356,10 +613,7 @@ paths:
             schema:
               type: object
               properties:
-                email:
-                  type: string
-                  format: email
-                phone:
+                token:
                   type: string
                 otp:
                   type: string
@@ -367,92 +621,20 @@ paths:
                   type: string
                   minimum: 8
               required:
+                - token
                 - otp
                 - newPassword
             example:
-              email: user@example.com
-              phone: +919876543210
+              token: sample_string
               otp: 123456
               newPassword: Password@123
-  /users/profile:
-    get:
+  /auth/refresh-token:
+    post:
       tags:
-        - Customer
-      summary: Get Profile
-      description: "GET /profile\n\n\n🔐 Requires authentication (Bearer token)"
-      operationId: get_users_profile
-      responses:
-        200:
-          description: Successful operation
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-      security:
-        -
-          BearerAuth: []
-  /users:
-    get:
-      tags:
-        - Customer
-      summary: Get All Users
-      description: GET /
-      operationId: get_users
-      responses:
-        200:
-          description: Successful operation
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /users/{id}:
-    get:
-      tags:
-        - Customer
-      summary: Get User
-      description: "GET /:id"
-      operationId: get_users__id
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Id identifier
-      responses:
-        200:
-          description: Successful operation
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-    put:
-      tags:
-        - Customer
-      summary: Update User
-      description: "PUT /:id\n\n\n📋 Request Body Fields:\n• email: string (optional)\n• phone: string (optional)"
-      operationId: put_users__id
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Id identifier
+        - Auth
+      summary: Refresh Token
+      description: "POST /refresh-token\n\n\n📋 Request Body Fields:\n• refreshToken: string (required)"
+      operationId: post_auth_refresh_token
       responses:
         200:
           description: Successful operation
@@ -471,28 +653,19 @@ paths:
             schema:
               type: object
               properties:
-                email:
+                refreshToken:
                   type: string
-                  format: email
-                phone:
-                  type: string
+              required:
+                - refreshToken
             example:
-              email: user@example.com
-              phone: +919876543210
-    delete:
+              refreshToken: sample_string
+  /users:
+    get:
       tags:
         - Customer
-      summary: Delete User
-      description: "DELETE /:id"
-      operationId: delete_users__id
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Id identifier
+      summary: Mounted at /admin/sellers
+      description: "Mounted at /admin/sellers\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_users
       responses:
         200:
           description: Successful operation
@@ -504,6 +677,125 @@ paths:
           description: Not found
         500:
           description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /users/{sellerID}:
+    get:
+      tags:
+        - Customer
+      summary: Get User
+      description: "GET /:sellerID\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_users__sellerID
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /users/{sellerID}/approve:
+    put:
+      tags:
+        - Customer
+      summary: Update Approve
+      description: "PUT /:sellerID/approve\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_users__sellerID_approve
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /users/{sellerID}/reject:
+    put:
+      tags:
+        - Customer
+      summary: Update Reject
+      description: "PUT /:sellerID/reject\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_users__sellerID_reject
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /users/{sellerID}/request-info:
+    put:
+      tags:
+        - Customer
+      summary: Update Request Info
+      description: "PUT /:sellerID/request-info\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_users__sellerID_request_info
+      parameters:
+        -
+          name: sellerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SellerID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
   /address:
     post:
       tags:
@@ -784,6 +1076,39 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /cart/user/{userID}/{productID}:
+    get:
+      tags:
+        - Customer
+      summary: Get Cart By User
+      description: "GET /user/:userID/:productID"
+      operationId: get_cart_user__userID__productID
+      parameters:
+        -
+          name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: UserID identifier
+        -
+          name: productID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ProductID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
   /cart/{cartID}:
     put:
       tags:
@@ -899,6 +1224,32 @@ paths:
           schema:
             type: string
           description: UserID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /wishlist/{wishlistID}/move-to-cart:
+    post:
+      tags:
+        - Customer
+      summary: Create Move To Cart
+      description: "POST /:wishlistID/move-to-cart"
+      operationId: post_wishlist__wishlistID_move_to_cart
+      parameters:
+        -
+          name: wishlistID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: WishlistID identifier
       responses:
         200:
           description: Successful operation
@@ -1386,7 +1737,7 @@ paths:
       tags:
         - Customer
       summary: Create Order
-      description: "POST /create-order\n\n\n📋 Request Body Fields:\n• UserID: string (required)\n• amount: number (required)\n• currency: string (optional)"
+      description: "POST /create-order\n\n\n📋 Request Body Fields:\n• UserID: string (required)\n• amount: number (required)\n• currency: string (optional)\n• address: string (required)"
       operationId: post_payments_create_order
       responses:
         200:
@@ -1412,13 +1763,17 @@ paths:
                   type: number
                 currency:
                   type: string
+                address:
+                  type: string
               required:
                 - UserID
                 - amount
+                - address
             example:
               UserID: 507f1f77bcf86cd799439011
               amount: 25000
               currency: INR
+              address: sample_string
   /payments/verify:
     post:
       tags:
@@ -1621,13 +1976,13 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /products:
+  /chat/threads:
     post:
       tags:
-        - Public
-      summary: Create Product
-      description: "POST /\n\n\n📋 Request Body Fields:\n• UserID: string (required)\n• ProductName: string (required)\n• BrandID: string (required)\n• CollectionID: string (required)\n• CategoryID: string (required)\n• RecipientID: string (required)\n• Price: number (required)"
-      operationId: post_products
+        - Seller
+      summary: Create Threads
+      description: "POST /threads\n\n\n📋 Request Body Fields:\n• productId: string (required)"
+      operationId: post_chat_threads
       responses:
         200:
           description: Successful operation
@@ -1646,41 +2001,127 @@ paths:
             schema:
               type: object
               properties:
-                UserID:
+                productId:
                   type: string
-                ProductName:
-                  type: string
-                BrandID:
-                  type: string
-                CollectionID:
-                  type: string
-                CategoryID:
-                  type: string
-                RecipientID:
-                  type: string
-                Price:
-                  type: number
               required:
-                - UserID
-                - ProductName
-                - BrandID
-                - CollectionID
-                - CategoryID
-                - RecipientID
-                - Price
+                - productId
             example:
-              UserID: 507f1f77bcf86cd799439011
-              ProductName: Submariner Date
-              BrandID: 507f1f77bcf86cd799439011
-              CollectionID: 507f1f77bcf86cd799439011
-              CategoryID: 507f1f77bcf86cd799439011
-              RecipientID: 507f1f77bcf86cd799439011
-              Price: 25000
+              productId: 507f1f77bcf86cd799439011
+    get:
+      tags:
+        - Seller
+      summary: Get Threads
+      description: GET /threads
+      operationId: get_chat_threads
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /chat/threads/{threadId}/messages:
+    get:
+      tags:
+        - Seller
+      summary: Get Messages
+      description: "GET /threads/:threadId/messages"
+      operationId: get_chat_threads__threadId_messages
+      parameters:
+        -
+          name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ThreadId identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    post:
+      tags:
+        - Seller
+      summary: Create Messages
+      description: "POST /threads/:threadId/messages\n\n\n📋 Request Body Fields:\n• text: string (required)"
+      operationId: post_chat_threads__threadId_messages
+      parameters:
+        -
+          name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ThreadId identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  minimum: 1
+                  maximum: 2000
+              required:
+                - text
+            example:
+              text: sample_string
+  /chat/threads/{threadId}/close:
+    patch:
+      tags:
+        - Seller
+      summary: Update Close
+      description: "PATCH /threads/:threadId/close"
+      operationId: patch_chat_threads__threadId_close
+      parameters:
+        -
+          name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ThreadId identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /products:
     get:
       tags:
         - Public
-      summary: Get All Products
-      description: GET /
+      summary: Mounted at /admin/products
+      description: "Mounted at /admin/products\n\n\n🔐 Requires authentication (Bearer token)"
       operationId: get_products
       responses:
         200:
@@ -1693,38 +2134,16 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /products/{productID}:
-    get:
-      tags:
-        - Public
-      summary: Get Product
-      description: "GET /:productID"
-      operationId: get_products__productID
-      parameters:
+      security:
         -
-          name: productID
-          in: path
-          required: true
-          schema:
-            type: string
-          description: ProductID identifier
-      responses:
-        200:
-          description: Successful operation
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
+          BearerAuth: []
+  /products/{productID}/approve:
     put:
       tags:
         - Public
-      summary: Update Product
-      description: "PUT /:productID\n\n\n📋 Request Body Fields:\n• ProductName: string (optional)\n• BrandID: string (optional)\n• CollectionID: string (optional)\n• CategoryID: string (optional)\n• RecipientID: string (optional)\n• Price: number (optional)\n• IsAvailable: boolean (optional)"
-      operationId: put_products__productID
+      summary: Update Approve
+      description: "PUT /:productID/approve\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_products__productID_approve
       parameters:
         -
           name: productID
@@ -1744,67 +2163,24 @@ paths:
           description: Not found
         500:
           description: Internal server error
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                ProductName:
-                  type: string
-                BrandID:
-                  type: string
-                CollectionID:
-                  type: string
-                CategoryID:
-                  type: string
-                RecipientID:
-                  type: string
-                Price:
-                  type: number
-                IsAvailable:
-                  type: boolean
-            example:
-              ProductName: Submariner Date
-              BrandID: 507f1f77bcf86cd799439011
-              CollectionID: 507f1f77bcf86cd799439011
-              CategoryID: 507f1f77bcf86cd799439011
-              RecipientID: 507f1f77bcf86cd799439011
-              Price: 25000
-              IsAvailable: false
-    delete:
-      tags:
-        - Public
-      summary: Delete Product
-      description: "DELETE /:productID"
-      operationId: delete_products__productID
-      parameters:
+      security:
         -
-          name: productID
-          in: path
-          required: true
-          schema:
-            type: string
-          description: ProductID identifier
-      responses:
-        200:
-          description: Successful operation
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /products/availability:
+          BearerAuth: []
+  /products/{productID}/reject:
     put:
       tags:
         - Public
-      summary: Update Availability
-      description: "PUT /availability\n\n\n📋 Request Body Fields:\n• ProductIDs: array (required)"
-      operationId: put_products_availability
+      summary: Update Reject
+      description: "PUT /:productID/reject\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: put_products__productID_reject
+      parameters:
+        -
+          name: productID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ProductID identifier
       responses:
         200:
           description: Successful operation
@@ -1816,22 +2192,9 @@ paths:
           description: Not found
         500:
           description: Internal server error
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                ProductIDs:
-                  type: array
-                  minimum: 1
-              required:
-                - ProductIDs
-            example:
-              ProductIDs:
-                - 507f1f77bcf86cd799439011
-                - 507f1f77bcf86cd799439012
+      security:
+        -
+          BearerAuth: []
   /product-descriptions:
     post:
       tags:
@@ -2106,7 +2469,7 @@ paths:
       tags:
         - Public
       summary: Create Product Image
-      description: "POST /\n\n\n📋 Request Body Fields:\n• ProductID: string (required)\n• ImageURLs: array (required)\n• key: string (optional)\n• AltText: string (optional)"
+      description: "POST /\n\n\n📋 Request Body Fields:\n• ProductID: string (required)\n• ImageURLs: array (required)\n• key: string (optional)\n• IsPrimary: boolean (optional)\n• mediaType: string (optional)\n• AltText: string (optional)"
       operationId: post_product_images
       responses:
         200:
@@ -2132,7 +2495,14 @@ paths:
                   type: array
                 key:
                   type: string
+                IsPrimary:
+                  type: boolean
+                mediaType:
+                  type: string
                   minimum: 1
+                  enum:
+                    - image
+                    - video
                 AltText:
                   type: string
               required:
@@ -2145,6 +2515,8 @@ paths:
                   url: "https://i.ibb.co/abc123/watch.jpg"
                   key: abc123
               key: sample_string
+              IsPrimary: false
+              mediaType: image
               AltText: sample_string
   /product-images/product/{productID}:
     get:
@@ -2202,7 +2574,7 @@ paths:
       tags:
         - Public
       summary: Update Product Image
-      description: "PUT /:imageID\n\n\n📋 Request Body Fields:\n• ImageURL: string (optional)\n• key: string (optional)\n• IsPrimary: boolean (optional)\n• AltText: string (optional)"
+      description: "PUT /:imageID\n\n\n📋 Request Body Fields:\n• ImageURL: string (optional)\n• key: string (optional)\n• IsPrimary: boolean (optional)\n• AltText: string (optional)\n• mediaType: string (optional)"
       operationId: put_product_images__imageID
       parameters:
         -
@@ -2238,11 +2610,17 @@ paths:
                   type: boolean
                 AltText:
                   type: string
+                mediaType:
+                  type: string
+                  enum:
+                    - image
+                    - video
             example:
               ImageURL: "https://i.ibb.co/abc123/watch.jpg"
               key: sample_string
               IsPrimary: false
               AltText: sample_string
+              mediaType: image
     delete:
       tags:
         - Public
@@ -3963,6 +4341,24 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /offers/all:
+    get:
+      tags:
+        - Public
+      summary: "Static path — must precede \"/:offerID\" so \"all\" isn't treated as an id."
+      description: "Static path — must precede \"/:offerID\" so \"all\" isn't treated as an id."
+      operationId: get_offers_all
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
   /offers/{offerID}:
     get:
       tags:
@@ -4065,6 +4461,45 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /offers/{offerID}/status:
+    patch:
+      tags:
+        - Public
+      summary: Update Status
+      description: "PATCH /:offerID/status\n\n\n📋 Request Body Fields:\n• IsActive: boolean (required)"
+      operationId: patch_offers__offerID_status
+      parameters:
+        -
+          name: offerID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: OfferID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                IsActive:
+                  type: boolean
+              required:
+                - IsActive
+            example:
+              IsActive: true
   /reviews:
     post:
       tags:
@@ -4190,6 +4625,153 @@ paths:
       summary: Delete Review
       description: "DELETE /:reviewID"
       operationId: delete_reviews__reviewID
+      parameters:
+        -
+          name: reviewID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ReviewID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /user-reviews:
+    post:
+      tags:
+        - Public
+      summary: Create User Review
+      description: "POST /\n\n\n📋 Request Body Fields:\n• ProductID: string (required)\n• Rating: number (required)\n• Subject: string (required)\n• Name: string (optional)\n• Email: string (required)\n• Comment: string (required)"
+      operationId: post_user_reviews
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ProductID:
+                  type: string
+                Rating:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                Subject:
+                  type: string
+                Name:
+                  type: string
+                Email:
+                  type: string
+                  format: email
+                Comment:
+                  type: string
+              required:
+                - ProductID
+                - Rating
+                - Subject
+                - Email
+                - Comment
+            example:
+              ProductID: 507f1f77bcf86cd799439011
+              Rating: 1
+              Subject: sample_string
+              Name: sample_string
+              Email: user@example.com
+              Comment: sample_string
+    get:
+      tags:
+        - Public
+      summary: Get All User Reviews
+      description: GET /
+      operationId: get_user_reviews
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /user-reviews/user/{userID}:
+    get:
+      tags:
+        - Public
+      summary: Get User Review By User
+      description: "GET /user/:userID"
+      operationId: get_user_reviews_user__userID
+      parameters:
+        -
+          name: userID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: UserID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /user-reviews/{reviewID}:
+    get:
+      tags:
+        - Public
+      summary: Get User Review
+      description: "GET /:reviewID"
+      operationId: get_user_reviews__reviewID
+      parameters:
+        -
+          name: reviewID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ReviewID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Public
+      summary: Delete User Review
+      description: "DELETE /:reviewID"
+      operationId: delete_user_reviews__reviewID
       parameters:
         -
           name: reviewID
@@ -4344,6 +4926,146 @@ paths:
       summary: Delete Site Content
       description: "DELETE /:id"
       operationId: delete_site_content__id
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /contact:
+    post:
+      tags:
+        - Public
+      summary: Create Contact
+      description: "POST /\n\n\n📋 Request Body Fields:\n• name: string (required)\n• email: string (required)\n• phone: string (optional)\n• subject: string (optional)\n• message: string (required)"
+      operationId: post_contact
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                subject:
+                  type: string
+                message:
+                  type: string
+              required:
+                - name
+                - email
+                - message
+            example:
+              name: sample_string
+              email: user@example.com
+              phone: +919876543210
+              subject: sample_string
+              message: sample_string
+    get:
+      tags:
+        - Public
+      summary: Get All Contact
+      description: GET /
+      operationId: get_contact
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /contact/{id}:
+    get:
+      tags:
+        - Public
+      summary: Get Contact
+      description: "GET /:id"
+      operationId: get_contact__id
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Public
+      summary: Delete Contact
+      description: "DELETE /:id"
+      operationId: delete_contact__id
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /contact/{id}/read:
+    patch:
+      tags:
+        - Public
+      summary: Update Read
+      description: "PATCH /:id/read"
+      operationId: patch_contact__id_read
       parameters:
         -
           name: id
@@ -4686,6 +5408,325 @@ paths:
           description: Not found
         500:
           description: Internal server error
+  /wallet:
+    get:
+      tags:
+        - Seller
+      summary: Mounted at /wallet. Seller-only — the seller is taken from the JWT.
+      description: "Mounted at /wallet. Seller-only — the seller is taken from the JWT.\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_wallet
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /wallet/items:
+    get:
+      tags:
+        - Seller
+      summary: Get Items
+      description: "GET /items\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_wallet_items
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /bank-accounts:
+    post:
+      tags:
+        - Seller
+      summary: Mounted at /bank-accounts. Seller-only; ownership scoped to the JWT.
+      description: "Mounted at /bank-accounts. Seller-only; ownership scoped to the JWT.\n\n\n🔐 Requires authentication (Bearer token)\n\n\n📋 Request Body Fields:\n• AccountHolderName: string (required)\n• AccountNumber: string (required)\n• IFSC: string (required)\n• BankName: string (required)\n• IsDefault: boolean (optional)"
+      operationId: post_bank_accounts
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AccountHolderName:
+                  type: string
+                AccountNumber:
+                  type: string
+                IFSC:
+                  type: string
+                BankName:
+                  type: string
+                IsDefault:
+                  type: boolean
+              required:
+                - AccountHolderName
+                - AccountNumber
+                - IFSC
+                - BankName
+            example:
+              AccountHolderName: sample_string
+              AccountNumber: sample_string
+              IFSC: sample_string
+              BankName: sample_string
+              IsDefault: false
+    get:
+      tags:
+        - Seller
+      summary: Get All Bank Accounts
+      description: "GET /\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: get_bank_accounts
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /bank-accounts/{accountID}:
+    put:
+      tags:
+        - Seller
+      summary: Update Bank Account
+      description: "PUT /:accountID\n\n\n🔐 Requires authentication (Bearer token)\n\n\n📋 Request Body Fields:\n• AccountHolderName: string (optional)\n• AccountNumber: string (optional)\n• IFSC: string (optional)\n• BankName: string (optional)\n• IsDefault: boolean (optional)"
+      operationId: put_bank_accounts__accountID
+      parameters:
+        -
+          name: accountID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: AccountID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                AccountHolderName:
+                  type: string
+                AccountNumber:
+                  type: string
+                IFSC:
+                  type: string
+                BankName:
+                  type: string
+                IsDefault:
+                  type: boolean
+            example:
+              AccountHolderName: sample_string
+              AccountNumber: sample_string
+              IFSC: sample_string
+              BankName: sample_string
+              IsDefault: false
+    delete:
+      tags:
+        - Seller
+      summary: Delete Bank Account
+      description: "DELETE /:accountID\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: delete_bank_accounts__accountID
+      parameters:
+        -
+          name: accountID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: AccountID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /bank-accounts/{accountID}/verify:
+    post:
+      tags:
+        - Seller
+      summary: Verify
+      description: "POST /:accountID/verify\n\n\n🔐 Requires authentication (Bearer token)"
+      operationId: post_bank_accounts__accountID_verify
+      parameters:
+        -
+          name: accountID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: AccountID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          BearerAuth: []
+  /withdrawals:
+    get:
+      tags:
+        - Seller
+      summary: Get All Withdrawals
+      description: GET /
+      operationId: get_withdrawals
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /withdrawals/{withdrawalID}/pay:
+    put:
+      tags:
+        - Seller
+      summary: Update Pay
+      description: "PUT /:withdrawalID/pay\n\n\n📋 Request Body Fields:\n• Reference: string (required)\n• Notes: string (optional)"
+      operationId: put_withdrawals__withdrawalID_pay
+      parameters:
+        -
+          name: withdrawalID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: WithdrawalID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Reference:
+                  type: string
+                Notes:
+                  type: string
+              required:
+                - Reference
+            example:
+              Reference: sample_string
+              Notes: Please deliver after 6 PM
+  /withdrawals/{withdrawalID}/reject:
+    put:
+      tags:
+        - Seller
+      summary: Update Reject
+      description: "PUT /:withdrawalID/reject\n\n\n📋 Request Body Fields:\n• Notes: string (required)"
+      operationId: put_withdrawals__withdrawalID_reject
+      parameters:
+        -
+          name: withdrawalID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: WithdrawalID identifier
+      responses:
+        200:
+          description: Successful operation
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                Notes:
+                  type: string
+              required:
+                - Notes
+            example:
+              Notes: Please deliver after 6 PM
 components:
   securitySchemes:
     BearerAuth:

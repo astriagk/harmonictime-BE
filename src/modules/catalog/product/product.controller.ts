@@ -9,6 +9,9 @@ import { Product } from "./product.types";
 import { productImageRepository } from "../product_image/product_image.repository";
 import { offerRepository } from "../../commerce/offer";
 import { deleteFile } from "../../../shared/services/file-storage.service";
+import { gstRepository } from "../../users/gst/gst.repository";
+import { earningRepository } from "../../wallet/earning/earning.repository";
+import { env } from "../../../shared/config/env";
 
 export const createProduct = asyncHandler(
   async (req: Request, res: Response) => {
@@ -22,13 +25,29 @@ export const createProduct = asyncHandler(
       RecipientID,
       Quantity,
       OfferID,
+      IsPriceInclusiveOfTax,
     } = req.body;
 
     if (OfferID && !ObjectId.isValid(OfferID))
       throw ApiError.badRequest("Invalid OfferID");
 
+    // GST threshold check: if the seller's cumulative gross sales have crossed
+    // the configured threshold (default ₹2,00,000), they must have GST details
+    // on file before listing new products.
+    const sellerObjId = new ObjectId(UserID);
+    const totalGrossSales = await earningRepository.getTotalGrossSales(sellerObjId);
+    if (totalGrossSales >= env.SELLER_GST_THRESHOLD) {
+      const gstDetails = await gstRepository.findBySeller(sellerObjId);
+      if (!gstDetails) {
+        throw new ApiError(
+          HTTP_STATUS.FORBIDDEN,
+          `Your total sales have crossed ₹${env.SELLER_GST_THRESHOLD.toLocaleString("en-IN")}. Please add your GST details before listing new products.`
+        );
+      }
+    }
+
     const doc: Product = {
-      UserID: new ObjectId(UserID),
+      UserID: sellerObjId,
       ProductName,
       BrandID: new ObjectId(BrandID),
       CollectionID: new ObjectId(CollectionID),
@@ -39,6 +58,8 @@ export const createProduct = asyncHandler(
       OfferID: OfferID ? new ObjectId(OfferID) : null,
       IsAvailable: true,
       DateListed: new Date(),
+      IsPriceInclusiveOfTax: IsPriceInclusiveOfTax ?? false,
+      ApprovalStatus: "Pending",
     };
     const result = await productRepository.insertOne(doc);
     sendResponse(
@@ -66,6 +87,10 @@ export const getAllProducts = asyncHandler(
     else if (IsAvailable === "false") match.IsAvailable = false;
     else if (IsAvailable !== "all" && !UserID) match.IsAvailable = true;
 
+    // Buyers (no UserID filter) only see admin-approved products.
+    // Sellers querying their own listings see everything (pending, rejected, approved).
+    if (!UserID) (match as any).ApprovalStatus = "Approved";
+
     // getEnrichedWithStatus tags each product with Status (Sold / Available /
     // Unavailable) and IsSold, derived from paid checkouts.
     const products = await productRepository.getEnrichedWithStatus(match);
@@ -83,6 +108,10 @@ export const getProductById = asyncHandler(
     const _id = new ObjectId(req.params.productID);
     const product = await productRepository.findById(_id);
     if (!product) throw ApiError.notFound("Product not found");
+
+    // Non-approved products are invisible to public callers.
+    const approvalStatus = (product as any).ApprovalStatus ?? "Approved";
+    if (approvalStatus !== "Approved") throw ApiError.notFound("Product not found");
 
     const enriched = await productRepository.getEnriched({ _id });
     sendResponse(res, HTTP_STATUS.OK, "ProductDetails Data !", enriched);
@@ -122,6 +151,7 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
     Quantity,
     OfferID,
     IsAvailable,
+    IsPriceInclusiveOfTax,
     RemovedImageIDs,
   } = req.body;
 
@@ -164,6 +194,7 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
   if (OfferID !== undefined)
     update.OfferID = OfferID ? new ObjectId(OfferID) : null;
   if (IsAvailable !== undefined) update.IsAvailable = IsAvailable;
+  if (IsPriceInclusiveOfTax !== undefined) update.IsPriceInclusiveOfTax = IsPriceInclusiveOfTax;
   if (BrandID !== undefined) update.BrandID = new ObjectId(BrandID);
   if (CollectionID !== undefined)
     update.CollectionID = new ObjectId(CollectionID);

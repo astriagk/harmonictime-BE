@@ -192,6 +192,7 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       UserID: p.UserID,
       Price: p.Price,
       OfferDiscountPercentage: p.OfferDiscountPercentage ?? 0,
+      IsPriceInclusiveOfTax: p.IsPriceInclusiveOfTax ?? false,
     }))
   );
 

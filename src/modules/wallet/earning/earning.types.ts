@@ -20,6 +20,12 @@ export interface SellerEarning {
   CommissionRate: number;          // seller commission rate applied (e.g. 0.02)
   CommissionAmount: number;        // Math.round(GrossAmount * CommissionRate)
   NetAmount: number;               // GrossAmount - CommissionAmount = seller's credit
+  // GST fields — snapshotted from the product at sale time.
+  // If IsTaxInclusive = false, GSTAmount = 0 and NetAmountAfterGST = NetAmount.
+  IsTaxInclusive: boolean;         // copied from Product.IsPriceInclusiveOfTax
+  GSTRate: number;                 // GST rate in % (default 18); stored for future rate changes
+  GSTAmount: number;               // reverse-calc: Math.round(NetAmount * GSTRate / (100 + GSTRate)) if inclusive
+  NetAmountAfterGST: number;       // NetAmount - GSTAmount (actual seller payout for this earning)
   Status: EarningStatus;
   SaleDate: Date;
   AvailableAt?: Date; // when it became Available (DeliveredAt + hold)

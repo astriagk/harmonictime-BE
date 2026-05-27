@@ -1,6 +1,8 @@
 import { ObjectId } from "mongodb";
 
 export type UserStatus = "active" | "blocked" | "suspended";
+export type AccountType = "individual" | "business";
+export type SellerVerificationStatus = "Unverified" | "Pending" | "Approved" | "Rejected";
 
 export interface User {
   _id?: ObjectId;
@@ -15,4 +17,12 @@ export interface User {
   acceptedTerms?: boolean;
   termsAcceptedAt?: Date;
   profilePicUrl?: string;
+  accountType?: AccountType;
+  businessName?: string;
+  // Seller verification: admin reviews the seller's profile and sets this.
+  // Sellers start as "Unverified". Once they submit details they move to "Pending".
+  sellerVerificationStatus?: SellerVerificationStatus;
+  sellerVerificationNote?: string;  // Reason shown to the seller on Rejected / info-request
+  sellerVerifiedBy?: ObjectId;      // Admin who last updated the status
+  sellerVerifiedAt?: Date;
 }

@@ -8,11 +8,11 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 ## Admin
 
-| Field    | Value                 |
-| -------- | --------------------- |
-| Email    | gowtham0794@gmail.com |
-| Password | 252318Gow@#           |
-| Role     | admin                 |
+| Field    | Value           |
+| -------- | --------------- |
+| Email    | admin@gmail.com |
+| Password | 252318Gow@#     |
+| Role     | admin           |
 
 **Capabilities:** Full platform access — user management, seller approval, order oversight, catalog management, commission configuration, withdrawals.
 
@@ -22,9 +22,10 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 **Capabilities:** List products, manage inventory, view orders, request withdrawals, manage bank account.
 
-| #   | Email                         | Password    | Store Name         |
-| --- | ----------------------------- | ----------- | ------------------ |
-| S1  | thetechnomaddiaries@gmail.com | 252318Gow@# | Technomad Horology |
+| #   | Email              | Password    | Store Name            |
+| --- | ------------------ | ----------- | --------------------- |
+| S1  | seller01@gmail.com | 252318Gow@# | Technomad Horology 01 |
+| S2  | seller02@gmail.com | 252318Gow@# | Technomad Horology 01 |
 
 ---
 
@@ -32,10 +33,10 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 **Capabilities:** Browse catalog, place orders, make offers, track orders, manage wallet.
 
-| #   | Email                  | Password    |
-| --- | ---------------------- | ----------- |
-| B1  | gowtham0794k@gmail.com | 252318Gow@# |
-| B2  | astriagk@gmail.com     | 252318Gow@# |
+| #   | Email             | Password    |
+| --- | ----------------- | ----------- |
+| B1  | buyer01@gmail.com | 252318Gow@# |
+| B2  | buyer02@gmail.com | 252318Gow@# |
 
 ---
 

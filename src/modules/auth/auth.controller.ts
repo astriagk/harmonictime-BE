@@ -25,7 +25,7 @@ import { userRoleRepository } from "../users/role/role.repository";
 const OTP_TTL_MS = 10 * 60 * 1000;
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, phone, acceptedTerms } = req.body;
+  const { email, password, phone, acceptedTerms, accountType, businessName } = req.body;
 
   const existing = await userRepository.findByEmail(email);
   if (existing) throw ApiError.conflict("Email already exists");
@@ -38,6 +38,8 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     acceptedTerms,
     termsAcceptedAt: new Date(),
     dateCreated: new Date(),
+    accountType: accountType ?? "individual",
+    ...(accountType === "business" && businessName ? { businessName } : {}),
   });
 
   await userRoleRepository.insertOne({

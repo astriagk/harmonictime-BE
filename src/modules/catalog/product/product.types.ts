@@ -1,5 +1,7 @@
 import { ObjectId } from "mongodb";
 
+export type ProductApprovalStatus = "Pending" | "Approved" | "Rejected";
+
 export interface Product {
   _id?: ObjectId;
   UserID: ObjectId;
@@ -17,4 +19,11 @@ export interface Product {
   OfferID?: ObjectId | null;
   IsAvailable: boolean;
   DateListed: Date;
+  // true = seller's Price already includes 18% GST; false = price is GST-exclusive.
+  IsPriceInclusiveOfTax: boolean;
+  // Admin moderation: products start Pending and only show to buyers once Approved.
+  ApprovalStatus: ProductApprovalStatus;
+  ApprovalNote?: string;       // Reason surfaced to the seller on Rejected
+  ApprovedBy?: ObjectId;       // Admin who approved/rejected
+  ApprovedAt?: Date;
 }

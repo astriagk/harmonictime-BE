@@ -47,6 +47,8 @@ export const requestWithdrawal = asyncHandler(
       throw ApiError.badRequest("No funds available to withdraw");
 
     const amount = available.reduce((sum, e) => sum + e.NetAmount, 0);
+    const totalGSTDeducted = available.reduce((sum, e) => sum + (e.GSTAmount ?? 0), 0);
+    const finalPayableAmount = amount - totalGSTDeducted;
     const earningIds = available.map((e) => e._id!);
 
     const result = await withdrawalRepository.insertOne({
@@ -59,6 +61,8 @@ export const requestWithdrawal = asyncHandler(
         BankName: account.BankName,
       },
       Amount: amount,
+      TotalGSTDeducted: totalGSTDeducted,
+      FinalPayableAmount: finalPayableAmount,
       EarningIDs: earningIds,
       Status: "Pending",
       RequestedAt: new Date(),
@@ -69,6 +73,8 @@ export const requestWithdrawal = asyncHandler(
     sendResponse(res, HTTP_STATUS.CREATED, "Withdrawal requested successfully", {
       _id: result.insertedId,
       Amount: amount,
+      TotalGSTDeducted: totalGSTDeducted,
+      FinalPayableAmount: finalPayableAmount,
       ItemCount: earningIds.length,
       Status: "Pending",
     });

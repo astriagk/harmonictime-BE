@@ -78,6 +78,9 @@ const enrichmentStages = (): Document[] => [
         },
       },
       IsAvailable: 1,
+      IsPriceInclusiveOfTax: 1,
+      ApprovalStatus: { $ifNull: ["$ApprovalStatus", "Approved"] },
+      ApprovalNote: 1,
       DateListed: 1,
       Description: {
         _id: "$Description._id",
@@ -271,6 +274,7 @@ class ProductRepository extends BaseRepository<Product> {
       UserID: ObjectId;
       Price: number;
       OfferDiscountPercentage: number;
+      IsPriceInclusiveOfTax: boolean;
     }>([
       { $match: { _id: { $in: ids } } },
       {
@@ -287,6 +291,7 @@ class ProductRepository extends BaseRepository<Product> {
           _id: 1,
           UserID: 1,
           Price: 1,
+          IsPriceInclusiveOfTax: { $ifNull: ["$IsPriceInclusiveOfTax", false] },
           OfferDiscountPercentage: {
             $cond: {
               if: {
