@@ -12,13 +12,6 @@ export const registerSchema = Joi.object({
     "any.only": "accountType must be 'individual' or 'business'",
     "any.required": "accountType is required",
   }),
-  businessName: Joi.when("accountType", {
-    is: "business",
-    then: Joi.string().trim().min(1).required().messages({
-      "any.required": "businessName is required for business accounts",
-    }),
-    otherwise: Joi.string().optional(),
-  }),
 });
 
 export const loginSchema = Joi.object({
@@ -44,4 +37,9 @@ export const resetPasswordSchema = Joi.object({
 
 export const refreshTokenSchema = Joi.object({
   refreshToken: Joi.string().required(),
+});
+
+export const verifyTokenSchema = Joi.object({
+  token: Joi.string().required(),
+  refreshToken: Joi.string().optional(),
 });

@@ -248,6 +248,15 @@ class ProductRepository extends BaseRepository<Product> {
     return issues;
   }
 
+  // When a seller modifies any product content, reset it to Pending so the
+  // admin re-reviews the updated listing. No-op if already Pending.
+  resubmitIfRejected(productId: string | ObjectId) {
+    return this.collection.updateOne(
+      { _id: this.toObjectId(productId), ApprovalStatus: { $in: ["Approved", "Rejected"] } } as any,
+      { $set: { ApprovalStatus: "Pending" } } as any
+    );
+  }
+
   setAvailability(ids: ObjectId[], IsAvailable: boolean) {
     return this.updateMany(
       { _id: { $in: ids } } as Filter<Product>,

@@ -25,7 +25,10 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 | #   | Email              | Password    | Store Name            |
 | --- | ------------------ | ----------- | --------------------- |
 | S1  | seller01@gmail.com | 252318Gow@# | Technomad Horology 01 |
-| S2  | seller02@gmail.com | 252318Gow@# | Technomad Horology 01 |
+| S2  | seller02@gmail.com | 252318Gow@# | Technomad Horology 03 |
+| S3  | seller03@gmail.com | 252318Gow@# | Technomad Horology 03 |
+| S3  | seller04@gmail.com | 252318Gow@# | Technomad Horology 04 |
+| S3  | seller05@gmail.com | 252318Gow@# | Technomad Horology 05 |
 
 ---
 
@@ -37,6 +40,19 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 | --- | ----------------- | ----------- |
 | B1  | buyer01@gmail.com | 252318Gow@# |
 | B2  | buyer02@gmail.com | 252318Gow@# |
+
+---
+
+## Seller GST Details
+
+| #   | GSTIN           | LegalBusinessName         | TradeName             | BusinessType | State       | PinCode |
+| --- | --------------- | ------------------------- | --------------------- | ------------ | ----------- | ------- |
+| S1  | 27AAPFT1234A1Z5 | Technomad Horology 01 LLP | Technomad Horology 01 | LLP          | Maharashtra | 400001  |
+| S2  | 29AAPFT5678B1Z3 | Technomad Horology 02 LLP | Technomad Horology 02 | LLP          | Karnataka   | 560001  |
+| S3  | 33AAPFT9012C1Z1 | Technomad Horology 03 LLP | Technomad Horology 03 | LLP          | Tamil Nadu  | 600001  |
+| S4  | 07AAPFT3456D1Z9 | Technomad Horology 04 LLP | Technomad Horology 04 | LLP          | Delhi       | 110001  |
+
+> GSTINs above follow valid Indian format (state code + PAN pattern + entity + Z + check). Use these only for test environment — not real GSTINs.
 
 ---
 

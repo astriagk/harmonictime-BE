@@ -110,8 +110,11 @@ export const getProductById = asyncHandler(
     if (!product) throw ApiError.notFound("Product not found");
 
     // Non-approved products are invisible to public callers.
+    // The seller who owns the product can always fetch it regardless of status.
     const approvalStatus = (product as any).ApprovalStatus ?? "Approved";
-    if (approvalStatus !== "Approved") throw ApiError.notFound("Product not found");
+    const isOwner = req.user?.userId === (product as any).UserID?.toString();
+    if (approvalStatus !== "Approved" && !isOwner)
+      throw ApiError.notFound("Product not found");
 
     const enriched = await productRepository.getEnriched({ _id });
     sendResponse(res, HTTP_STATUS.OK, "ProductDetails Data !", enriched);
@@ -211,6 +214,8 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
     const exists = await productRepository.findById(productID);
     if (!exists) throw ApiError.notFound("Product not found");
   }
+
+  await productRepository.resubmitIfRejected(productID);
 
   const [updated] = await productRepository.getEnriched({
     _id: new ObjectId(productID),

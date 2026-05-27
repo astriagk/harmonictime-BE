@@ -55,4 +55,21 @@ export const authMiddleware = async (
   next();
 };
 
+// Attaches req.user if a valid token is present, but never blocks the request.
+export const optionalAuthMiddleware = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (token) {
+    try {
+      req.user = verifyToken(token);
+    } catch {
+      // Invalid token — treat as unauthenticated, don't block
+    }
+  }
+  next();
+};
+
 export default authMiddleware;

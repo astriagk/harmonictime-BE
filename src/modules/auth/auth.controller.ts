@@ -4,11 +4,12 @@ import { asyncHandler } from "../../shared/middlewares/asyncHandler";
 import { ApiError } from "../../shared/utils/apiError";
 import { sendResponse } from "../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../shared/constants/httpStatus";
-import { DEFAULT_ROLE_ID } from "../../shared/constants/roles";
+import { DEFAULT_ROLE_ID, RoleId } from "../../shared/constants/roles";
+import jwt from "jsonwebtoken";
 import {
   signToken,
   signRefreshToken,
-  verifyToken,
+  verifyToken as verifyAccessToken,
   verifyRefreshToken,
 } from "../../shared/services/token.service";
 import { resetPasswordUrl } from "../../shared/constants/frontend";
@@ -42,10 +43,11 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     ...(accountType === "business" && businessName ? { businessName } : {}),
   });
 
+  const assignedRole = accountType === "business" ? RoleId.SELLER : DEFAULT_ROLE_ID;
   await userRoleRepository.insertOne({
-    UserRoleID: DEFAULT_ROLE_ID,
+    UserRoleID: assignedRole,
     UserID: result.insertedId,
-    RoleID: DEFAULT_ROLE_ID,
+    RoleID: assignedRole,
   });
 
   const token = signToken(
@@ -146,7 +148,7 @@ export const resetPassword = asyncHandler(
     // if tampered or past its 10-minute expiry.
     let userId: string;
     try {
-      userId = verifyToken(token).userId;
+      userId = verifyAccessToken(token).userId;
     } catch {
       throw ApiError.badRequest("Invalid or expired reset link");
     }
@@ -172,6 +174,118 @@ export const resetPassword = asyncHandler(
     sendResponse(res, HTTP_STATUS.OK, "Password reset successfully");
   },
 );
+
+export const verifyToken = asyncHandler(async (req: Request, res: Response) => {
+  const { token, refreshToken: providedRefreshToken } = req.body;
+
+  type DecodedPayload = { userId: string; email: string; exp?: number };
+
+  // --- 1. Try to verify the access token ---
+  let payload: DecodedPayload | null = null;
+  let isExpired = false;
+
+  try {
+    payload = verifyAccessToken(token) as DecodedPayload;
+  } catch (err: any) {
+    if (err?.name === "TokenExpiredError") {
+      isExpired = true;
+      payload = jwt.decode(token) as DecodedPayload | null;
+    } else {
+      return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Invalid token", {
+        valid: false,
+        reason: "invalid",
+      });
+    }
+  }
+
+  if (!payload?.userId) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Invalid token", {
+      valid: false,
+      reason: "invalid",
+    });
+  }
+
+  const user = await userRepository.findById(payload.userId);
+  if (!user) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "User not found", {
+      valid: false,
+      reason: "invalid",
+    });
+  }
+
+  const roles = await userRoleRepository.findByUser(payload.userId);
+
+  // --- 2. Token is valid ---
+  if (!isExpired) {
+    return sendResponse(res, HTTP_STATUS.OK, "Token is valid", {
+      valid: true,
+      userId: user._id,
+      email: user.email,
+      accountType: (user as any).accountType,
+      roles: roles.map((r) => r.RoleID),
+      expiresAt: payload.exp ? new Date(payload.exp * 1000).toISOString() : null,
+    });
+  }
+
+  // --- 3. Token is expired — try refresh token if provided ---
+  if (!providedRefreshToken) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Token has expired", {
+      valid: false,
+      expired: true,
+      reason: "expired",
+    });
+  }
+
+  let refreshPayload: { userId: string; email: string } | null = null;
+  try {
+    refreshPayload = verifyRefreshToken(providedRefreshToken);
+  } catch {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Refresh token is invalid", {
+      valid: false,
+      expired: true,
+      reason: "refresh_invalid",
+    });
+  }
+
+  if (refreshPayload.userId !== payload.userId) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Token mismatch", {
+      valid: false,
+      expired: true,
+      reason: "refresh_invalid",
+    });
+  }
+
+  const refreshUser = await userRepository.findById(refreshPayload.userId);
+  if (!refreshUser?.refreshTokenHash) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Session expired. Please login again.", {
+      valid: false,
+      expired: true,
+      reason: "session_expired",
+    });
+  }
+
+  const hashValid = await bcrypt.compare(providedRefreshToken, refreshUser.refreshTokenHash);
+  if (!hashValid) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Session expired. Please login again.", {
+      valid: false,
+      expired: true,
+      reason: "session_expired",
+    });
+  }
+
+  const newAccessToken = signToken({ userId: refreshUser._id!.toString(), email: refreshUser.email });
+
+  return sendResponse(res, HTTP_STATUS.OK, "Token refreshed successfully", {
+    valid: false,
+    expired: true,
+    refreshed: true,
+    newToken: newAccessToken,
+    userId: refreshUser._id,
+    email: refreshUser.email,
+    accountType: (refreshUser as any).accountType,
+    roles: roles.map((r) => r.RoleID),
+  });
+});
 
 export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
   const { refreshToken: token } = req.body;

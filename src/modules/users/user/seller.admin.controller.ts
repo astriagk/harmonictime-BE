@@ -5,10 +5,12 @@ import { ApiError } from "../../../shared/utils/apiError";
 import { sendResponse } from "../../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { userRepository } from "./user.repository";
+import { userRoleRepository } from "../role/role.repository";
 import { gstRepository } from "../gst/gst.repository";
 import { bankAccountRepository } from "../../wallet/bank_account/bank_account.repository";
 import { productRepository } from "../../catalog/product/product.repository";
 import { SellerVerificationStatus } from "./user.types";
+import { RoleId } from "../../../shared/constants/roles";
 
 const adminObjectId = (req: Request): ObjectId => {
   const userId = req.user?.userId;
@@ -35,11 +37,9 @@ export const adminListSellers = asyncHandler(
         "status must be one of: Unverified, Pending, Approved, Rejected"
       );
 
-    // Find distinct seller IDs from the Products collection.
-    const sellerIdDocs = await productRepository.aggregate<{ _id: ObjectId }>([
-      { $group: { _id: "$UserID" } },
-    ]);
-    const sellerIds = sellerIdDocs.map((d) => d._id);
+    // Find all users assigned the Seller role (RoleID = 2).
+    const sellerRoleDocs = await userRoleRepository.find({ RoleID: RoleId.SELLER });
+    const sellerIds = sellerRoleDocs.map((d) => d.UserID);
 
     if (sellerIds.length === 0) {
       return sendResponse(res, HTTP_STATUS.OK, "Sellers retrieved successfully", []);
