@@ -24,6 +24,7 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 | #   | Email              | Password    | Store Name            |
 | --- | ------------------ | ----------- | --------------------- |
+| S1  | seller01@gmail.com | 252318Gow@# | Technomad Horology 01 |
 | S5  | seller05@gmail.com | 252318Gow@# | Technomad Horology 05 |
 
 ---

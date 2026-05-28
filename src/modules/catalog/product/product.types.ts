@@ -7,9 +7,9 @@ export interface Product {
   UserID: ObjectId;
   ProductName: string;
   BrandID: ObjectId;
-  CollectionID: ObjectId;
+  CollectionID?: ObjectId | null;
   CategoryID: ObjectId;
-  RecipientID: ObjectId;
+  RecipientID?: ObjectId | null;
   Price: number;
   // Total units available for this listing. One Product document represents the
   // whole stock — the same _id is used for every unit. Units sold are derived by
