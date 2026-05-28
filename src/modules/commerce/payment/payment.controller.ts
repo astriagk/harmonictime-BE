@@ -192,6 +192,7 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       UserID: p.UserID,
       Price: p.Price,
       OfferDiscountPercentage: p.OfferDiscountPercentage ?? 0,
+      IsPriceInclusiveOfTax: p.IsPriceInclusiveOfTax ?? false,
     }))
   );
 
@@ -255,7 +256,7 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       });
 
       const subtotal = lineItems.reduce((sum, i) => sum + i.amount, 0);
-      const gst = Math.round(subtotal * 0.18);
+      const gst = Math.round(subtotal * env.GST_RATE / 100);
 
       await sendTemplateEmail(
         buyer.email,

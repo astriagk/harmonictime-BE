@@ -15,6 +15,8 @@ export const createProductImage = asyncHandler(
     const product = await productRepository.findById(ProductID);
     if (!product) throw ApiError.badRequest("Invalid ProductID");
 
+    await productRepository.resubmitIfRejected(ProductID);
+
     const productObjectId = new ObjectId(ProductID);
     const images = ImageURLs as {
       url: string;
@@ -67,10 +69,10 @@ export const getAllProductImagesByProductID = asyncHandler(
 
 export const updateProductImage = asyncHandler(
   async (req: Request, res: Response) => {
-    if (req.body.IsPrimary === true) {
-      const image = await productImageRepository.findById(req.params.imageID);
-      if (!image) throw ApiError.notFound("Product image not found");
+    const image = await productImageRepository.findById(req.params.imageID);
+    if (!image) throw ApiError.notFound("Product image not found");
 
+    if (req.body.IsPrimary === true) {
       // Unset the existing primary before promoting this one.
       await productImageRepository.updateMany(
         { ProductID: image.ProductID, IsPrimary: true } as any,
@@ -80,6 +82,7 @@ export const updateProductImage = asyncHandler(
 
     const result = await productImageRepository.updateById(req.params.imageID, req.body);
     if (result.matchedCount === 0) throw ApiError.notFound("Product image not found");
+    await productRepository.resubmitIfRejected(image.ProductID);
     sendResponse(res, HTTP_STATUS.OK, "Product image updated successfully");
   }
 );
@@ -94,6 +97,7 @@ export const deleteProductImage = asyncHandler(
     await deleteFile(image.key || image.ImageURL);
 
     await productImageRepository.deleteById(req.params.imageID);
+    await productRepository.resubmitIfRejected(image.ProductID);
     sendResponse(res, HTTP_STATUS.OK, "Product image deleted successfully");
   }
 );

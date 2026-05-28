@@ -4,12 +4,15 @@ export const createProductSchema = Joi.object({
   UserID: Joi.string().required(),
   ProductName: Joi.string().required(),
   BrandID: Joi.string().required(),
-  CollectionID: Joi.string().required(),
+  CollectionID: Joi.string().allow(null, "").optional(),
   CategoryID: Joi.string().required(),
-  RecipientID: Joi.string().required(),
+  RecipientID: Joi.string().allow(null, "").optional(),
   Price: Joi.number().required(),
   Quantity: Joi.number().integer().min(1).required(),
   OfferID: Joi.string().allow(null, "").optional(),
+  IsPriceInclusiveOfTax: Joi.boolean().required().messages({
+    "any.required": "IsPriceInclusiveOfTax is required — specify whether the price includes 18% GST",
+  }),
 });
 
 export const updateAvailabilitySchema = Joi.object({
@@ -39,5 +42,6 @@ export const updateProductSchema = Joi.object({
   Quantity: Joi.number().integer().min(0),
   OfferID: Joi.string().allow(null, ""),
   IsAvailable: Joi.boolean(),
+  IsPriceInclusiveOfTax: Joi.boolean(),
   RemovedImageIDs: Joi.array().items(Joi.string()),
 }).min(1);

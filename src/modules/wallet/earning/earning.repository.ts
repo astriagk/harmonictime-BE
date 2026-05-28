@@ -11,7 +11,8 @@ type SoldProduct = {
   _id: ObjectId;
   UserID: ObjectId;
   Price: number;
-  OfferDiscountPercentage: number; // 0 if no active offer at sale time
+  OfferDiscountPercentage: number;   // 0 if no active offer at sale time
+  IsPriceInclusiveOfTax: boolean;    // snapshotted for GST calculation
 };
 
 class EarningRepository extends BaseRepository<SellerEarning> {
@@ -31,11 +32,19 @@ class EarningRepository extends BaseRepository<SellerEarning> {
     const sellerRate = env.PLATFORM_COMMISSION_RATE;
     const now = new Date();
 
+    const gstRate = env.GST_RATE;
+
     const docs: SellerEarning[] = products.map((p) => {
       const offerDiscount  = p.OfferDiscountPercentage ?? 0;
       const discountAmount = Math.round(p.Price * offerDiscount / 100);
       const effectivePrice = p.Price - discountAmount;
       const commission     = Math.round(effectivePrice * sellerRate);
+      const netAmount      = effectivePrice - commission;
+
+      const isTaxInclusive    = p.IsPriceInclusiveOfTax ?? false;
+      const gstAmount         = Math.round(netAmount * gstRate / 100);
+      const netAmountAfterGST = netAmount - gstAmount;
+
       return {
         SellerID: p.UserID,
         CheckoutID: checkoutId,
@@ -45,7 +54,11 @@ class EarningRepository extends BaseRepository<SellerEarning> {
         GrossAmount: effectivePrice,
         CommissionRate: sellerRate,
         CommissionAmount: commission,
-        NetAmount: effectivePrice - commission,
+        NetAmount: netAmount,
+        IsTaxInclusive: isTaxInclusive,
+        GSTRate: gstRate,
+        GSTAmount: gstAmount,
+        NetAmountAfterGST: netAmountAfterGST,
         Status: "Pending",
         SaleDate: now,
         WithdrawalID: null,
@@ -109,11 +122,18 @@ class EarningRepository extends BaseRepository<SellerEarning> {
     );
   }
 
-  // Totals per status (in NetAmount) for the wallet summary.
+  // Totals per status (in NetAmountAfterGST) for the wallet summary.
+  // Falls back to NetAmount for legacy earnings that predate the GST fields.
   async getBalances(sellerId: ObjectId) {
     const rows = await this.aggregate<{ _id: EarningStatus; total: number; count: number }>([
       { $match: { SellerID: sellerId } },
-      { $group: { _id: "$Status", total: { $sum: "$NetAmount" }, count: { $sum: 1 } } },
+      {
+        $group: {
+          _id: "$Status",
+          total: { $sum: { $ifNull: ["$NetAmountAfterGST", "$NetAmount"] } },
+          count: { $sum: 1 },
+        },
+      },
     ]);
     const by = (s: EarningStatus) => rows.find((r) => r._id === s);
     const sum = (s: EarningStatus) => by(s)?.total ?? 0;
@@ -170,6 +190,10 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           CommissionRate: 1,
           CommissionAmount: 1,
           NetAmount: 1,
+          IsTaxInclusive: 1,
+          GSTRate: 1,
+          GSTAmount: 1,
+          NetAmountAfterGST: 1,
           SaleDate: 1,
           AvailableAt: 1,
           ProductName: { $arrayElemAt: ["$Product.ProductName", 0] },
@@ -178,6 +202,15 @@ class EarningRepository extends BaseRepository<SellerEarning> {
       },
       { $sort: { SaleDate: -1 } },
     ]);
+  }
+
+  // Total cumulative gross sales for a seller across all time (used for GST threshold check).
+  async getTotalGrossSales(sellerId: ObjectId): Promise<number> {
+    const rows = await this.aggregate<{ total: number }>([
+      { $match: { SellerID: sellerId } },
+      { $group: { _id: null, total: { $sum: "$GrossAmount" } } },
+    ]);
+    return rows[0]?.total ?? 0;
   }
 
   // Earnings currently withdrawable for this seller.
