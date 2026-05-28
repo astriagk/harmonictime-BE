@@ -78,6 +78,9 @@ const enrichmentStages = (): Document[] => [
         },
       },
       IsAvailable: 1,
+      IsPriceInclusiveOfTax: 1,
+      ApprovalStatus: { $ifNull: ["$ApprovalStatus", "Approved"] },
+      ApprovalNote: 1,
       DateListed: 1,
       Description: {
         _id: "$Description._id",
@@ -245,6 +248,15 @@ class ProductRepository extends BaseRepository<Product> {
     return issues;
   }
 
+  // When a seller modifies any product content, reset it to Pending so the
+  // admin re-reviews the updated listing. No-op if already Pending.
+  resubmitIfRejected(productId: string | ObjectId) {
+    return this.collection.updateOne(
+      { _id: this.toObjectId(productId), ApprovalStatus: { $in: ["Approved", "Rejected"] } } as any,
+      { $set: { ApprovalStatus: "Pending" } } as any
+    );
+  }
+
   setAvailability(ids: ObjectId[], IsAvailable: boolean) {
     return this.updateMany(
       { _id: { $in: ids } } as Filter<Product>,
@@ -271,6 +283,7 @@ class ProductRepository extends BaseRepository<Product> {
       UserID: ObjectId;
       Price: number;
       OfferDiscountPercentage: number;
+      IsPriceInclusiveOfTax: boolean;
     }>([
       { $match: { _id: { $in: ids } } },
       {
@@ -287,6 +300,7 @@ class ProductRepository extends BaseRepository<Product> {
           _id: 1,
           UserID: 1,
           Price: 1,
+          IsPriceInclusiveOfTax: { $ifNull: ["$IsPriceInclusiveOfTax", false] },
           OfferDiscountPercentage: {
             $cond: {
               if: {

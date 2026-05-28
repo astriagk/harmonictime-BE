@@ -14,6 +14,8 @@ export const createDeliveryReturn = asyncHandler(
     const product = await productRepository.findById(ProductID);
     if (!product) throw ApiError.badRequest("Invalid ProductID");
 
+    await productRepository.resubmitIfRejected(ProductID);
+
     const result = await deliveryReturnsRepository.insertOne({
       ProductID: new ObjectId(ProductID),
       DeliveryInformation,
@@ -57,17 +59,18 @@ export const updateDeliveryReturn = asyncHandler(
     );
     if (result.matchedCount === 0)
       throw ApiError.notFound("Delivery return information not found");
+    await productRepository.resubmitIfRejected(req.params.productID);
     sendResponse(res, HTTP_STATUS.OK, "Delivery return information updated successfully");
   }
 );
 
 export const deleteDeliveryReturn = asyncHandler(
   async (req: Request, res: Response) => {
-    const result = await deliveryReturnsRepository.deleteById(
-      req.params.deliveryReturnID
-    );
-    if (result.deletedCount === 0)
-      throw ApiError.notFound("Delivery return information not found");
+    const record = await deliveryReturnsRepository.findById(req.params.deliveryReturnID);
+    if (!record) throw ApiError.notFound("Delivery return information not found");
+
+    await deliveryReturnsRepository.deleteById(req.params.deliveryReturnID);
+    await productRepository.resubmitIfRejected(record.ProductID);
     sendResponse(res, HTTP_STATUS.OK, "Delivery return information deleted successfully");
   }
 );

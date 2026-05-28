@@ -14,6 +14,8 @@ export const createProductDescription = asyncHandler(
     const product = await productRepository.findById(ProductID);
     if (!product) throw ApiError.badRequest("Invalid ProductID");
 
+    await productRepository.resubmitIfRejected(ProductID);
+
     const result = await productDescriptionRepository.insertOne({
       ProductID: new ObjectId(ProductID),
       Title,
@@ -55,6 +57,7 @@ export const updateProductDescription = asyncHandler(
     );
     if (result.matchedCount === 0)
       throw ApiError.notFound("Product description not found");
+    await productRepository.resubmitIfRejected(req.params.productID);
     sendResponse(res, HTTP_STATUS.OK, "Product description updated successfully");
   }
 );
@@ -66,6 +69,7 @@ export const deleteProductDescription = asyncHandler(
     );
     if (result.deletedCount === 0)
       throw ApiError.notFound("Product description not found");
+    await productRepository.resubmitIfRejected(req.params.productID);
     sendResponse(res, HTTP_STATUS.OK, "Product description deleted successfully");
   }
 );

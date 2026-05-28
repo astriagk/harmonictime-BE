@@ -1,34 +1,52 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { asyncHandler } from "../../shared/middlewares/asyncHandler";
 import { ApiError } from "../../shared/utils/apiError";
 import { sendResponse } from "../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../shared/constants/httpStatus";
-import { DEFAULT_ROLE_ID } from "../../shared/constants/roles";
+import { DEFAULT_ROLE_ID, RoleId } from "../../shared/constants/roles";
+import jwt from "jsonwebtoken";
 import {
   signToken,
   signRefreshToken,
-  verifyToken,
+  verifyToken as verifyAccessToken,
   verifyRefreshToken,
 } from "../../shared/services/token.service";
-import { resetPasswordUrl } from "../../shared/constants/frontend";
+import {
+  resetPasswordUrl,
+  FRONTEND_ROUTES,
+} from "../../shared/constants/frontend";
 import { sendTemplateEmail } from "../../shared/services/email.service";
 import { sendSMS } from "../../shared/services/sms.service";
 import {
   welcomeEmail,
   passwordResetOtpEmail,
+  verifyEmailTemplate,
 } from "../../shared/email-templates";
 import { generateOTP, hashOTP } from "../../shared/utils/otp";
 import { userRepository } from "../users/user/user.repository";
 import { userRoleRepository } from "../users/role/role.repository";
 
+const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+const generateEmailVerificationToken = (): { raw: string; hashed: string } => {
+  const raw = crypto.randomBytes(32).toString("hex");
+  const hashed = crypto.createHash("sha256").update(raw).digest("hex");
+  return { raw, hashed };
+};
+
 const OTP_TTL_MS = 10 * 60 * 1000;
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, phone, acceptedTerms } = req.body;
+  const { email, password, phone, acceptedTerms, accountType, businessName } =
+    req.body;
 
   const existing = await userRepository.findByEmail(email);
   if (existing) throw ApiError.conflict("Email already exists");
+
+  const { raw: rawToken, hashed: hashedToken } =
+    generateEmailVerificationToken();
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await userRepository.insertOne({
@@ -38,27 +56,34 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     acceptedTerms,
     termsAcceptedAt: new Date(),
     dateCreated: new Date(),
+    accountType: accountType ?? "individual",
+    ...(accountType === "business" && businessName ? { businessName } : {}),
+    isEmailVerified: false,
+    emailVerificationToken: hashedToken,
+    emailVerificationTokenExpiry: new Date(
+      Date.now() + EMAIL_VERIFICATION_TTL_MS,
+    ),
   });
 
+  const assignedRole =
+    accountType === "business" ? RoleId.SELLER : DEFAULT_ROLE_ID;
   await userRoleRepository.insertOne({
-    UserRoleID: DEFAULT_ROLE_ID,
+    UserRoleID: assignedRole,
     UserID: result.insertedId,
-    RoleID: DEFAULT_ROLE_ID,
+    RoleID: assignedRole,
   });
 
-  const token = signToken(
-    { userId: result.insertedId.toString(), email },
-    "1h",
+  // Send verification email — best-effort; the mailer swallows its own errors.
+  await sendTemplateEmail(email, verifyEmailTemplate(rawToken, email));
+
+  sendResponse(
+    res,
+    HTTP_STATUS.CREATED,
+    "Registration successful. Please check your email to verify your account.",
+    {
+      userId: result.insertedId,
+    },
   );
-
-  // Welcome email — best-effort; the mailer swallows its own errors so a mail
-  // failure never blocks account creation.
-  await sendTemplateEmail(email, welcomeEmail());
-
-  sendResponse(res, HTTP_STATUS.CREATED, "User created successfully", {
-    userId: result.insertedId,
-    token,
-  });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -70,15 +95,32 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) throw ApiError.unauthorized("Invalid email or password");
 
+  if (!user.isEmailVerified) {
+    return sendResponse(
+      res,
+      HTTP_STATUS.FORBIDDEN,
+      "Please verify your email address before logging in. Check your inbox for the verification link.",
+      {
+        emailVerified: false,
+      },
+    );
+  }
+
   const token = signToken({ userId: user._id!.toString(), email: user.email });
-  const refreshToken = signRefreshToken({ userId: user._id!.toString(), email: user.email });
+  const refreshToken = signRefreshToken({
+    userId: user._id!.toString(),
+    email: user.email,
+  });
 
   await userRepository.updateOne(
     { _id: user._id },
     { $set: { refreshTokenHash: await bcrypt.hash(refreshToken, 10) } },
   );
 
-  sendResponse(res, HTTP_STATUS.OK, "Login successful", { token, refreshToken });
+  sendResponse(res, HTTP_STATUS.OK, "Login successful", {
+    token,
+    refreshToken,
+  });
 });
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
@@ -144,7 +186,7 @@ export const resetPassword = asyncHandler(
     // if tampered or past its 10-minute expiry.
     let userId: string;
     try {
-      userId = verifyToken(token).userId;
+      userId = verifyAccessToken(token).userId;
     } catch {
       throw ApiError.badRequest("Invalid or expired reset link");
     }
@@ -171,23 +213,303 @@ export const resetPassword = asyncHandler(
   },
 );
 
-export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
-  const { refreshToken: token } = req.body;
+export const verifyToken = asyncHandler(async (req: Request, res: Response) => {
+  const { token, refreshToken: providedRefreshToken } = req.body;
 
-  let payload: { userId: string; email: string };
+  type DecodedPayload = { userId: string; email: string; exp?: number };
+
+  // --- 1. Try to verify the access token ---
+  let payload: DecodedPayload | null = null;
+  let isExpired = false;
+
   try {
-    payload = verifyRefreshToken(token);
-  } catch {
-    throw ApiError.unauthorized("Invalid or expired refresh token");
+    payload = verifyAccessToken(token) as DecodedPayload;
+  } catch (err: any) {
+    if (err?.name === "TokenExpiredError") {
+      isExpired = true;
+      payload = jwt.decode(token) as DecodedPayload | null;
+    } else {
+      return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Invalid token", {
+        valid: false,
+        reason: "invalid",
+      });
+    }
+  }
+
+  if (!payload?.userId) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Invalid token", {
+      valid: false,
+      reason: "invalid",
+    });
   }
 
   const user = await userRepository.findById(payload.userId);
-  if (!user || !user.refreshTokenHash)
-    throw ApiError.unauthorized("Invalid or expired refresh token");
+  if (!user) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "User not found", {
+      valid: false,
+      reason: "invalid",
+    });
+  }
 
-  const valid = await bcrypt.compare(token, user.refreshTokenHash);
-  if (!valid) throw ApiError.unauthorized("Invalid or expired refresh token");
+  const roles = await userRoleRepository.findByUser(payload.userId);
 
-  const newAccessToken = signToken({ userId: user._id!.toString(), email: user.email });
-  sendResponse(res, HTTP_STATUS.OK, "Token refreshed successfully", { token: newAccessToken });
+  // --- 2. Token is valid ---
+  if (!isExpired) {
+    return sendResponse(res, HTTP_STATUS.OK, "Token is valid", {
+      valid: true,
+      userId: user._id,
+      email: user.email,
+      accountType: (user as any).accountType,
+      roles: roles.map((r) => r.RoleID),
+      expiresAt: payload.exp
+        ? new Date(payload.exp * 1000).toISOString()
+        : null,
+    });
+  }
+
+  // --- 3. Token is expired — try refresh token if provided ---
+  if (!providedRefreshToken) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Token has expired", {
+      valid: false,
+      expired: true,
+      reason: "expired",
+    });
+  }
+
+  let refreshPayload: { userId: string; email: string } | null = null;
+  try {
+    refreshPayload = verifyRefreshToken(providedRefreshToken);
+  } catch {
+    return sendResponse(
+      res,
+      HTTP_STATUS.UNAUTHORIZED,
+      "Refresh token is invalid",
+      {
+        valid: false,
+        expired: true,
+        reason: "refresh_invalid",
+      },
+    );
+  }
+
+  if (refreshPayload.userId !== payload.userId) {
+    return sendResponse(res, HTTP_STATUS.UNAUTHORIZED, "Token mismatch", {
+      valid: false,
+      expired: true,
+      reason: "refresh_invalid",
+    });
+  }
+
+  const refreshUser = await userRepository.findById(refreshPayload.userId);
+  if (!refreshUser?.refreshTokenHash) {
+    return sendResponse(
+      res,
+      HTTP_STATUS.UNAUTHORIZED,
+      "Session expired. Please login again.",
+      {
+        valid: false,
+        expired: true,
+        reason: "session_expired",
+      },
+    );
+  }
+
+  const hashValid = await bcrypt.compare(
+    providedRefreshToken,
+    refreshUser.refreshTokenHash,
+  );
+  if (!hashValid) {
+    return sendResponse(
+      res,
+      HTTP_STATUS.UNAUTHORIZED,
+      "Session expired. Please login again.",
+      {
+        valid: false,
+        expired: true,
+        reason: "session_expired",
+      },
+    );
+  }
+
+  const newAccessToken = signToken({
+    userId: refreshUser._id!.toString(),
+    email: refreshUser.email,
+  });
+
+  return sendResponse(res, HTTP_STATUS.OK, "Token refreshed successfully", {
+    valid: false,
+    expired: true,
+    refreshed: true,
+    newToken: newAccessToken,
+    userId: refreshUser._id,
+    email: refreshUser.email,
+    accountType: (refreshUser as any).accountType,
+    roles: roles.map((r) => r.RoleID),
+  });
 });
+
+export const refreshToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { refreshToken: token } = req.body;
+
+    let payload: { userId: string; email: string };
+    try {
+      payload = verifyRefreshToken(token);
+    } catch {
+      throw ApiError.unauthorized("Invalid or expired refresh token");
+    }
+
+    const user = await userRepository.findById(payload.userId);
+    if (!user || !user.refreshTokenHash)
+      throw ApiError.unauthorized("Invalid or expired refresh token");
+
+    const valid = await bcrypt.compare(token, user.refreshTokenHash);
+    if (!valid) throw ApiError.unauthorized("Invalid or expired refresh token");
+
+    const newAccessToken = signToken({
+      userId: user._id!.toString(),
+      email: user.email,
+    });
+    sendResponse(res, HTTP_STATUS.OK, "Token refreshed successfully", {
+      token: newAccessToken,
+    });
+  },
+);
+
+export const confirmEmail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { token } = req.body;
+
+    const hashed = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await userRepository.findOne({
+      emailVerificationToken: hashed,
+    });
+
+    if (!user)
+      throw ApiError.badRequest("Invalid or expired verification link");
+
+    if (
+      !user.emailVerificationTokenExpiry ||
+      new Date() > user.emailVerificationTokenExpiry
+    ) {
+      throw ApiError.badRequest(
+        "Verification link has expired. Please request a new one.",
+      );
+    }
+
+    const accessToken = signToken({
+      userId: user._id!.toString(),
+      email: user.email,
+    });
+    const refreshToken = signRefreshToken({
+      userId: user._id!.toString(),
+      email: user.email,
+    });
+
+    await userRepository.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          isEmailVerified: true,
+          refreshTokenHash: await bcrypt.hash(refreshToken, 10),
+        },
+        $unset: {
+          emailVerificationToken: "",
+          emailVerificationTokenExpiry: "",
+        },
+      },
+    );
+
+    const roles = await userRoleRepository.findByUser(user._id!.toString());
+
+    const redirectTo =
+      user.accountType === "business"
+        ? FRONTEND_ROUTES.POST_VERIFICATION_BUSINESS
+        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL;
+
+    sendResponse(res, HTTP_STATUS.OK, "Email verified successfully", {
+      token: accessToken,
+      refreshToken,
+      userId: user._id,
+      email: user.email,
+      accountType: user.accountType,
+      roles: roles.map((r) => r.RoleID),
+      redirectTo,
+    });
+  },
+);
+
+export const resendVerification = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    const user = await userRepository.findByEmail(email);
+    // Always return the same response to avoid leaking whether an email exists.
+    const genericMsg =
+      "If that email is registered and unverified, a new verification link has been sent.";
+
+    if (!user || user.isEmailVerified) {
+      return sendResponse(res, HTTP_STATUS.OK, genericMsg);
+    }
+
+    const { raw: rawToken, hashed: hashedToken } =
+      generateEmailVerificationToken();
+
+    await userRepository.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          emailVerificationToken: hashedToken,
+          emailVerificationTokenExpiry: new Date(
+            Date.now() + EMAIL_VERIFICATION_TTL_MS,
+          ),
+        },
+      },
+    );
+
+    await sendTemplateEmail(email, verifyEmailTemplate(rawToken, email));
+
+    sendResponse(res, HTTP_STATUS.OK, genericMsg);
+  },
+);
+
+export const updateUnverifiedEmail = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { currentEmail, newEmail } = req.body;
+
+    const user = await userRepository.findByEmail(currentEmail);
+    if (!user || user.isEmailVerified) {
+      // Intentionally vague — don't reveal whether the account exists or is verified
+      throw ApiError.badRequest(
+        "Unable to update email. The account may not exist or is already verified.",
+      );
+    }
+
+    const taken = await userRepository.findByEmail(newEmail);
+    if (taken) throw ApiError.conflict("This email address is already in use.");
+
+    const { raw: rawToken, hashed: hashedToken } =
+      generateEmailVerificationToken();
+
+    await userRepository.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          email: newEmail,
+          emailVerificationToken: hashedToken,
+          emailVerificationTokenExpiry: new Date(
+            Date.now() + EMAIL_VERIFICATION_TTL_MS,
+          ),
+        },
+      },
+    );
+
+    await sendTemplateEmail(newEmail, verifyEmailTemplate(rawToken, newEmail));
+
+    sendResponse(
+      res,
+      HTTP_STATUS.OK,
+      "Email updated. A new verification link has been sent to your new address.",
+    );
+  },
+);

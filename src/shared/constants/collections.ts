@@ -48,4 +48,6 @@ export const COLLECTIONS = {
 
   CHAT_THREADS: "ChatThreads",
   CHAT_MESSAGES: "ChatMessages",
+
+  SELLER_GST_DETAILS: "SellerGSTDetails",
 } as const;

@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Harmoniv Time API v1.0.3",
-    "description": "# Harmoniv Time API v1.0.3\n\nGenerated: 2026-05-22T05:27:09.623Z\n\n## Summary\n- **Total Endpoints:** 152\n- **Gateways:** 5\n\n## Authentication\nSet `TOKEN` in the environment to a Bearer JWT obtained from `POST /api/auth/login`.\n\n## Gateways\n- **Admin**: 6 endpoints\n- **Auth**: 5 endpoints\n- **Customer**: 38 endpoints\n- **Public**: 95 endpoints\n- **Seller**: 8 endpoints\n",
+    "name": "Harmoniv Time API v1.0.5",
+    "description": "# Harmoniv Time API v1.0.5\n\nGenerated: 2026-05-27T15:06:54.994Z\n\n## Summary\n- **Total Endpoints:** 206\n- **Gateways:** 5\n\n## Authentication\nSet `TOKEN` in the environment to a Bearer JWT obtained from `POST /api/auth/login`.\n\n## Gateways\n- **Admin**: 24 endpoints\n- **Auth**: 6 endpoints\n- **Customer**: 45 endpoints\n- **Public**: 104 endpoints\n- **Seller**: 27 endpoints\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.3"
+    "version": "1.0.5"
   },
   "auth": {
     "type": "bearer",
@@ -414,6 +414,1393 @@
               ]
             }
           ]
+        },
+        {
+          "name": "Admin/Withdrawals",
+          "description": "Admin/Withdrawals endpoints",
+          "item": [
+            {
+              "name": "Get Withdrawals",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/withdrawals",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "withdrawals"
+                  ]
+                },
+                "description": "GET /"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Withdrawals successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Pay",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/withdrawals/{{withdrawalID}}/pay",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "withdrawals",
+                    "{{WITHDRAWALID}}",
+                    "pay"
+                  ],
+                  "variable": [
+                    {
+                      "key": "withdrawalID",
+                      "value": "{{WITHDRAWALID}}",
+                      "description": "WithdrawalID"
+                    }
+                  ]
+                },
+                "description": "PUT /:withdrawalID/pay\n\n\n📋 Request Body Fields:\n• Reference: string (required)\n• Notes: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Reference\": \"sample_string\",\n  \"Notes\": \"Please deliver after 6 PM\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Pay successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Reject",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/withdrawals/{{withdrawalID}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "withdrawals",
+                    "{{WITHDRAWALID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "withdrawalID",
+                      "value": "{{WITHDRAWALID}}",
+                      "description": "WithdrawalID"
+                    }
+                  ]
+                },
+                "description": "PUT /:withdrawalID/reject\n\n\n📋 Request Body Fields:\n• Notes: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Notes\": \"Please deliver after 6 PM\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Admin/Users",
+          "description": "Admin/Users endpoints",
+          "item": [
+            {
+              "name": "Mounted at /admin/sellers",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/users",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users"
+                  ]
+                },
+                "description": "Mounted at /admin/sellers\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Mounted at /admin/sellers successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Admin/User By Users",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/users/{{sellerID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    "{{SELLERID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
+                    }
+                  ]
+                },
+                "description": "GET /:sellerID\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Admin/User By Users successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Approve",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/users/{{sellerID}}/approve",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    "{{SELLERID}}",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
+                    }
+                  ]
+                },
+                "description": "PUT /:sellerID/approve\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Approve successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Reject",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/users/{{sellerID}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    "{{SELLERID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
+                    }
+                  ]
+                },
+                "description": "PUT /:sellerID/reject\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Request Info",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/users/{{sellerID}}/request-info",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    "{{SELLERID}}",
+                    "request-info"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
+                    }
+                  ]
+                },
+                "description": "PUT /:sellerID/request-info\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Request Info successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Admin/GST",
+          "description": "Admin endpoints for managing seller GST records",
+          "item": [
+            {
+              "name": "List All Seller GST Records",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/gst",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "gst"
+                  ]
+                },
+                "description": "GET /admin/gst\n\n🔐 Requires authentication (admin)\n\nReturns all seller GST records with IsVerified status."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Verify Seller GST",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/gst/{{gstID}}/verify",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "gst",
+                    "{{gstID}}",
+                    "verify"
+                  ],
+                  "variable": [
+                    {
+                      "key": "gstID",
+                      "value": "{{GST_ID}}",
+                      "description": "GST record _id"
+                    }
+                  ]
+                },
+                "description": "PUT /admin/gst/:id/verify\n\n🔐 Requires authentication (admin)\n\nMarks the GST record as verified."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Admin/Products",
+          "description": "Admin product moderation — approve or reject listings before they go live to buyers",
+          "item": [
+            {
+              "name": "List Products (by approval status)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/products?status=Pending",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "products"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "Pending",
+                      "description": "Pending | Approved | Rejected (omit for all)"
+                    }
+                  ]
+                },
+                "description": "GET /admin/products?status=Pending\n\n🔐 Requires authentication (admin)\n\nReturns enriched products filtered by ApprovalStatus. Use status=Pending to see the review queue."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Approve Product",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/products/{{productID}}/approve",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "products",
+                    "{{productID}}",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "productID",
+                      "value": "{{PRODUCT_ID}}",
+                      "description": "Product _id"
+                    }
+                  ]
+                },
+                "description": "PUT /admin/products/:productID/approve\n\n🔐 Requires authentication (admin)\n\nSets ApprovalStatus to Approved — the product becomes visible to buyers immediately."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Reject Product",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/products/{{productID}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "products",
+                    "{{productID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "productID",
+                      "value": "{{PRODUCT_ID}}",
+                      "description": "Product _id"
+                    }
+                  ]
+                },
+                "description": "PUT /admin/products/:productID/reject\n\n🔐 Requires authentication (admin)\n\nSets ApprovalStatus to Rejected. The note is shown to the seller so they know what to fix.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Images are blurry and price appears incorrect. Please re-upload clear photos and verify the price.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Admin/Sellers",
+          "description": "Admin seller verification — view full profiles and approve, reject, or request missing information",
+          "item": [
+            {
+              "name": "List Sellers",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/sellers?status=Pending",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "sellers"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "Pending",
+                      "description": "Unverified | Pending | Approved | Rejected (omit for all sellers)"
+                    }
+                  ]
+                },
+                "description": "GET /admin/sellers?status=Pending\n\n🔐 Requires authentication (admin)\n\nLists all users who have at least one product listing. Filter by sellerVerificationStatus."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Get Seller Full Profile",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/sellers/{{sellerID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "sellers",
+                    "{{sellerID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLER_ID}}",
+                      "description": "Seller user _id"
+                    }
+                  ]
+                },
+                "description": "GET /admin/sellers/:sellerID\n\n🔐 Requires authentication (admin)\n\nReturns seller user info + GST details + bank accounts + product counts (total / approved / pending / rejected)."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Approve Seller",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/sellers/{{sellerID}}/approve",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "sellers",
+                    "{{sellerID}}",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLER_ID}}",
+                      "description": "Seller user _id"
+                    }
+                  ]
+                },
+                "description": "PUT /admin/sellers/:sellerID/approve\n\n🔐 Requires authentication (admin)\n\nSets sellerVerificationStatus to Approved."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Reject Seller",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/sellers/{{sellerID}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "sellers",
+                    "{{sellerID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLER_ID}}",
+                      "description": "Seller user _id"
+                    }
+                  ]
+                },
+                "description": "PUT /admin/sellers/:sellerID/reject\n\n🔐 Requires authentication (admin)\n\nSets sellerVerificationStatus to Rejected. The note is shown to the seller.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Could not verify identity documents. Please re-submit a valid government ID.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Request Missing Info from Seller",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/sellers/{{sellerID}}/request-info",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "sellers",
+                    "{{sellerID}}",
+                    "request-info"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLER_ID}}",
+                      "description": "Seller user _id"
+                    }
+                  ]
+                },
+                "description": "PUT /admin/sellers/:sellerID/request-info\n\n🔐 Requires authentication (admin)\n\nKeeps status as Pending but saves a note telling the seller exactly what is missing.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"GST details are missing. Please add your GSTIN before we can verify your account.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -441,10 +1828,10 @@
                 "register"
               ]
             },
-            "description": "POST /register\n\n\n📋 Request Body Fields:\n• email: string (required)\n• password: string (required)\n• phone: string (optional)",
+            "description": "POST /register\n\n\n📋 Request Body Fields:\n• email: string (required)\n• password: string (required)\n• phone: string (optional)\n• acceptedTerms: boolean (required)\n• accountType: string (required)\n• businessName: string (required)\n• otherwise: string (optional)",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password@123\",\n  \"phone\": \"+919876543210\"\n}",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password@123\",\n  \"phone\": \"+919876543210\",\n  \"acceptedTerms\": \"true\",\n  \"accountType\": \"individual\",\n  \"businessName\": \"sample_string\",\n  \"otherwise\": \"sample_string\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -721,10 +2108,10 @@
                 "reset-password"
               ]
             },
-            "description": "POST /reset-password\n\n\n📋 Request Body Fields:\n• email: string (optional)\n• phone: string (optional)\n• otp: string (required)\n• newPassword: string (required)",
+            "description": "POST /reset-password\n\n\n📋 Request Body Fields:\n• token: string (required)\n• otp: string (required)\n• newPassword: string (required)",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"phone\": \"+919876543210\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"Password@123\"\n}",
+              "raw": "{\n  \"token\": \"sample_string\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"Password@123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -770,6 +2157,76 @@
               "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
             }
           ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/refresh-token",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "POST /refresh-token\n\n\n📋 Request Body Fields:\n• refreshToken: string (required)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"sample_string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Success",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Refresh Token successful\",\n  \"data\": {}\n}"
+            },
+            {
+              "name": "Bad Request",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+            },
+            {
+              "name": "Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+            }
+          ]
         }
       ]
     },
@@ -782,21 +2239,20 @@
           "description": "Users endpoints",
           "item": [
             {
-              "name": "Get Profile",
+              "name": "Mounted at /admin/sellers",
               "request": {
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{BASE_URL}}/users/profile",
+                  "raw": "{{BASE_URL}}/users",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
-                    "users",
-                    "profile"
+                    "users"
                   ]
                 },
-                "description": "GET /profile\n\n\n🔐 Requires authentication (Bearer token)",
+                "description": "Mounted at /admin/sellers\n\n\n🔐 Requires authentication (Bearer token)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -819,62 +2275,7 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"message\": \"Get Profile successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
-                }
-              ]
-            },
-            {
-              "name": "Get All Users",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{BASE_URL}}/users",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "users"
-                  ]
-                },
-                "description": "GET /"
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Get All Users successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"message\": \"Mounted at /admin/sellers successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -908,23 +2309,33 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                  "raw": "{{BASE_URL}}/users/{{id}}",
+                  "raw": "{{BASE_URL}}/users/{{sellerID}}",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "users",
-                    "{{ID}}"
+                    "{{SELLERID}}"
                   ],
                   "variable": [
                     {
-                      "key": "id",
-                      "value": "{{ID}}",
-                      "description": "Id"
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
                     }
                   ]
                 },
-                "description": "GET /:id"
+                "description": "GET /:sellerID\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
               },
               "response": [
                 {
@@ -966,41 +2377,38 @@
               ]
             },
             {
-              "name": "Update User",
+              "name": "Update Approve",
               "request": {
                 "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
+                "header": [],
                 "url": {
-                  "raw": "{{BASE_URL}}/users/{{id}}",
+                  "raw": "{{BASE_URL}}/users/{{sellerID}}/approve",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "users",
-                    "{{ID}}"
+                    "{{SELLERID}}",
+                    "approve"
                   ],
                   "variable": [
                     {
-                      "key": "id",
-                      "value": "{{ID}}",
-                      "description": "Id"
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
                     }
                   ]
                 },
-                "description": "PUT /:id\n\n\n📋 Request Body Fields:\n• email: string (optional)\n• phone: string (optional)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"user@example.com\",\n  \"phone\": \"+919876543210\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
+                "description": "PUT /:sellerID/approve\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
                     }
-                  }
+                  ]
                 }
               },
               "response": [
@@ -1014,7 +2422,7 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"message\": \"Update User successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"message\": \"Update Approve successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -1043,28 +2451,39 @@
               ]
             },
             {
-              "name": "Delete User",
+              "name": "Update Reject",
               "request": {
-                "method": "DELETE",
+                "method": "PUT",
                 "header": [],
                 "url": {
-                  "raw": "{{BASE_URL}}/users/{{id}}",
+                  "raw": "{{BASE_URL}}/users/{{sellerID}}/reject",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "users",
-                    "{{ID}}"
+                    "{{SELLERID}}",
+                    "reject"
                   ],
                   "variable": [
                     {
-                      "key": "id",
-                      "value": "{{ID}}",
-                      "description": "Id"
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
                     }
                   ]
                 },
-                "description": "DELETE /:id"
+                "description": "PUT /:sellerID/reject\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
               },
               "response": [
                 {
@@ -1077,7 +2496,81 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"message\": \"Delete User successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"message\": \"Update Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Request Info",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/users/{{sellerID}}/request-info",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "users",
+                    "{{SELLERID}}",
+                    "request-info"
+                  ],
+                  "variable": [
+                    {
+                      "key": "sellerID",
+                      "value": "{{SELLERID}}",
+                      "description": "SellerID"
+                    }
+                  ]
+                },
+                "description": "PUT /:sellerID/request-info\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Request Info successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -1587,6 +3080,76 @@
               ]
             },
             {
+              "name": "Get Cart By User",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/cart/user/{{userID}}/{{productID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "cart",
+                    "user",
+                    "{{USERID}}",
+                    "{{PRODUCTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userID",
+                      "value": "{{USERID}}",
+                      "description": "UserID"
+                    },
+                    {
+                      "key": "productID",
+                      "value": "{{PRODUCTID}}",
+                      "description": "ProductID"
+                    }
+                  ]
+                },
+                "description": "GET /user/:userID/:productID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Cart By User successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
               "name": "Update Cart",
               "request": {
                 "method": "PUT",
@@ -1838,6 +3401,70 @@
                     }
                   ],
                   "body": "{\n  \"message\": \"Get Wishlist By User successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Move To Cart",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/wishlist/{{wishlistID}}/move-to-cart",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "wishlist",
+                    "{{WISHLISTID}}",
+                    "move-to-cart"
+                  ],
+                  "variable": [
+                    {
+                      "key": "wishlistID",
+                      "value": "{{WISHLISTID}}",
+                      "description": "WishlistID"
+                    }
+                  ]
+                },
+                "description": "POST /:wishlistID/move-to-cart"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create Move To Cart successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -2897,10 +4524,10 @@
                     "create-order"
                   ]
                 },
-                "description": "POST /create-order\n\n\n📋 Request Body Fields:\n• UserID: string (required)\n• amount: number (required)\n• currency: string (optional)",
+                "description": "POST /create-order\n\n\n📋 Request Body Fields:\n• UserID: string (required)\n• amount: number (required)\n• currency: string (optional)\n• address: string (required)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"UserID\": \"507f1f77bcf86cd799439011\",\n  \"amount\": 25000,\n  \"currency\": \"INR\"\n}",
+                  "raw": "{\n  \"UserID\": \"507f1f77bcf86cd799439011\",\n  \"amount\": 25000,\n  \"currency\": \"INR\",\n  \"address\": \"sample_string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -3347,6 +4974,347 @@
               ]
             }
           ]
+        },
+        {
+          "name": "Chat",
+          "description": "Chat endpoints",
+          "item": [
+            {
+              "name": "Create Threads",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads"
+                  ]
+                },
+                "description": "POST /threads\n\n\n📋 Request Body Fields:\n• productId: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productId\": \"507f1f77bcf86cd799439011\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create Threads successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Threads",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads"
+                  ]
+                },
+                "description": "GET /threads"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Threads successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Messages",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads/{{threadId}}/messages",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads",
+                    "{{THREADID}}",
+                    "messages"
+                  ],
+                  "variable": [
+                    {
+                      "key": "threadId",
+                      "value": "{{THREADID}}",
+                      "description": "ThreadId"
+                    }
+                  ]
+                },
+                "description": "GET /threads/:threadId/messages"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Messages successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Messages",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads/{{threadId}}/messages",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads",
+                    "{{THREADID}}",
+                    "messages"
+                  ],
+                  "variable": [
+                    {
+                      "key": "threadId",
+                      "value": "{{THREADID}}",
+                      "description": "ThreadId"
+                    }
+                  ]
+                },
+                "description": "POST /threads/:threadId/messages\n\n\n📋 Request Body Fields:\n• text: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"text\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create Messages successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Close",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads/{{threadId}}/close",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads",
+                    "{{THREADID}}",
+                    "close"
+                  ],
+                  "variable": [
+                    {
+                      "key": "threadId",
+                      "value": "{{THREADID}}",
+                      "description": "ThreadId"
+                    }
+                  ]
+                },
+                "description": "PATCH /threads/:threadId/close"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Close successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -3359,76 +5327,7 @@
           "description": "Products endpoints",
           "item": [
             {
-              "name": "Create Product",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/products",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "products"
-                  ]
-                },
-                "description": "POST /\n\n\n📋 Request Body Fields:\n• UserID: string (required)\n• ProductName: string (required)\n• BrandID: string (required)\n• CollectionID: string (required)\n• CategoryID: string (required)\n• RecipientID: string (required)\n• Price: number (required)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"UserID\": \"507f1f77bcf86cd799439011\",\n  \"ProductName\": \"Submariner Date\",\n  \"BrandID\": \"507f1f77bcf86cd799439011\",\n  \"CollectionID\": \"507f1f77bcf86cd799439011\",\n  \"CategoryID\": \"507f1f77bcf86cd799439011\",\n  \"RecipientID\": \"507f1f77bcf86cd799439011\",\n  \"Price\": 25000\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Create Product successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
-                }
-              ]
-            },
-            {
-              "name": "Get All Products",
+              "name": "Mounted at /admin/products",
               "request": {
                 "method": "GET",
                 "header": [],
@@ -3441,70 +5340,17 @@
                     "products"
                   ]
                 },
-                "description": "GET /"
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
+                "description": "Mounted at /admin/products\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
                     {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Get All Products successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
-                }
-              ]
-            },
-            {
-              "name": "Get Product",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{BASE_URL}}/products/{{productID}}",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "products",
-                    "{{PRODUCTID}}"
-                  ],
-                  "variable": [
-                    {
-                      "key": "productID",
-                      "value": "{{PRODUCTID}}",
-                      "description": "ProductID"
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
                     }
                   ]
-                },
-                "description": "GET /:productID"
+                }
               },
               "response": [
                 {
@@ -3517,7 +5363,7 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"message\": \"Get Product successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"message\": \"Mounted at /admin/products successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -3546,165 +5392,19 @@
               ]
             },
             {
-              "name": "Update Availability",
+              "name": "Update Approve",
               "request": {
                 "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/products/availability",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "products",
-                    "availability"
-                  ]
-                },
-                "description": "PUT /availability\n\n\n📋 Request Body Fields:\n• ProductIDs: array (required)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"ProductIDs\": [\n    \"507f1f77bcf86cd799439011\",\n    \"507f1f77bcf86cd799439012\"\n  ]\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Update Availability successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
-                }
-              ]
-            },
-            {
-              "name": "Update Product",
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/products/{{productID}}",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "products",
-                    "{{PRODUCTID}}"
-                  ],
-                  "variable": [
-                    {
-                      "key": "productID",
-                      "value": "{{PRODUCTID}}",
-                      "description": "ProductID"
-                    }
-                  ]
-                },
-                "description": "PUT /:productID\n\n\n📋 Request Body Fields:\n• ProductName: string (optional)\n• BrandID: string (optional)\n• CollectionID: string (optional)\n• CategoryID: string (optional)\n• RecipientID: string (optional)\n• Price: number (optional)\n• IsAvailable: boolean (optional)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"ProductName\": \"Submariner Date\",\n  \"BrandID\": \"507f1f77bcf86cd799439011\",\n  \"CollectionID\": \"507f1f77bcf86cd799439011\",\n  \"CategoryID\": \"507f1f77bcf86cd799439011\",\n  \"RecipientID\": \"507f1f77bcf86cd799439011\",\n  \"Price\": 25000,\n  \"IsAvailable\": false\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Update Product successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
-                }
-              ]
-            },
-            {
-              "name": "Delete Product",
-              "request": {
-                "method": "DELETE",
                 "header": [],
                 "url": {
-                  "raw": "{{BASE_URL}}/products/{{productID}}",
+                  "raw": "{{BASE_URL}}/products/{{productID}}/approve",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "products",
-                    "{{PRODUCTID}}"
+                    "{{PRODUCTID}}",
+                    "approve"
                   ],
                   "variable": [
                     {
@@ -3714,7 +5414,17 @@
                     }
                   ]
                 },
-                "description": "DELETE /:productID"
+                "description": "PUT /:productID/approve\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
               },
               "response": [
                 {
@@ -3727,7 +5437,81 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"message\": \"Delete Product successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"message\": \"Update Approve successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Reject",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/products/{{productID}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "products",
+                    "{{PRODUCTID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "productID",
+                      "value": "{{PRODUCTID}}",
+                      "description": "ProductID"
+                    }
+                  ]
+                },
+                "description": "PUT /:productID/reject\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Reject successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -4377,10 +6161,10 @@
                     "product-images"
                   ]
                 },
-                "description": "POST /\n\n\n📋 Request Body Fields:\n• ProductID: string (required)\n• ImageURLs: array (required)\n• key: string (optional)\n• AltText: string (optional)",
+                "description": "POST /\n\n\n📋 Request Body Fields:\n• ProductID: string (required)\n• ImageURLs: array (required)\n• key: string (optional)\n• IsPrimary: boolean (optional)\n• mediaType: string (optional)\n• AltText: string (optional)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"ProductID\": \"507f1f77bcf86cd799439011\",\n  \"ImageURLs\": [\n    {\n      \"url\": \"https://i.ibb.co/abc123/watch.jpg\",\n      \"key\": \"abc123\"\n    }\n  ],\n  \"key\": \"sample_string\",\n  \"AltText\": \"sample_string\"\n}",
+                  "raw": "{\n  \"ProductID\": \"507f1f77bcf86cd799439011\",\n  \"ImageURLs\": [\n    {\n      \"url\": \"https://i.ibb.co/abc123/watch.jpg\",\n      \"key\": \"abc123\"\n    }\n  ],\n  \"key\": \"sample_string\",\n  \"IsPrimary\": false,\n  \"mediaType\": \"image\",\n  \"AltText\": \"sample_string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -4581,10 +6365,10 @@
                     }
                   ]
                 },
-                "description": "PUT /:imageID\n\n\n📋 Request Body Fields:\n• ImageURL: string (optional)\n• key: string (optional)\n• IsPrimary: boolean (optional)\n• AltText: string (optional)",
+                "description": "PUT /:imageID\n\n\n📋 Request Body Fields:\n• ImageURL: string (optional)\n• key: string (optional)\n• IsPrimary: boolean (optional)\n• AltText: string (optional)\n• mediaType: string (optional)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"ImageURL\": \"https://i.ibb.co/abc123/watch.jpg\",\n  \"key\": \"sample_string\",\n  \"IsPrimary\": false,\n  \"AltText\": \"sample_string\"\n}",
+                  "raw": "{\n  \"ImageURL\": \"https://i.ibb.co/abc123/watch.jpg\",\n  \"key\": \"sample_string\",\n  \"IsPrimary\": false,\n  \"AltText\": \"sample_string\",\n  \"mediaType\": \"image\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -8645,6 +10429,62 @@
               ]
             },
             {
+              "name": "Static path — must precede \"/:offerID\" so \"all\" isn't treated as an id.",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/offers/all",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "offers",
+                    "all"
+                  ]
+                },
+                "description": "Static path — must precede \"/:offerID\" so \"all\" isn't treated as an id."
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Static path — must precede \\\"/:offerID\\\" so \\\"all\\\" isn't treated as an id. successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
               "name": "Get Offer",
               "request": {
                 "method": "GET",
@@ -8680,6 +10520,84 @@
                     }
                   ],
                   "body": "{\n  \"message\": \"Get Offer successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Status",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/offers/{{offerID}}/status",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "offers",
+                    "{{OFFERID}}",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "offerID",
+                      "value": "{{OFFERID}}",
+                      "description": "OfferID"
+                    }
+                  ]
+                },
+                "description": "PATCH /:offerID/status\n\n\n📋 Request Body Fields:\n• IsActive: boolean (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"IsActive\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Status successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -9170,6 +11088,326 @@
           ]
         },
         {
+          "name": "User Reviews",
+          "description": "User Reviews endpoints",
+          "item": [
+            {
+              "name": "Create User Review",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/user-reviews",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "user-reviews"
+                  ]
+                },
+                "description": "POST /\n\n\n📋 Request Body Fields:\n• ProductID: string (required)\n• Rating: number (required)\n• Subject: string (required)\n• Name: string (optional)\n• Email: string (required)\n• Comment: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ProductID\": \"507f1f77bcf86cd799439011\",\n  \"Rating\": 1,\n  \"Subject\": \"sample_string\",\n  \"Name\": \"sample_string\",\n  \"Email\": \"user@example.com\",\n  \"Comment\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create User Review successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get All User Reviews",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/user-reviews",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "user-reviews"
+                  ]
+                },
+                "description": "GET /"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get All User Reviews successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get User Review By User",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/user-reviews/user/{{userID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "user-reviews",
+                    "user",
+                    "{{USERID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userID",
+                      "value": "{{USERID}}",
+                      "description": "UserID"
+                    }
+                  ]
+                },
+                "description": "GET /user/:userID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get User Review By User successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get User Review",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/user-reviews/{{reviewID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "user-reviews",
+                    "{{REVIEWID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "reviewID",
+                      "value": "{{REVIEWID}}",
+                      "description": "ReviewID"
+                    }
+                  ]
+                },
+                "description": "GET /:reviewID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get User Review successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete User Review",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/user-reviews/{{reviewID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "user-reviews",
+                    "{{REVIEWID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "reviewID",
+                      "value": "{{REVIEWID}}",
+                      "description": "ReviewID"
+                    }
+                  ]
+                },
+                "description": "DELETE /:reviewID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Delete User Review successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "Site Content",
           "description": "Site Content endpoints",
           "item": [
@@ -9473,6 +11711,326 @@
                     }
                   ],
                   "body": "{\n  \"message\": \"Delete Site Content successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Contact",
+          "description": "Contact endpoints",
+          "item": [
+            {
+              "name": "Create Contact",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/contact",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "contact"
+                  ]
+                },
+                "description": "POST /\n\n\n📋 Request Body Fields:\n• name: string (required)\n• email: string (required)\n• phone: string (optional)\n• subject: string (optional)\n• message: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"sample_string\",\n  \"email\": \"user@example.com\",\n  \"phone\": \"+919876543210\",\n  \"subject\": \"sample_string\",\n  \"message\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create Contact successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get All Contact",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/contact",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "contact"
+                  ]
+                },
+                "description": "GET /"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get All Contact successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Contact",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/contact/{{id}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "contact",
+                    "{{ID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id"
+                    }
+                  ]
+                },
+                "description": "GET /:id"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Contact successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Read",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/contact/{{id}}/read",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "contact",
+                    "{{ID}}",
+                    "read"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id"
+                    }
+                  ]
+                },
+                "description": "PATCH /:id/read"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Read successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Contact",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/contact/{{id}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "contact",
+                    "{{ID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id"
+                    }
+                  ]
+                },
+                "description": "DELETE /:id"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Delete Contact successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -10210,6 +12768,1395 @@
                     }
                   ],
                   "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Wallet",
+          "description": "Wallet endpoints",
+          "item": [
+            {
+              "name": "Mounted at /wallet. Seller-only — the seller is taken from the JWT.",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/wallet",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "wallet"
+                  ]
+                },
+                "description": "Mounted at /wallet. Seller-only — the seller is taken from the JWT.\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Mounted at /wallet. Seller-only — the seller is taken from the JWT. successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Items",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/wallet/items",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "wallet",
+                    "items"
+                  ]
+                },
+                "description": "GET /items\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Items successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Bank Accounts",
+          "description": "Bank Accounts endpoints",
+          "item": [
+            {
+              "name": "Mounted at /bank-accounts. Seller-only; ownership scoped to the JWT.",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/bank-accounts",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "bank-accounts"
+                  ]
+                },
+                "description": "Mounted at /bank-accounts. Seller-only; ownership scoped to the JWT.\n\n\n🔐 Requires authentication (Bearer token)\n\n\n📋 Request Body Fields:\n• AccountHolderName: string (required)\n• AccountNumber: string (required)\n• IFSC: string (required)\n• BankName: string (required)\n• IsDefault: boolean (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"AccountHolderName\": \"sample_string\",\n  \"AccountNumber\": \"sample_string\",\n  \"IFSC\": \"sample_string\",\n  \"BankName\": \"sample_string\",\n  \"IsDefault\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Mounted at /bank-accounts. Seller-only; ownership scoped to the JWT. successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get All Bank Accounts",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/bank-accounts",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "bank-accounts"
+                  ]
+                },
+                "description": "GET /\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get All Bank Accounts successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Bank Account",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/bank-accounts/{{accountID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "bank-accounts",
+                    "{{ACCOUNTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountID",
+                      "value": "{{ACCOUNTID}}",
+                      "description": "AccountID"
+                    }
+                  ]
+                },
+                "description": "PUT /:accountID\n\n\n🔐 Requires authentication (Bearer token)\n\n\n📋 Request Body Fields:\n• AccountHolderName: string (optional)\n• AccountNumber: string (optional)\n• IFSC: string (optional)\n• BankName: string (optional)\n• IsDefault: boolean (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"AccountHolderName\": \"sample_string\",\n  \"AccountNumber\": \"sample_string\",\n  \"IFSC\": \"sample_string\",\n  \"BankName\": \"sample_string\",\n  \"IsDefault\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Bank Account successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Bank Account",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/bank-accounts/{{accountID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "bank-accounts",
+                    "{{ACCOUNTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountID",
+                      "value": "{{ACCOUNTID}}",
+                      "description": "AccountID"
+                    }
+                  ]
+                },
+                "description": "DELETE /:accountID\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Delete Bank Account successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Verify",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/bank-accounts/{{accountID}}/verify",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "bank-accounts",
+                    "{{ACCOUNTID}}",
+                    "verify"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountID",
+                      "value": "{{ACCOUNTID}}",
+                      "description": "AccountID"
+                    }
+                  ]
+                },
+                "description": "POST /:accountID/verify\n\n\n🔐 Requires authentication (Bearer token)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Verify successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Withdrawals",
+          "description": "Withdrawals endpoints",
+          "item": [
+            {
+              "name": "Get All Withdrawals",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/withdrawals",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "withdrawals"
+                  ]
+                },
+                "description": "GET /"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get All Withdrawals successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Pay",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/withdrawals/{{withdrawalID}}/pay",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "withdrawals",
+                    "{{WITHDRAWALID}}",
+                    "pay"
+                  ],
+                  "variable": [
+                    {
+                      "key": "withdrawalID",
+                      "value": "{{WITHDRAWALID}}",
+                      "description": "WithdrawalID"
+                    }
+                  ]
+                },
+                "description": "PUT /:withdrawalID/pay\n\n\n📋 Request Body Fields:\n• Reference: string (required)\n• Notes: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Reference\": \"sample_string\",\n  \"Notes\": \"Please deliver after 6 PM\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Pay successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Reject",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/withdrawals/{{withdrawalID}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "withdrawals",
+                    "{{WITHDRAWALID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "withdrawalID",
+                      "value": "{{WITHDRAWALID}}",
+                      "description": "WithdrawalID"
+                    }
+                  ]
+                },
+                "description": "PUT /:withdrawalID/reject\n\n\n📋 Request Body Fields:\n• Notes: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"Notes\": \"Please deliver after 6 PM\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Chat",
+          "description": "Chat endpoints",
+          "item": [
+            {
+              "name": "Create Threads",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads"
+                  ]
+                },
+                "description": "POST /threads\n\n\n📋 Request Body Fields:\n• productId: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"productId\": \"507f1f77bcf86cd799439011\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create Threads successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Threads",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads"
+                  ]
+                },
+                "description": "GET /threads"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Threads successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Messages",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads/{{threadId}}/messages",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads",
+                    "{{THREADID}}",
+                    "messages"
+                  ],
+                  "variable": [
+                    {
+                      "key": "threadId",
+                      "value": "{{THREADID}}",
+                      "description": "ThreadId"
+                    }
+                  ]
+                },
+                "description": "GET /threads/:threadId/messages"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Get Messages successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Messages",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads/{{threadId}}/messages",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads",
+                    "{{THREADID}}",
+                    "messages"
+                  ],
+                  "variable": [
+                    {
+                      "key": "threadId",
+                      "value": "{{THREADID}}",
+                      "description": "ThreadId"
+                    }
+                  ]
+                },
+                "description": "POST /threads/:threadId/messages\n\n\n📋 Request Body Fields:\n• text: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"text\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Create Messages successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Close",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/chat/threads/{{threadId}}/close",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "chat",
+                    "threads",
+                    "{{THREADID}}",
+                    "close"
+                  ],
+                  "variable": [
+                    {
+                      "key": "threadId",
+                      "value": "{{THREADID}}",
+                      "description": "ThreadId"
+                    }
+                  ]
+                },
+                "description": "PATCH /threads/:threadId/close"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Update Close successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Validation error\",\n  \"data\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"message\": \"Unauthorized\",\n  \"data\": null\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "GST",
+          "description": "Seller GST details — CRUD for own GST registration",
+          "item": [
+            {
+              "name": "Create GST Details",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/gst",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "gst"
+                  ]
+                },
+                "description": "POST /seller/gst\n\n🔐 Requires authentication\n\n📋 Request Body Fields:\n• GSTIN: string (required) — 15-char GST number\n• LegalBusinessName: string (required)\n• TradeName: string (optional)\n• BusinessType: string (optional) — Proprietorship | Partnership | Private Limited | LLP | Other\n• RegisteredAddress: string (optional)\n• State: string (optional)\n• PinCode: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"GSTIN\": \"27AAPFU0939F1ZV\",\n  \"LegalBusinessName\": \"Acme Watches Pvt Ltd\",\n  \"TradeName\": \"Acme Watches\",\n  \"BusinessType\": \"Private Limited\",\n  \"RegisteredAddress\": \"123 MG Road\",\n  \"State\": \"Maharashtra\",\n  \"PinCode\": \"400001\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Get GST Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/gst",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "gst"
+                  ]
+                },
+                "description": "GET /seller/gst\n\n🔐 Requires authentication"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Update GST Details",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/gst/{{gstID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "gst",
+                    "{{gstID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "gstID",
+                      "value": "{{GST_ID}}",
+                      "description": "GST record _id"
+                    }
+                  ]
+                },
+                "description": "PUT /seller/gst/:id\n\n🔐 Requires authentication\n\nUpdates GST record; resets IsVerified to false.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"LegalBusinessName\": \"Acme Watches Pvt Ltd Updated\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
+                }
+              ]
+            },
+            {
+              "name": "Delete GST Details",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{BASE_URL}}/gst/{{gstID}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "gst",
+                    "{{gstID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "gstID",
+                      "value": "{{GST_ID}}",
+                      "description": "GST record _id"
+                    }
+                  ]
+                },
+                "description": "DELETE /seller/gst/:id\n\n🔐 Requires authentication"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Success\",\"data\":{}}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Validation error\",\"data\":[]}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\"message\":\"Unauthorized\",\"data\":null}"
                 }
               ]
             }

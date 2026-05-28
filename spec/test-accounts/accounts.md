@@ -8,11 +8,11 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 ## Admin
 
-| Field    | Value                 |
-| -------- | --------------------- |
-| Email    | gowtham0794@gmail.com |
-| Password | 252318Gow@#           |
-| Role     | admin                 |
+| Field    | Value           |
+| -------- | --------------- |
+| Email    | admin@gmail.com |
+| Password | 252318Gow@#     |
+| Role     | admin           |
 
 **Capabilities:** Full platform access — user management, seller approval, order oversight, catalog management, commission configuration, withdrawals.
 
@@ -22,9 +22,10 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 **Capabilities:** List products, manage inventory, view orders, request withdrawals, manage bank account.
 
-| #   | Email                         | Password    | Store Name         |
-| --- | ----------------------------- | ----------- | ------------------ |
-| S1  | thetechnomaddiaries@gmail.com | 252318Gow@# | Technomad Horology |
+| #   | Email              | Password    | Store Name            |
+| --- | ------------------ | ----------- | --------------------- |
+| S1  | seller01@gmail.com | 252318Gow@# | Technomad Horology 01 |
+| S5  | seller05@gmail.com | 252318Gow@# | Technomad Horology 05 |
 
 ---
 
@@ -32,10 +33,23 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 **Capabilities:** Browse catalog, place orders, make offers, track orders, manage wallet.
 
-| #   | Email                  | Password    |
-| --- | ---------------------- | ----------- |
-| B1  | gowtham0794k@gmail.com | 252318Gow@# |
-| B2  | astriagk@gmail.com     | 252318Gow@# |
+| #   | Email             | Password    |
+| --- | ----------------- | ----------- |
+| B1  | buyer01@gmail.com | 252318Gow@# |
+| B2  | buyer02@gmail.com | 252318Gow@# |
+
+---
+
+## Seller GST Details
+
+| #   | GSTIN           | LegalBusinessName         | TradeName             | BusinessType | State       | PinCode |
+| --- | --------------- | ------------------------- | --------------------- | ------------ | ----------- | ------- |
+| S1  | 27AAPFT1234A1Z5 | Technomad Horology 01 LLP | Technomad Horology 01 | LLP          | Maharashtra | 400001  |
+| S2  | 29AAPFT5678B1Z3 | Technomad Horology 02 LLP | Technomad Horology 02 | LLP          | Karnataka   | 560001  |
+| S3  | 33AAPFT9012C1Z1 | Technomad Horology 03 LLP | Technomad Horology 03 | LLP          | Tamil Nadu  | 600001  |
+| S4  | 07AAPFT3456D1Z9 | Technomad Horology 04 LLP | Technomad Horology 04 | LLP          | Delhi       | 110001  |
+
+> GSTINs above follow valid Indian format (state code + PAN pattern + entity + Z + check). Use these only for test environment — not real GSTINs.
 
 ---
 

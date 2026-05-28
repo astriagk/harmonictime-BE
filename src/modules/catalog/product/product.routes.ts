@@ -1,5 +1,6 @@
 ﻿import { Router } from "express";
 import { validate } from "../../../shared/middlewares/validate.middleware";
+import { optionalAuthMiddleware } from "../../../shared/middlewares/auth.middleware";
 import {
   createProduct,
   getAllProducts,
@@ -20,7 +21,7 @@ const router: Router = Router();
 
 router.post("/", validate(createProductSchema), createProduct);
 router.get("/", getAllProducts);
-router.get("/:productID", getProductById);
+router.get("/:productID", optionalAuthMiddleware, getProductById);
 router.put("/availability", validate(updateAvailabilitySchema), updateProduct);
 router.put("/bulk-offer", validate(bulkOfferSchema), bulkUpdateProductOffer);
 router.put("/:productID", validate(updateProductSchema), editProduct);

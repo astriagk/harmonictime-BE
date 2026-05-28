@@ -52,6 +52,13 @@ export const env = {
   //                            Goes to the platform.
   // Hold days: how long after delivery a sale's amount is locked before it becomes withdrawable.
   BUYER_COMMISSION_RATE: Number(process.env.BUYER_COMMISSION_RATE ?? 0.02),
-  PLATFORM_COMMISSION_RATE: Number(process.env.PLATFORM_COMMISSION_RATE ?? 0.1),
+  PLATFORM_COMMISSION_RATE: Number(
+    process.env.PLATFORM_COMMISSION_RATE ?? 0.02,
+  ),
   PAYOUT_HOLD_DAYS: Number(process.env.PAYOUT_HOLD_DAYS ?? 7),
+
+  // GST: rate applied when a product price is marked as tax-inclusive.
+  // Threshold: seller must supply GST details once cumulative gross sales exceed this value.
+  GST_RATE: Number(process.env.GST_RATE ?? 18),
+  SELLER_GST_THRESHOLD: Number(process.env.SELLER_GST_THRESHOLD ?? 200000),
 };

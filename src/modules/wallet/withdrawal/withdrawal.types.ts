@@ -16,7 +16,9 @@ export interface Withdrawal {
   SellerID: ObjectId;
   BankAccountID: ObjectId;
   BankSnapshot: BankSnapshot;
-  Amount: number; // sum of covered earnings' NetAmount
+  Amount: number;               // sum of covered earnings' NetAmount
+  TotalGSTDeducted: number;     // sum of GSTAmount across covered earnings
+  FinalPayableAmount: number;   // Amount - TotalGSTDeducted (actual bank transfer amount)
   EarningIDs: ObjectId[];
   Status: WithdrawalStatus;
   Reference?: string; // UTR / bank txn id, captured on Paid

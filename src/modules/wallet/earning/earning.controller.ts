@@ -6,6 +6,8 @@ import { sendResponse } from "../../../shared/utils/apiResponse";
 import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { earningRepository } from "./earning.repository";
 import { EarningStatus } from "./earning.types";
+import { userRepository } from "../../users/user/user.repository";
+import { env } from "../../../shared/config/env";
 
 // The authenticated seller's id, from the JWT — never trusted from params/body.
 const sellerObjectId = (req: Request): ObjectId => {
@@ -14,6 +16,35 @@ const sellerObjectId = (req: Request): ObjectId => {
     throw ApiError.unauthorized("Invalid session");
   return new ObjectId(userId);
 };
+
+// GET /wallet/product-eligibility — checks if an individual seller has crossed
+// the GST threshold; frontend calls this before navigating to product creation.
+export const checkProductEligibility = asyncHandler(async (req: Request, res: Response) => {
+  const sellerId = sellerObjectId(req);
+  const user = await userRepository.findById(sellerId.toString());
+  if (!user) throw ApiError.unauthorized("Invalid session");
+
+  const [balances, totalGrossSales] = await Promise.all([
+    earningRepository.getBalances(sellerId),
+    earningRepository.getTotalGrossSales(sellerId),
+  ]);
+
+  if (user.accountType !== "individual") {
+    return sendResponse(res, HTTP_STATUS.OK, "Eligible to create products", {
+      canCreate: true,
+      availableBalance: balances.availableBalance,
+    });
+  }
+
+  const threshold = env.SELLER_GST_THRESHOLD;
+
+  return sendResponse(res, HTTP_STATUS.OK, "Eligibility checked", {
+    canCreate: totalGrossSales < threshold,
+    totalGrossSales,
+    threshold,
+    availableBalance: balances.availableBalance,
+  });
+});
 
 // GET /wallet — balance summary for the authenticated seller.
 export const getWallet = asyncHandler(async (req: Request, res: Response) => {
