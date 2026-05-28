@@ -256,7 +256,7 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       });
 
       const subtotal = lineItems.reduce((sum, i) => sum + i.amount, 0);
-      const gst = Math.round(subtotal * 0.18);
+      const gst = Math.round(subtotal * env.GST_RATE / 100);
 
       await sendTemplateEmail(
         buyer.email,

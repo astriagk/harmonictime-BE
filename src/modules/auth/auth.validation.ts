@@ -8,10 +8,13 @@ export const registerSchema = Joi.object({
     "any.only": "You must accept the terms and conditions",
     "any.required": "acceptedTerms is required",
   }),
-  accountType: Joi.string().valid("individual", "business").required().messages({
-    "any.only": "accountType must be 'individual' or 'business'",
-    "any.required": "accountType is required",
-  }),
+  accountType: Joi.string()
+    .valid("individual", "business")
+    .required()
+    .messages({
+      "any.only": "accountType must be 'individual' or 'business'",
+      "any.required": "accountType is required",
+    }),
 });
 
 export const loginSchema = Joi.object({
@@ -42,4 +45,17 @@ export const refreshTokenSchema = Joi.object({
 export const verifyTokenSchema = Joi.object({
   token: Joi.string().required(),
   refreshToken: Joi.string().optional(),
+});
+
+export const confirmEmailSchema = Joi.object({
+  token: Joi.string().required(),
+});
+
+export const resendVerificationSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
+export const updateUnverifiedEmailSchema = Joi.object({
+  currentEmail: Joi.string().email().required(),
+  newEmail: Joi.string().email().required(),
 });

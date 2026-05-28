@@ -40,11 +40,17 @@ export const authMiddleware = async (
       return;
     }
     if (user.status === "blocked") {
-      sendResponse(res, HTTP_STATUS.FORBIDDEN, "Your account has been blocked. Please contact support.");
+      sendResponse(res, HTTP_STATUS.FORBIDDEN, "Account blocked", {
+        blocked: true,
+        suspended: false,
+      });
       return;
     }
     if (user.status === "suspended") {
-      sendResponse(res, HTTP_STATUS.FORBIDDEN, "Your account has been temporarily suspended. Please contact support.");
+      sendResponse(res, HTTP_STATUS.FORBIDDEN, "Account suspended", {
+        blocked: false,
+        suspended: true,
+      });
       return;
     }
   } catch {

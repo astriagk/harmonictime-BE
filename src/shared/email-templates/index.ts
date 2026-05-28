@@ -11,3 +11,4 @@ export * from "./contactNotification.template";
 export * from "./accountStatus.template";
 export * from "./withdrawal.template";
 export * from "./orderConfirmation.template";
+export * from "./verifyEmail.template";
