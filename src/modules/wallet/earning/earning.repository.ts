@@ -41,12 +41,15 @@ class EarningRepository extends BaseRepository<SellerEarning> {
       const commission     = Math.round(effectivePrice * sellerRate);
       const netAmount      = effectivePrice - commission;
 
-      // GST reverse calculation: extract the tax portion from the inclusive price.
-      // Formula: GST = NetAmount × rate / (100 + rate)
-      const isTaxInclusive = p.IsPriceInclusiveOfTax ?? false;
-      const gstAmount      = isTaxInclusive
+      // Tax-inclusive: reverse-extract GST from netAmount (GST is already baked in).
+      // Tax-exclusive: add GST on top of netAmount (buyer pays it separately).
+      const isTaxInclusive   = p.IsPriceInclusiveOfTax ?? false;
+      const gstAmount        = isTaxInclusive
         ? Math.round(netAmount * gstRate / (100 + gstRate))
-        : 0;
+        : Math.round(netAmount * gstRate / 100);
+      const netAmountAfterGST = isTaxInclusive
+        ? netAmount - gstAmount
+        : netAmount + gstAmount;
 
       return {
         SellerID: p.UserID,
@@ -61,7 +64,7 @@ class EarningRepository extends BaseRepository<SellerEarning> {
         IsTaxInclusive: isTaxInclusive,
         GSTRate: gstRate,
         GSTAmount: gstAmount,
-        NetAmountAfterGST: netAmount - gstAmount,
+        NetAmountAfterGST: netAmountAfterGST,
         Status: "Pending",
         SaleDate: now,
         WithdrawalID: null,

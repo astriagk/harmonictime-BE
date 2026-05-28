@@ -24,8 +24,8 @@ export interface SellerEarning {
   // If IsTaxInclusive = false, GSTAmount = 0 and NetAmountAfterGST = NetAmount.
   IsTaxInclusive: boolean;         // copied from Product.IsPriceInclusiveOfTax
   GSTRate: number;                 // GST rate in % (default 18); stored for future rate changes
-  GSTAmount: number;               // reverse-calc: Math.round(NetAmount * GSTRate / (100 + GSTRate)) if inclusive
-  NetAmountAfterGST: number;       // NetAmount - GSTAmount (actual seller payout for this earning)
+  GSTAmount: number;               // inclusive: round(NetAmount × rate/(100+rate)); exclusive: round(NetAmount × rate/100)
+  NetAmountAfterGST: number;       // inclusive: NetAmount - GSTAmount; exclusive: NetAmount + GSTAmount
   Status: EarningStatus;
   SaleDate: Date;
   AvailableAt?: Date; // when it became Available (DeliveredAt + hold)
