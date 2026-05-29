@@ -39,8 +39,15 @@ const generateEmailVerificationToken = (): { raw: string; hashed: string } => {
 const OTP_TTL_MS = 10 * 60 * 1000;
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, phone, acceptedTerms, accountType, businessName } =
-    req.body;
+  const {
+    email,
+    password,
+    phone,
+    acceptedTerms,
+    accountType,
+    businessName,
+    redirectAfterVerification,
+  } = req.body;
 
   const existing = await userRepository.findByEmail(email);
   if (existing) throw ApiError.conflict("Email already exists");
@@ -63,6 +70,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     emailVerificationTokenExpiry: new Date(
       Date.now() + EMAIL_VERIFICATION_TTL_MS,
     ),
+    ...(redirectAfterVerification ? { postVerificationRedirect: redirectAfterVerification } : {}),
   });
 
   const assignedRole =
@@ -74,7 +82,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   });
 
   // Send verification email — best-effort; the mailer swallows its own errors.
-  await sendTemplateEmail(email, verifyEmailTemplate(rawToken, email));
+  await sendTemplateEmail(
+    email,
+    verifyEmailTemplate(rawToken, email),
+  );
 
   sendResponse(
     res,
@@ -416,6 +427,7 @@ export const confirmEmail = asyncHandler(
         $unset: {
           emailVerificationToken: "",
           emailVerificationTokenExpiry: "",
+          postVerificationRedirect: "",
         },
       },
     );
@@ -423,9 +435,10 @@ export const confirmEmail = asyncHandler(
     const roles = await userRoleRepository.findByUser(user._id!.toString());
 
     const redirectTo =
-      user.accountType === "business"
+      user.postVerificationRedirect ??
+      (user.accountType === "business"
         ? FRONTEND_ROUTES.POST_VERIFICATION_BUSINESS
-        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL;
+        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL);
 
     sendResponse(res, HTTP_STATUS.OK, "Email verified successfully", {
       token: accessToken,

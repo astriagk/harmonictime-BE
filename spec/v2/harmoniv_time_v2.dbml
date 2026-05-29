@@ -1,0 +1,619 @@
+// ============================================================================
+//  Harmoniv Time V2 — Watch Selling Marketplace (Multi-Product Catalog)
+//  MongoDB Database Design (DBML)
+// ----------------------------------------------------------------------------
+//  This is the authoritative V2 schema. It incorporates all V1 tables and
+//  extends the Catalog domain to support any product type beyond watches.
+//
+//  Key V2 changes vs V1:
+//    1. Products.ProductType  — discriminator field added
+//    2. ProductDetails        — fixed watch columns replaced by generic `attributes`
+//    3. ProductAttributeSchemas (NEW) — admin-managed per-type field definitions
+//    4. AttributeOptions (NEW) — unified enum lookup, replaces 5 watch-only tables
+//    5. DialColors / Movements / StrapMaterials / CaseMaterials / WatchMarkers
+//                             — DEPRECATED; data migrated to AttributeOptions
+//
+//  All other tables (Identity, Shopping, Commerce, Settlement, Reviews) are
+//  identical to V1.
+//
+//  Tip: paste into https://dbdiagram.io  or run
+//       npx @dbml/cli validate spec/v2/harmoniv_time_v2.dbml
+// ============================================================================
+
+Project harmoniv_time_v2 {
+  database_type: 'MongoDB'
+  Note: '''
+    # Harmoniv Time V2
+
+    A multi-category marketplace. V1 was watch-only; V2 makes the catalog
+    product-type-agnostic. An admin defines attribute schemas per product type
+    (watch, jewelry, apparel, …). Sellers fill in ProductDetails.attributes
+    according to the schema for their product type. Enum values are stored in
+    a single AttributeOptions collection.
+
+    ## Domains
+    - **Identity**    : Users, Roles, UserRoles, Address
+    - **Catalog**     : Products (+ ProductType) · ProductDescription ·
+                        ProductDetails (attributes map) · ProductImages ·
+                        DeliveryReturns · ProductAttributeSchemas (NEW) ·
+                        AttributeOptions (NEW) · plus unchanged lookups
+                        (Brands, Collections, Categories, Recipients,
+                        DeliveryOptions)
+    - **Shopping**    : Cart, Wishlist, RecentlyViewedProducts
+    - **Commerce**    : Checkout, CheckoutItems, Sales, Offers, Payments, Shipments
+    - **Settlement**  : SellerEarnings, SellerBankAccounts, Withdrawals
+    - **Reviews**     : Reviews, UserReviews
+
+    ## Deprecated (V1 watch-only lookup tables)
+    DialColors, Movements, StrapMaterials, CaseMaterials, WatchMarkers are
+    kept read-only during migration then dropped once all ProductDetails rows
+    are migrated to AttributeOptions.
+  '''
+}
+
+// ============================================================================
+//  DOMAIN: IDENTITY  (unchanged from V1)
+// ============================================================================
+
+Table Users {
+  _id           objectid    [pk]
+  email         string      [unique, not null]
+  password      string      [not null, note: 'bcrypt hash']
+  phone         string      [null]
+  status        string      [null, note: 'active (default) | blocked | suspended']
+  dateCreated   timestamp   [note: 'set to new Date() on register']
+  otp           string      [null, note: 'sha256 hash of OTP, transient']
+  otpExpiry     timestamp   [null, note: 'OTP valid 10 min']
+}
+
+Table Roles {
+  _id        objectid   [pk]
+  RoleID     int        [unique, not null, note: '1=admin, 3=customer']
+  RoleName   string     [unique, not null]
+}
+
+Table UserRoles {
+  _id          objectid   [pk]
+  UserRoleID   int
+  UserID       objectid   [not null]
+  RoleID       int        [not null, note: 'references Roles.RoleID (int)']
+
+  Note: 'On register a UserRoles row {RoleID:3} is auto-created for the new user.'
+}
+
+Table Address {
+  _id            objectid   [pk]
+  UserID         objectid   [not null]
+  FirstName      string     [not null]
+  LastName       string     [not null]
+  Country        string     [not null]
+  AddressLine1   string     [not null]
+  AddressLine2   string     [null]
+  City           string     [not null]
+  State          string     [not null]
+  PostalCode     string     [not null]
+  Phone          string     [not null]
+  orderNotes     string     [null]
+  IsDefault      boolean    [default: false]
+}
+
+// ============================================================================
+//  DOMAIN: CATALOG — core product  (V2 CHANGES: Products + ProductDetails)
+// ============================================================================
+
+Table Products {
+  _id              objectid    [pk]
+  UserID           objectid    [not null, note: 'seller']
+  ProductName      string      [not null]
+  ProductType      string      [not null, default: 'watch', note: '''
+    V2 discriminator. Must match a ProductAttributeSchemas.ProductType value.
+    Examples: watch | jewelry | apparel | accessory
+    Existing watch products default to "watch" during migration.
+  ''']
+  BrandID          objectid    [not null]
+  CollectionID     objectid    [null]
+  CategoryID       objectid    [not null]
+  RecipientID      objectid    [null]
+  Price            decimal     [not null]
+  Quantity         int         [not null, default: 1, note: 'total stock; RemainingQuantity = Quantity - SoldCount (derived)']
+  OfferID          objectid    [null]
+  IsAvailable      boolean     [default: true]
+  DateListed       timestamp
+  IsPriceInclusiveOfTax   boolean   [default: false]
+  ApprovalStatus   string      [not null, default: 'Pending', note: 'Pending | Approved | Rejected']
+  ApprovalNote     string      [null]
+  ApprovedBy       objectid    [null]
+  ApprovedAt       timestamp   [null]
+}
+
+Table ProductDescription {
+  _id                 objectid    [pk]
+  ProductID           objectid    [not null]
+  Title               string
+  Content             string
+  AdditionalDetails   string
+  CreatedAt           timestamp
+
+  Note: 'One-to-one with Products. Unchanged from V1.'
+}
+
+Table ProductDetails {
+  _id          objectid   [pk]
+  ProductID    objectid   [not null]
+  attributes   object     [not null, note: '''
+    V2: generic key-value map replacing fixed watch columns.
+    Shape is defined by ProductAttributeSchemas for the product''s ProductType.
+
+    Enum-ref keys store an ObjectId → AttributeOptions._id.
+    Free-text / numeric keys store the value inline.
+
+    Watch example (backward-compatible with V1 data after migration):
+    {
+      "dialColorId":            ObjectId,   // was DialColorID
+      "movementId":             ObjectId,   // was MovementID
+      "strapMaterialId":        ObjectId,   // was StrapMaterialID
+      "caseMaterialId":         ObjectId,   // was CaseMaterialID
+      "watchMarkerId":          ObjectId,   // was WatchMarkersID
+      "deliveryOptionId":       ObjectId,   // was DeliveryOptionID
+      "diameter":               "40mm",
+      "waterResistant":         "100m",
+      "manufacturerProductNumber": "AB-1234",
+      "guarantee":              "2 years"
+    }
+
+    Jewelry example:
+    {
+      "gemstoneId":    ObjectId,
+      "metalTypeId":   ObjectId,
+      "carat":         "18k",
+      "ringSize":      "7",
+      "weight":        "5g"
+    }
+
+    Enum refs inside attributes are resolved in application code via a single
+    $in lookup against AttributeOptions after reading ProductAttributeSchemas
+    to identify which keys are ObjectId refs.
+  ''']
+
+  Note: 'One-to-one with Products (joined by ProductID).'
+}
+
+Table ProductImages {
+  _id          objectid   [pk]
+  ProductID    objectid   [not null]
+  ImageURL     string     [not null, note: 'hosted on ImgBB']
+  key          string     [null, note: 'ImgBB delete key']
+  IsPrimary    boolean    [default: false]
+  AltText      string     [null]
+  mediaType    string     [null, note: 'image | video']
+
+  Note: 'One Products → many ProductImages. Unchanged from V1.'
+}
+
+Table DeliveryReturns {
+  _id                   objectid   [pk]
+  ProductID             objectid   [not null]
+  DeliveryInformation   string
+  ReturnsPolicy         string
+  CreatedAt             timestamp
+
+  Note: 'One-to-one with Products. Unchanged from V1.'
+}
+
+// ============================================================================
+//  DOMAIN: CATALOG — V2 new tables
+// ============================================================================
+
+Table ProductAttributeSchemas {
+  _id            objectid    [pk]
+  ProductType    string      [unique, not null, note: 'lowercase, no spaces — e.g. watch | jewelry | apparel']
+  DisplayName    string      [not null, note: 'UI label shown to sellers, e.g. "Watches"']
+  Attributes     array       [not null, note: '''
+    Ordered list of attribute descriptors. Each element:
+    {
+      key:           string,    // camelCase — matches key in ProductDetails.attributes
+      label:         string,    // seller-facing label
+      type:          string,    // "enum" | "text" | "number" | "boolean"
+      refCollection: string,    // only for type=enum: "AttributeOptions"
+      required:      boolean
+    }
+
+    Admin creates/edits these via POST|PUT /api/admin/product-attribute-schemas.
+    The Attributes array drives form rendering, server-side validation, and
+    enrichment-pipeline resolution (identifying which attributes.* keys hold
+    ObjectId refs vs inline values).
+  ''']
+  CreatedAt      timestamp
+  UpdatedAt      timestamp
+}
+
+Table AttributeOptions {
+  _id            objectid    [pk]
+  ProductType    string      [not null, note: 'scopes the option to a product type, e.g. watch']
+  AttributeKey   string      [not null, note: 'matches key in ProductAttributeSchemas.Attributes, e.g. dialColorId']
+  Value          string      [not null, note: 'display value, e.g. "Black", "Swiss ETA 2824"']
+  CreatedAt      timestamp
+
+  Note: '''
+    Unique index on (ProductType, AttributeKey, Value).
+    Unified replacement for the five V1 watch-only tables.
+
+    V1 migration:
+      DialColors.*      → ProductType="watch", AttributeKey="dialColorId"
+      Movements.*       → ProductType="watch", AttributeKey="movementId"
+      StrapMaterials.*  → ProductType="watch", AttributeKey="strapMaterialId"
+      CaseMaterials.*   → ProductType="watch", AttributeKey="caseMaterialId"
+      WatchMarkers.*    → ProductType="watch", AttributeKey="watchMarkerId"
+
+    After all ProductDetails rows are migrated, the five V1 tables are dropped.
+  '''
+}
+
+// ============================================================================
+//  DOMAIN: CATALOG — lookup / reference tables  (unchanged from V1)
+// ============================================================================
+
+Table Brands {
+  _id         objectid   [pk]
+  BrandName   string     [unique, not null]
+}
+
+Table Collections {
+  _id              objectid   [pk]
+  BrandID          objectid   [not null]
+  CollectionName   string     [unique, not null]
+}
+
+Table Categories {
+  _id            objectid   [pk]
+  CategoryName   string     [unique, not null]
+}
+
+Table Recipients {
+  _id             objectid   [pk]
+  RecipientName   string     [unique, not null]
+}
+
+Table DeliveryOptions {
+  _id                  objectid   [pk]
+  DeliveryOptionName   string     [unique, not null]
+}
+
+// ============================================================================
+//  DEPRECATED — V1 watch-only lookup tables
+//  Keep read-only during migration; drop after AttributeOptions migration.
+// ============================================================================
+
+Table DialColors {
+  _id             objectid   [pk]
+  DialColorName   string     [unique, not null]
+  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / dialColorId).'
+}
+
+Table Movements {
+  _id            objectid   [pk]
+  MovementName   string     [unique, not null]
+  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / movementId).'
+}
+
+Table StrapMaterials {
+  _id                 objectid   [pk]
+  StrapMaterialName   string     [unique, not null]
+  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / strapMaterialId).'
+}
+
+Table CaseMaterials {
+  _id                objectid   [pk]
+  CaseMaterialName   string     [unique, not null]
+  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / caseMaterialId).'
+}
+
+Table WatchMarkers {
+  _id               objectid   [pk]
+  WatchMarkerName   string     [unique, not null]
+  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / watchMarkerId).'
+}
+
+// ============================================================================
+//  DOMAIN: SHOPPING  (unchanged from V1)
+// ============================================================================
+
+Table Cart {
+  _id          objectid   [pk]
+  UserID       objectid   [not null]
+  ProductID    objectid   [not null]
+  Quantity     int        [null, default: 1]
+
+  Note: 'Unique (UserID, ProductID).'
+}
+
+Table Wishlist {
+  _id          objectid   [pk]
+  UserID       objectid   [not null]
+  ProductID    objectid   [not null]
+}
+
+Table RecentlyViewedProducts {
+  _id          objectid   [pk]
+  UserID       objectid   [not null]
+  ProductID    objectid   [not null]
+  ViewedAt     timestamp  [not null]
+
+  Note: 'Sorted newest-first (ViewedAt desc).'
+}
+
+// ============================================================================
+//  DOMAIN: COMMERCE  (unchanged from V1)
+// ============================================================================
+
+Table Checkout {
+  _id              objectid    [pk]
+  UserID           objectid    [not null]
+  AddressID        objectid    [not null]
+  TotalAmount      decimal     [not null]
+  PaymentStatus    string      [not null, note: 'Pending | Paid | Failed']
+  DeliveryStatus   string      [not null, note: 'Processing | Shipped | Delivered']
+  CheckoutDate     timestamp   [not null]
+  ProductIDs       string      [note: 'ARRAY of Product ObjectIds']
+
+  Note: 'Acts as the ORDER record (no separate Orders collection).'
+}
+
+Table CheckoutItems {
+  _id           objectid    [pk]
+  CheckoutID    objectid    [not null]
+  ProductIDs    string      [note: 'ARRAY of Product ObjectIds']
+  Price         decimal     [not null]
+  Quantity      int         [null]
+}
+
+Table Sales {
+  _id              objectid    [pk]
+  BuyerID          objectid    [not null]
+  SellerID         objectid    [not null]
+  ProductID        objectid    [not null]
+  OfferID          objectid    [null]
+  SaleDate         timestamp   [not null]
+  SalePrice        decimal     [not null]
+  DiscountAmount   decimal     [default: 0]
+  FinalPrice       decimal     [not null]
+}
+
+Table Offers {
+  _id                  objectid    [pk]
+  OfferName            string      [unique, not null]
+  Description          string      [null]
+  DiscountPercentage   decimal     [not null]
+  StartDate            timestamp   [not null]
+  EndDate              timestamp   [not null]
+  IsActive             boolean     [default: true]
+}
+
+Table Payments {
+  _id                 objectid    [pk]
+  CheckoutID          objectid    [not null]
+  UserID              objectid    [not null]
+  Amount              decimal     [not null]
+  Currency            string      [default: 'INR']
+  RazorpayOrderID     string      [null]
+  RazorpayPaymentID   string      [null]
+  RazorpaySignature   string      [null]
+  PaymentMethod       string      [null]
+  PaymentStatus       string      [not null, note: 'Created | Verified | Failed | RefundPending']
+  Receipt             string      [null]
+  PaidAt              timestamp   [null]
+  CreatedAt           timestamp
+}
+
+Table Shipments {
+  _id                 objectid    [pk]
+  CheckoutID          objectid    [not null]
+  SellerID            objectid    [not null]
+  Courier             string      [not null]
+  TrackingNumber      string      [not null]
+  TrackingURL         string      [null]
+  ShipmentStatus      string      [not null, note: 'Pending | Shipped | InTransit | OutForDelivery | Delivered']
+  ShippedAt           timestamp   [null]
+  EstimatedDelivery   timestamp   [null]
+  DeliveredAt         timestamp   [null]
+  Notes               string      [null]
+  CreatedAt           timestamp
+}
+
+// ============================================================================
+//  DOMAIN: SETTLEMENT  (unchanged from V1)
+// ============================================================================
+
+Table SellerEarnings {
+  _id                objectid    [pk]
+  SellerID           objectid    [not null]
+  CheckoutID         objectid    [not null]
+  ProductID          objectid    [not null]
+  GrossAmount        decimal     [not null]
+  CommissionRate     decimal     [not null]
+  CommissionAmount   decimal     [not null]
+  NetAmount          decimal     [not null]
+  Status             string      [not null, note: 'Pending | Available | Requested | Settled']
+  SaleDate           timestamp   [not null]
+  AvailableAt        timestamp   [null]
+  WithdrawalID       objectid    [null]
+  CreatedAt          timestamp
+}
+
+Table SellerBankAccounts {
+  _id                 objectid    [pk]
+  SellerID            objectid    [not null]
+  AccountHolderName   string      [not null]
+  AccountNumber       string      [not null]
+  IFSC                string      [not null]
+  BankName            string      [not null]
+  IsDefault           boolean     [default: false]
+  CreatedAt           timestamp
+}
+
+Table Withdrawals {
+  _id            objectid    [pk]
+  SellerID       objectid    [not null]
+  BankAccountID  objectid    [not null]
+  BankSnapshot   string      [null]
+  Amount         decimal     [not null]
+  EarningIDs     string      [note: 'ARRAY of SellerEarnings._id']
+  Status         string      [not null, note: 'Pending | Approved | Paid | Rejected']
+  Reference      string      [null]
+  Notes          string      [null]
+  RequestedAt    timestamp   [not null]
+  ProcessedAt    timestamp   [null]
+  ProcessedBy    objectid    [null]
+}
+
+// ============================================================================
+//  DOMAIN: REVIEWS  (unchanged from V1)
+// ============================================================================
+
+Table Reviews {
+  _id         objectid    [pk]
+  ProductID   objectid    [not null]
+  Rating      int         [not null, note: '1–5 stars']
+  Name        string      [not null]
+  Email       string      [not null]
+  Comment     string      [not null]
+  CreatedAt   timestamp
+}
+
+Table UserReviews {
+  _id         objectid    [pk]
+  UserID      objectid    [not null, note: 'seller being reviewed']
+  ProductID   objectid    [not null]
+  Rating      int         [not null, note: '1–5 stars']
+  Subject     string      [not null]
+  Name        string      [null]
+  Email       string      [not null]
+  Comment     string      [not null]
+  CreatedAt   timestamp
+}
+
+// ============================================================================
+//  RELATIONSHIPS
+// ============================================================================
+
+// --- Identity ---
+Ref: UserRoles.UserID > Users._id
+Ref: UserRoles.RoleID > Roles.RoleID
+Ref: Address.UserID  > Users._id
+
+// --- Catalog: product → lookups ---
+Ref: Products.UserID       > Users._id
+Ref: Products.BrandID      > Brands._id
+Ref: Products.CollectionID > Collections._id
+Ref: Products.CategoryID   > Categories._id
+Ref: Products.RecipientID  > Recipients._id
+Ref: Products.OfferID      > Offers._id
+Ref: Products.ApprovedBy   > Users._id
+Ref: Collections.BrandID   > Brands._id
+
+// --- Catalog: V2 type system ---
+Ref: Products.ProductType                > ProductAttributeSchemas.ProductType
+Ref: AttributeOptions.ProductType        > ProductAttributeSchemas.ProductType
+// ProductDetails.attributes.* → AttributeOptions._id resolved in application code
+
+// --- Catalog: product 1:1 / 1:N satellites ---
+Ref: ProductDescription.ProductID - Products._id
+Ref: ProductDetails.ProductID     - Products._id
+Ref: DeliveryReturns.ProductID    - Products._id
+Ref: ProductImages.ProductID      > Products._id
+
+// --- Shopping ---
+Ref: Cart.UserID                        > Users._id
+Ref: Cart.ProductID                     > Products._id
+Ref: Wishlist.UserID                    > Users._id
+Ref: Wishlist.ProductID                 > Products._id
+Ref: RecentlyViewedProducts.UserID      > Users._id
+Ref: RecentlyViewedProducts.ProductID   > Products._id
+
+// --- Commerce ---
+Ref: Checkout.UserID            > Users._id
+Ref: Checkout.AddressID         > Address._id
+Ref: CheckoutItems.CheckoutID   > Checkout._id
+Ref: Sales.BuyerID              > Users._id
+Ref: Sales.SellerID             > Users._id
+Ref: Sales.ProductID            > Products._id
+Ref: Sales.OfferID              > Offers._id
+Ref: Payments.CheckoutID        > Checkout._id
+Ref: Payments.UserID            > Users._id
+Ref: Shipments.CheckoutID       > Checkout._id
+Ref: Shipments.SellerID         > Users._id
+
+// --- Reviews ---
+Ref: Reviews.ProductID      > Products._id
+Ref: UserReviews.UserID     > Users._id
+Ref: UserReviews.ProductID  > Products._id
+
+// --- Settlement ---
+Ref: SellerEarnings.SellerID      > Users._id
+Ref: SellerEarnings.CheckoutID    > Checkout._id
+Ref: SellerEarnings.ProductID     > Products._id
+Ref: SellerEarnings.WithdrawalID  > Withdrawals._id
+Ref: SellerBankAccounts.SellerID  > Users._id
+Ref: Withdrawals.SellerID         > Users._id
+Ref: Withdrawals.BankAccountID    > SellerBankAccounts._id
+Ref: Withdrawals.ProcessedBy      > Users._id
+
+// ============================================================================
+//  TABLE GROUPS
+// ============================================================================
+
+TableGroup Identity {
+  Users
+  Roles
+  UserRoles
+  Address
+}
+
+TableGroup Catalog {
+  Products
+  ProductDescription
+  ProductDetails
+  ProductImages
+  DeliveryReturns
+  ProductAttributeSchemas
+  AttributeOptions
+  Brands
+  Collections
+  Categories
+  Recipients
+  DeliveryOptions
+}
+
+TableGroup CatalogDeprecated {
+  DialColors
+  Movements
+  StrapMaterials
+  CaseMaterials
+  WatchMarkers
+}
+
+TableGroup Shopping {
+  Cart
+  Wishlist
+  RecentlyViewedProducts
+}
+
+TableGroup Commerce {
+  Checkout
+  CheckoutItems
+  Sales
+  Offers
+  Payments
+  Shipments
+}
+
+TableGroup Settlement {
+  SellerEarnings
+  SellerBankAccounts
+  Withdrawals
+}
+
+TableGroup Reviews {
+  Reviews
+  UserReviews
+}

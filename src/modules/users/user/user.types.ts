@@ -28,4 +28,5 @@ export interface User {
   isEmailVerified?: boolean;
   emailVerificationToken?: string;  // SHA-256 hash of the raw token sent in the link
   emailVerificationTokenExpiry?: Date;
+  postVerificationRedirect?: string;
 }

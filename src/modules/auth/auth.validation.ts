@@ -15,6 +15,7 @@ export const registerSchema = Joi.object({
       "any.only": "accountType must be 'individual' or 'business'",
       "any.required": "accountType is required",
     }),
+  redirectAfterVerification: Joi.string().optional(),
 });
 
 export const loginSchema = Joi.object({
