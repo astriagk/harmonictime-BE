@@ -60,3 +60,14 @@ export const updateUnverifiedEmailSchema = Joi.object({
   currentEmail: Joi.string().email().required(),
   newEmail: Joi.string().email().required(),
 });
+
+export const sendMobileOTPSchema = Joi.object({
+  phone: Joi.string().required(),
+  countryCode: Joi.string().required(),
+});
+
+export const verifyMobileOTPSchema = Joi.object({
+  phone: Joi.string().required(),
+  countryCode: Joi.string().required(),
+  otp: Joi.string().required(),
+});

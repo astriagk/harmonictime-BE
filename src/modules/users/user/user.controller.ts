@@ -20,7 +20,14 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateUserById = asyncHandler(
   async (req: Request, res: Response) => {
-    const result = await userRepository.updateById(req.params.id, req.body);
+    const update = { ...req.body };
+    if (update.phone !== undefined) {
+      const current = await userRepository.findById(req.params.id);
+      if (!current) throw ApiError.notFound("User not found");
+      // Reset verification only when the phone number actually changes
+      if (update.phone !== current.phone) update.isPhoneVerified = false;
+    }
+    const result = await userRepository.updateById(req.params.id, update);
     if (result.matchedCount === 0) throw ApiError.notFound("User not found");
     sendResponse(res, HTTP_STATUS.OK, "User updated successfully");
   },

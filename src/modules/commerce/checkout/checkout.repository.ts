@@ -93,6 +93,8 @@ class CheckoutRepository extends BaseRepository<Checkout> {
       {
         $group: {
           _id: "$_id",
+          OrderID: { $first: "$OrderID" },
+          OrderItems: { $first: "$OrderItems" },
           TotalAmount: { $first: "$TotalAmount" },
           PaymentStatus: { $first: "$PaymentStatus" },
           CheckoutDate: { $first: "$CheckoutDate" },
@@ -132,6 +134,7 @@ class CheckoutRepository extends BaseRepository<Checkout> {
                 ],
               },
               ImageURL: "$PrimaryImage.ImageURL",
+              IsPriceInclusiveOfTax: "$Products.IsPriceInclusiveOfTax",
             },
           },
         },
@@ -213,6 +216,8 @@ class CheckoutRepository extends BaseRepository<Checkout> {
       },
       {
         $project: {
+          OrderID: 1,
+          OrderItems: 1,
           TotalAmount: 1,
           PaymentStatus: 1,
           DeliveryStatus: 1,
