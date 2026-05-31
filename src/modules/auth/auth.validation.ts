@@ -15,6 +15,7 @@ export const registerSchema = Joi.object({
       "any.only": "accountType must be 'individual' or 'business'",
       "any.required": "accountType is required",
     }),
+  redirectAfterVerification: Joi.string().optional(),
 });
 
 export const loginSchema = Joi.object({
@@ -58,4 +59,15 @@ export const resendVerificationSchema = Joi.object({
 export const updateUnverifiedEmailSchema = Joi.object({
   currentEmail: Joi.string().email().required(),
   newEmail: Joi.string().email().required(),
+});
+
+export const sendMobileOTPSchema = Joi.object({
+  phone: Joi.string().required(),
+  countryCode: Joi.string().required(),
+});
+
+export const verifyMobileOTPSchema = Joi.object({
+  phone: Joi.string().required(),
+  countryCode: Joi.string().required(),
+  otp: Joi.string().required(),
 });

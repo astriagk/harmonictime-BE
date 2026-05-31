@@ -8,6 +8,7 @@ import { checkoutRepository } from "./checkout.repository";
 import { userRepository } from "../../users/user/user.repository";
 import { addressRepository } from "../../users/address/address.repository";
 import { productRepository } from "../../catalog/product/product.repository";
+import { generateOrderID, generateItemID } from "../../../shared/utils/orderIdGenerator";
 
 export const createCheckout = asyncHandler(async (req: Request, res: Response) => {
   const { UserID, AddressID, TotalAmount, PaymentStatus, DeliveryStatus, CheckoutDate, ProductIDs } =
@@ -28,16 +29,29 @@ export const createCheckout = asyncHandler(async (req: Request, res: Response) =
       issues
     );
 
+  const productObjectIDs = (ProductIDs as string[]).map((id) => new ObjectId(id));
+  const orderID = generateOrderID();
+  const orderItems = productObjectIDs.map((pid) => ({
+    ProductID: pid,
+    OrderItemID: generateItemID(),
+  }));
+
   const result = await checkoutRepository.insertOne({
+    OrderID: orderID,
     UserID: new ObjectId(UserID),
     AddressID: new ObjectId(AddressID),
     TotalAmount,
     PaymentStatus,
     DeliveryStatus,
     CheckoutDate: new Date(CheckoutDate),
-    ProductIDs: (ProductIDs as string[]).map((id) => new ObjectId(id)),
+    ProductIDs: productObjectIDs,
+    OrderItems: orderItems,
   });
-  sendResponse(res, HTTP_STATUS.CREATED, "Checkout created successfully", result);
+  sendResponse(res, HTTP_STATUS.CREATED, "Checkout created successfully", {
+    ...result,
+    OrderID: orderID,
+    OrderItems: orderItems,
+  });
 });
 
 export const getCheckoutById = asyncHandler(async (req: Request, res: Response) => {

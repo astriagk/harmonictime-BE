@@ -11,6 +11,7 @@ export interface OrderConfirmationItem {
   offerPercentage: number;
   offerAmount: number;
   amount: number;
+  isTaxInclusive: boolean;
 }
 
 export interface OrderConfirmationData {
@@ -59,6 +60,7 @@ function itemRows(items: OrderConfirmationItem[]): string {
       </td>
       <td style="padding:14px 12px;font-size:14px;font-weight:bold;color:#18181b;text-align:right;border-bottom:1px solid #f4f4f5;">
         ${fmt(item.amount)}
+        ${item.isTaxInclusive ? `<span style="display:block;font-size:10px;font-weight:normal;color:#71717a;">incl. GST</span>` : ""}
       </td>
     </tr>`
     )
@@ -196,7 +198,9 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
                       </tr>
                       <tr>
                         <td style="padding:5px 0;font-size:13px;color:#18181b;">GST (18%)</td>
-                        <td style="padding:5px 0;font-size:13px;color:#18181b;text-align:right;">${fmt(data.gst)}</td>
+                        <td style="padding:5px 0;font-size:13px;color:#18181b;text-align:right;">
+                          ${data.gst > 0 ? fmt(data.gst) : `<span style="font-style:italic;color:#71717a;">Included in price</span>`}
+                        </td>
                       </tr>
                       <tr>
                         <td colspan="2" style="padding-top:8px;">
@@ -250,7 +254,7 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
       itemLines,
       ``,
       `Subtotal: ${fmt(data.subtotal)}`,
-      `GST (18%): ${fmt(data.gst)}`,
+      `GST (18%): ${data.gst > 0 ? fmt(data.gst) : "Included in price"}`,
       `Total Amount Paid: ${fmt(data.total)}`,
       ``,
       `Thank you for shopping with ${BRAND_NAME}. Contact us at ${BRAND_EMAIL} for any questions.`,

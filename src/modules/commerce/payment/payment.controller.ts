@@ -18,6 +18,7 @@ import { cartRepository } from "../../shopping/cart/cart.repository";
 import { sendTemplateEmail } from "../../../shared/services/email.service";
 import { orderConfirmationEmail } from "../../../shared/email-templates";
 import logger from "../../../shared/utils/logger";
+import { generateOrderID, generateItemID } from "../../../shared/utils/orderIdGenerator";
 
 // Create a Razorpay order for a checkout. The address + checkout data is stashed
 // as a draft on a pending Payment record and is NOT written to the Address /
@@ -166,7 +167,15 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   }
 
   // 2. Create the checkout referencing the new address.
+  const orderedProductIDs = draft.checkout.ProductIDs.map((id) => new ObjectId(id));
+  const orderID = generateOrderID();
+  const orderItems = orderedProductIDs.map((pid) => ({
+    ProductID: pid,
+    OrderItemID: generateItemID(),
+  }));
+
   const checkoutResult = await checkoutRepository.insertOne({
+    OrderID: orderID,
     UserID: payment.UserID,
     AddressID,
     TotalAmount: draft.checkout.TotalAmount,
@@ -175,7 +184,8 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
     CheckoutDate: draft.checkout.CheckoutDate
       ? new Date(draft.checkout.CheckoutDate)
       : new Date(),
-    ProductIDs: draft.checkout.ProductIDs.map((id) => new ObjectId(id)),
+    ProductIDs: orderedProductIDs,
+    OrderItems: orderItems,
   });
   const CheckoutID = checkoutResult.insertedId;
 
@@ -252,16 +262,21 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
           offerPercentage,
           offerAmount,
           amount,
+          isTaxInclusive: p.IsPriceInclusiveOfTax ?? false,
         };
       });
 
       const subtotal = lineItems.reduce((sum, i) => sum + i.amount, 0);
-      const gst = Math.round(subtotal * env.GST_RATE / 100);
+      // GST is charged only on items whose price does not already include tax.
+      const taxExclusiveSubtotal = lineItems
+        .filter((i) => !i.isTaxInclusive)
+        .reduce((sum, i) => sum + i.amount, 0);
+      const gst = Math.round(taxExclusiveSubtotal * env.GST_RATE / 100);
 
       await sendTemplateEmail(
         buyer.email,
         orderConfirmationEmail({
-          invoiceNumber: CheckoutID.toString(),
+          invoiceNumber: orderID,
           buyerEmail: buyer.email,
           buyerName: `${resolvedAddress.FirstName} ${resolvedAddress.LastName}`,
           buyerPhone: resolvedAddress.Phone,
@@ -288,6 +303,11 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   sendResponse(res, HTTP_STATUS.OK, "Payment verified successfully", {
     CheckoutID,
     AddressID,
+    OrderID: orderID,
+    OrderItems: orderItems.map((item) => ({
+      ProductID: item.ProductID,
+      OrderItemID: item.OrderItemID,
+    })),
   });
 });
 
