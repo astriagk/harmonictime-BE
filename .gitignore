@@ -4,3 +4,4 @@
 /logs
 /uploads
 /dist
+.env

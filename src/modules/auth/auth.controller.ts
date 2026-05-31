@@ -18,7 +18,11 @@ import {
   FRONTEND_ROUTES,
 } from "../../shared/constants/frontend";
 import { sendTemplateEmail } from "../../shared/services/email.service";
-import { sendSMS } from "../../shared/services/sms.service";
+import {
+  sendSMS,
+  sendMobileOTP as sendMobileOTPService,
+  verifyMobileOTP as verifyMobileOTPService,
+} from "../../shared/services/sms.service";
 import {
   welcomeEmail,
   passwordResetOtpEmail,
@@ -39,8 +43,15 @@ const generateEmailVerificationToken = (): { raw: string; hashed: string } => {
 const OTP_TTL_MS = 10 * 60 * 1000;
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, phone, acceptedTerms, accountType, businessName } =
-    req.body;
+  const {
+    email,
+    password,
+    phone,
+    acceptedTerms,
+    accountType,
+    businessName,
+    redirectAfterVerification,
+  } = req.body;
 
   const existing = await userRepository.findByEmail(email);
   if (existing) throw ApiError.conflict("Email already exists");
@@ -59,10 +70,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     accountType: accountType ?? "individual",
     ...(accountType === "business" && businessName ? { businessName } : {}),
     isEmailVerified: false,
+    isPhoneVerified: false,
     emailVerificationToken: hashedToken,
     emailVerificationTokenExpiry: new Date(
       Date.now() + EMAIL_VERIFICATION_TTL_MS,
     ),
+    ...(redirectAfterVerification ? { postVerificationRedirect: redirectAfterVerification } : {}),
   });
 
   const assignedRole =
@@ -74,7 +87,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   });
 
   // Send verification email — best-effort; the mailer swallows its own errors.
-  await sendTemplateEmail(email, verifyEmailTemplate(rawToken, email));
+  await sendTemplateEmail(
+    email,
+    verifyEmailTemplate(rawToken, email),
+  );
 
   sendResponse(
     res,
@@ -416,6 +432,7 @@ export const confirmEmail = asyncHandler(
         $unset: {
           emailVerificationToken: "",
           emailVerificationTokenExpiry: "",
+          postVerificationRedirect: "",
         },
       },
     );
@@ -423,9 +440,10 @@ export const confirmEmail = asyncHandler(
     const roles = await userRoleRepository.findByUser(user._id!.toString());
 
     const redirectTo =
-      user.accountType === "business"
+      user.postVerificationRedirect ??
+      (user.accountType === "business"
         ? FRONTEND_ROUTES.POST_VERIFICATION_BUSINESS
-        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL;
+        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL);
 
     sendResponse(res, HTTP_STATUS.OK, "Email verified successfully", {
       token: accessToken,
@@ -472,6 +490,49 @@ export const resendVerification = asyncHandler(
     sendResponse(res, HTTP_STATUS.OK, genericMsg);
   },
 );
+
+// Formats phone + countryCode into an E.164 string (+{cc}{number})
+const toE164 = (phone: string, countryCode: string): string =>
+  `+${countryCode.replace(/^\+/, "")}${phone}`;
+
+export const sendMobileOTP = asyncHandler(async (req: Request, res: Response) => {
+  const { phone, countryCode } = req.body;
+  try {
+    await sendMobileOTPService(toE164(phone, countryCode));
+  } catch (err: any) {
+    // Twilio error 20003 = bad credentials; others = delivery failure
+    const msg =
+      err?.status === 20003
+        ? "SMS service authentication failed. Check Twilio credentials."
+        : `Failed to send OTP: ${err?.message ?? "unknown error"}`;
+    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, msg);
+  }
+  sendResponse(res, HTTP_STATUS.OK, "OTP sent to mobile number");
+});
+
+export const verifyMobileOTP = asyncHandler(async (req: Request, res: Response) => {
+  const { phone, countryCode, otp } = req.body;
+  const e164 = toE164(phone, countryCode);
+
+  let approved: boolean;
+  try {
+    approved = await verifyMobileOTPService(e164, otp);
+  } catch (err: any) {
+    const msg =
+      err?.status === 20003
+        ? "SMS service authentication failed. Check Twilio credentials."
+        : `OTP verification failed: ${err?.message ?? "unknown error"}`;
+    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, msg);
+  }
+
+  if (!approved) throw ApiError.badRequest("Invalid or expired OTP");
+
+  await userRepository.updateById(req.user!.userId, { isPhoneVerified: true } as any);
+
+  sendResponse(res, HTTP_STATUS.OK, "Mobile number verified successfully", {
+    verified: true,
+  });
+});
 
 export const updateUnverifiedEmail = asyncHandler(
   async (req: Request, res: Response) => {
