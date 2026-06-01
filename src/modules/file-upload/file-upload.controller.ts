@@ -55,6 +55,34 @@ export const uploadSingleImage = asyncHandler(
   }
 );
 
+// Upload GST supporting documents (images or PDFs) to S3 under
+// gst-documents/<userID>/ and return their hosted URLs + S3 keys.
+// Multipart field `documents` (up to 5 files). Requires auth so the folder is
+// keyed by the authenticated seller — not a user-supplied value.
+export const uploadGSTDocuments = asyncHandler(
+  async (req: Request, res: Response) => {
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (!files || files.length === 0) throw ApiError.badRequest("No files uploaded");
+
+    const userId = req.user?.userId;
+    if (!userId) throw ApiError.unauthorized("Invalid session");
+
+    const folder = buildFolder("gst-documents", userId);
+
+    const results = await Promise.all(
+      files.map(async (file) => {
+        const url = await uploadFile(file, folder);
+        // Extract the S3 object key from the returned URL so callers can store it
+        // alongside the URL for efficient deletion later.
+        const key = new URL(url).pathname.substring(1);
+        return { url, key };
+      })
+    );
+
+    sendResponse(res, HTTP_STATUS.OK, "Documents uploaded successfully", { documents: results });
+  }
+);
+
 // Delete a hosted image. `imageId` is the S3 object key or full URL (the same
 // value the frontend received as a `url`). S3 deletes are idempotent.
 export const deleteImage = asyncHandler(async (req: Request, res: Response) => {

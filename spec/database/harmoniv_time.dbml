@@ -45,14 +45,29 @@ Project harmoniv_time {
 // ============================================================================
 
 Table Users {
-  _id           objectid    [pk]
-  email         string      [unique, not null]
-  password      string      [not null, note: 'bcrypt hash']
-  phone         string      [null]
-  status        string      [null, note: 'active (default) | blocked | suspended. Enforced in authMiddleware — blocked/suspended users are rejected on every authenticated request. Set by admin via PUT /api/admin/users/:id/block|unblock|suspend.']
-  dateCreated   timestamp   [note: 'set to new Date() on register']
-  otp           string      [null, note: 'sha256 hash of OTP, transient']
-  otpExpiry     timestamp   [null, note: 'OTP valid 10 min']
+  _id                              objectid    [pk]
+  email                            string      [unique, not null]
+  password                         string      [not null, note: 'bcrypt hash']
+  phone                            string      [null]
+  status                           string      [null, note: 'active (default) | blocked | suspended. Enforced in authMiddleware — blocked/suspended users are rejected on every authenticated request. Set by admin via PUT /api/admin/users/:id/block|unblock|suspend.']
+  dateCreated                      timestamp   [note: 'set to new Date() on register']
+  otp                              string      [null, note: 'sha256 hash of OTP, transient']
+  otpExpiry                        timestamp   [null, note: 'OTP valid 10 min']
+  refreshTokenHash                 string      [null, note: 'bcrypt hash of latest refresh token']
+  acceptedTerms                    boolean     [null]
+  termsAcceptedAt                  timestamp   [null]
+  profilePicUrl                    string      [null]
+  accountType                      string      [null, note: 'individual | business']
+  businessName                     string      [null]
+  sellerVerificationStatus         string      [null, note: 'Unverified | Pending | Approved | Rejected | Resubmitted']
+  sellerVerificationNote           string      [null, note: 'admin note shown to seller on Rejected or request-info']
+  sellerVerifiedBy                 objectid    [null, note: 'admin user who last changed verification status']
+  sellerVerifiedAt                 timestamp   [null]
+  isEmailVerified                  boolean     [null, default: false]
+  isPhoneVerified                  boolean     [null, default: false]
+  emailVerificationToken           string      [null, note: 'SHA-256 hash of raw token sent in verification link']
+  emailVerificationTokenExpiry     timestamp   [null]
+  postVerificationRedirect         string      [null, note: 'URL to redirect after email verification (e.g. /checkout)']
 
   Note: '''
     Created via POST /api/users/register (validated: email + password>=8).
@@ -99,31 +114,64 @@ Table Address {
   '''
 }
 
+Table SellerGSTDetails {
+  _id                  objectid   [pk]
+  UserID               objectid   [not null, note: 'seller who submitted these details']
+  GSTIN                string     [unique, not null, note: '15-char Indian GSTIN']
+  LegalBusinessName    string     [not null]
+  TradeName            string     [null]
+  BusinessType         string     [null, note: 'Proprietorship | Partnership | Private Limited | LLP | Other']
+  RegisteredAddress    string     [null]
+  State                string     [null]
+  PinCode              string     [null, note: '6-digit Indian pin code']
+  Documents            string     [null, note: 'ARRAY of { url, key, documentType } objects. documentType: GSTCertificate | AddressProof | PANCard | CancelledCheque | BankStatement | Other']
+  IsVerified           boolean    [default: false, note: 'set to true by admin via PUT /api/admin/gst/:id/verify; reset to false on every seller update']
+  CreatedAt            timestamp
+  UpdatedAt            timestamp
+
+  Note: '''
+    One seller → one GST record. GSTIN is globally unique across all sellers.
+    Submitted via POST /api/gst (seller) or POST /api/gst/with-documents (multipart).
+    Updated via PUT /api/gst/:id or PUT /api/gst/:id/with-documents.
+    Admin verifies via PUT /api/admin/gst/:id/verify.
+    Documents is an embedded array (not a separate collection) — no joins needed.
+  '''
+}
+
 // ============================================================================
 //  DOMAIN: CATALOG — core product
 // ============================================================================
 
 Table Products {
-  _id            objectid    [pk]
-  UserID         objectid    [not null, note: 'seller']
-  ProductName    string      [not null]
-  BrandID        objectid    [not null]
-  CollectionID   objectid    [not null]
-  CategoryID     objectid    [not null]
-  RecipientID    objectid    [not null]
-  Price          decimal     [not null]
-  Quantity       int         [not null, default: 1, note: 'total stock for the listing; same _id backs every unit. Units sold = occurrences across paid Checkouts; RemainingQuantity = Quantity - SoldCount (derived in getEnrichedWithStatus).']
-  OfferID        objectid    [null, note: 'optional promotional offer attached to this product; assign/clear via product edit or PUT /api/products/bulk-offer']
-  IsAvailable    boolean     [default: true]
-  DateListed     timestamp
+  _id                     objectid    [pk]
+  UserID                  objectid    [not null, note: 'seller']
+  ProductName             string      [not null]
+  BrandID                 objectid    [not null]
+  CollectionID            objectid    [not null]
+  CategoryID              objectid    [not null]
+  RecipientID             objectid    [not null]
+  Price                   decimal     [not null]
+  Quantity                int         [not null, default: 1, note: 'total stock for the listing; same _id backs every unit. RemainingQuantity = Quantity - SoldCount (derived in getEnrichedWithStatus by counting occurrences across paid Checkouts).']
+  OfferID                 objectid    [null, note: 'optional promotional offer; assign/clear via product edit or PUT /api/products/bulk-offer']
+  IsAvailable             boolean     [default: true]
+  IsPriceInclusiveOfTax   boolean     [not null, note: 'whether the listed Price already includes 18% GST']
+  ApprovalStatus          string      [not null, default: 'Pending', note: 'Pending | Approved | Rejected — admin-moderated; reset to Pending on any edit']
+  DateListed              timestamp
 
   Note: '''
+    Derived (read-only, not stored) fields returned by getEnrichedWithStatus():
+      SoldCount         – count of this product across all Paid Checkouts
+      RemainingQuantity – max(Quantity - SoldCount, 0)
+      Status            – "Available" | "Sold" | "Unavailable"
+      IsSold            – SoldCount > 0
+
+    GET /products        → uses getEnrichedWithStatus (includes stock fields)
+    GET /products/:id    → uses getEnrichedWithStatus (includes stock fields)
+    POST /products/check-availability → pre-flight stock check for checkout page
+
     // FIXME: BrandID / CollectionID / CategoryID / RecipientID are stored as
-    //        STRINGS in the code, so productController aggregations must wrap
-    //        them in $toObjectId. Modelled here as objectid (the correct form).
-    // FIXME: deleteProduct matches { ProductID: <int> } but documents have no
-    //        ProductID field (PK is _id) — delete by id never matches.
-    // Quantity/OfferID added: products predating Quantity read as 1 (via $ifNull).
+    //        STRINGS in the code, so aggregations wrap them in $toObjectId.
+    //        Modelled here as objectid (the correct form).
   '''
 }
 
@@ -162,12 +210,13 @@ Table ProductDetails {
 Table ProductImages {
   _id          objectid   [pk]
   ProductID    objectid   [not null]
-  ImageURL     string     [not null, note: 'hosted on ImgBB']
-  key          string     [null, note: 'ImgBB delete key']
+  ImageURL     string     [not null, note: 'hosted on S3']
+  key          string     [null, note: 'S3 object key for deletion']
   IsPrimary    boolean    [default: false, note: 'first uploaded image = primary']
   AltText      string     [null]
+  mediaType    string     [null, note: 'image (default) | video']
 
-  Note: 'One Products → many ProductImages. Uploaded via POST /api/products/upload-images.'
+  Note: 'One Products → many ProductImages. Uploaded via POST /api/product-images.'
 }
 
 Table DeliveryReturns {
@@ -250,9 +299,16 @@ Table Cart {
   _id          objectid   [pk]
   UserID       objectid   [not null]
   ProductID    objectid   [not null]
-  Quantity     int        [null, default: 1, note: 'set/updated via PUT /api/cart/:cartID']
+  Quantity     int        [null, default: 1, note: 'units the buyer wants; validated against Products.RemainingQuantity on add and update — returns 400 if Quantity > RemainingQuantity']
 
-  Note: 'Unique (UserID, ProductID) — code rejects adding a duplicate product.'
+  Note: '''
+    Unique (UserID, ProductID) — code rejects adding a duplicate product.
+    Stock is re-checked at add (POST /api/cart) and update (PUT /api/cart/:cartID).
+    GET /api/cart/user/:userID returns RemainingQuantity per item so the cart
+    page can cap the quantity stepper without an extra request.
+    When building the checkout ProductIDs array, expand Quantity: repeat the
+    ProductID N times (e.g. Quantity=3 → [id, id, id]).
+  '''
 }
 
 Table Wishlist {
@@ -282,19 +338,24 @@ Table RecentlyViewedProducts {
 // ============================================================================
 
 Table Checkout {
-  _id              objectid    [pk]
-  UserID           objectid    [not null]
-  AddressID        objectid    [not null]
-  TotalAmount      decimal     [not null]
-  PaymentStatus    string      [not null, note: 'e.g. Pending / Paid / Failed']
-  DeliveryStatus   string      [not null, note: 'e.g. Processing / Shipped / Delivered']
-  CheckoutDate     timestamp   [not null]
-  ProductIDs       string      [note: 'ARRAY of Product ObjectIds (DBML has no array-ref type). See Ref note below.']
+  _id                   objectid    [pk]
+  OrderID               string      [not null, note: 'human-readable order ID, e.g. ORD-20260601-J6RJW6S; generated by generateOrderID()']
+  UserID                objectid    [not null]
+  AddressID             objectid    [not null]
+  TotalAmount           decimal     [not null]
+  PaymentStatus         string      [not null, note: 'Pending | Paid | Failed']
+  DeliveryStatus        string      [not null, note: 'Pending | Processing | Shipped | Delivered']
+  CheckoutDate          timestamp   [not null]
+  ProductIDs            string      [note: 'ARRAY of Product ObjectIds — one entry per unit (qty=3 → 3 entries of same id). DBML has no array-ref type.']
+  OrderItems            string      [note: 'ARRAY of embedded objects: { ProductID: ObjectId, OrderItemID: string }. OrderItemID generated by generateItemID(), e.g. ITM-B3F8YF.']
+  SellerConfirmations   string      [note: 'ARRAY of embedded objects: { SellerID: ObjectId, Status: "Pending"|"Approved"|"Rejected", Reason?: string, UpdatedAt: Date }. Auto-populated at checkout creation with one entry per unique seller; sellers approve/reject via PUT /api/checkout/seller/:sellerID/order/:checkoutID/approval.']
 
   Note: '''
     Acts as the ORDER record (no separate Orders collection).
-    ProductIDs is an array → resolved in code via $map + $toObjectId then
-    $lookup into Products. See "Checkout.ProductIDs (array)" ref note.
+    ProductIDs is a flat array — quantity > 1 is represented by repeating the
+    ProductID. OrderItems parallels ProductIDs linking each unit to a unique
+    OrderItemID. SellerConfirmations tracks per-seller approval state; all start
+    as "Pending" and each seller must approve before the order is dispatched.
   '''
 }
 
@@ -430,6 +491,10 @@ Table SellerBankAccounts {
   IFSC                string      [not null]
   BankName            string      [not null]
   IsDefault           boolean     [default: false]
+  IsVerified          boolean     [default: false]
+  VerificationStatus  string      [not null, note: 'unverified | verified | failed']
+  VerifiedName        string      [null, note: 'account holder name returned by penny-drop verification']
+  VerifiedAt          timestamp   [null]
   CreatedAt           timestamp
 
   Note: 'Seller payout destinations. Ownership scoped to the authenticated seller.'
@@ -498,9 +563,11 @@ Table UserReviews {
 // ============================================================================
 
 // --- Identity ---
-Ref: UserRoles.UserID > Users._id          // many user-roles → one user
-Ref: UserRoles.RoleID > Roles.RoleID        // references the business RoleID (int)
-Ref: Address.UserID  > Users._id            // many addresses → one user
+Ref: UserRoles.UserID          > Users._id          // many user-roles → one user
+Ref: UserRoles.RoleID          > Roles.RoleID        // references the business RoleID (int)
+Ref: Address.UserID            > Users._id            // many addresses → one user
+Ref: SellerGSTDetails.UserID   > Users._id            // one GST record per seller
+Ref: Users.sellerVerifiedBy    > Users._id            // admin who verified
 
 // --- Catalog: product → lookups ---
 Ref: Products.UserID       > Users._id      // seller
@@ -574,6 +641,7 @@ TableGroup Identity {
   Roles
   UserRoles
   Address
+  SellerGSTDetails
 }
 
 TableGroup Catalog {

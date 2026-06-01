@@ -29,6 +29,18 @@ export const bulkOfferSchema = Joi.object({
   RemoveProductIDs: Joi.array().items(Joi.string()).min(1),
 }).or("AssignProductIDs", "RemoveProductIDs");
 
+export const checkAvailabilitySchema = Joi.object({
+  items: Joi.array()
+    .items(
+      Joi.object({
+        ProductID: Joi.string().required(),
+        Quantity: Joi.number().integer().min(1).required(),
+      })
+    )
+    .min(1)
+    .required(),
+});
+
 // Edit core product fields. Every field optional, but at least one required.
 // RemovedImageIDs lets the edit screen report images the user deleted; each is
 // removed from S3 and the DB.

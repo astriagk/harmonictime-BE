@@ -104,6 +104,15 @@ class CheckoutRepository extends BaseRepository<Checkout> {
             $push: {
               ProductID: "$Products._id",
               ProductName: "$Products.ProductName",
+              Quantity: {
+                $size: {
+                  $filter: {
+                    input: "$ProductIDs",
+                    as: "pid",
+                    cond: { $eq: ["$$pid", "$Products._id"] },
+                  },
+                },
+              },
               // Offer that was active when this unit was purchased (null if none).
               OfferApplied: {
                 $cond: [
@@ -252,6 +261,45 @@ class CheckoutRepository extends BaseRepository<Checkout> {
               },
             },
           },
+          // Approval status this seller set on the order (defaults to Pending).
+          SellerApprovalStatus: {
+            $let: {
+              vars: {
+                conf: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: { $ifNull: ["$SellerConfirmations", []] },
+                        as: "sc",
+                        cond: { $eq: ["$$sc.SellerID", sellerId] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+              in: { $ifNull: ["$$conf.Status", "Pending"] },
+            },
+          },
+          SellerRejectionReason: {
+            $let: {
+              vars: {
+                conf: {
+                  $arrayElemAt: [
+                    {
+                      $filter: {
+                        input: { $ifNull: ["$SellerConfirmations", []] },
+                        as: "sc",
+                        cond: { $eq: ["$$sc.SellerID", sellerId] },
+                      },
+                    },
+                    0,
+                  ],
+                },
+              },
+              in: "$$conf.Reason",
+            },
+          },
           Products: {
             $map: {
               input: "$SellerProducts",
@@ -260,6 +308,36 @@ class CheckoutRepository extends BaseRepository<Checkout> {
                 ProductID: "$$p._id",
                 ProductName: "$$p.ProductName",
                 Price: "$$p.Price",
+                // How many units of this product are in the order.
+                Quantity: {
+                  $size: {
+                    $filter: {
+                      input: "$ProductIDs",
+                      as: "pid",
+                      cond: { $eq: ["$$pid", "$$p._id"] },
+                    },
+                  },
+                },
+                // Order item ID linked to this product line.
+                OrderItemID: {
+                  $let: {
+                    vars: {
+                      item: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$OrderItems",
+                              as: "oi",
+                              cond: { $eq: ["$$oi.ProductID", "$$p._id"] },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    },
+                    in: "$$item.OrderItemID",
+                  },
+                },
                 ImageURL: {
                   $let: {
                     vars: {
@@ -291,6 +369,25 @@ class CheckoutRepository extends BaseRepository<Checkout> {
       },
       { $sort: { CheckoutDate: -1 } },
     ]);
+  }
+
+  updateSellerApproval(
+    checkoutId: ObjectId,
+    sellerId: ObjectId,
+    status: "Approved" | "Rejected",
+    reason?: string
+  ) {
+    return this.collection.updateOne(
+      { _id: checkoutId, "SellerConfirmations.SellerID": sellerId },
+      {
+        $set: {
+          "SellerConfirmations.$[elem].Status": status,
+          "SellerConfirmations.$[elem].Reason": reason ?? null,
+          "SellerConfirmations.$[elem].UpdatedAt": new Date(),
+        },
+      },
+      { arrayFilters: [{ "elem.SellerID": sellerId }] }
+    );
   }
 }
 

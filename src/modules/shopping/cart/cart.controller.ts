@@ -15,8 +15,12 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
 
   if (!(await userRepository.findById(userObjectId)))
     throw ApiError.badRequest("Invalid UserID");
-  if (!(await productRepository.findById(productObjectId)))
-    throw ApiError.badRequest("Invalid ProductID");
+
+  const requestedQty = Quantity || 1;
+  const [stock] = await productRepository.getEnrichedWithStatus({ _id: productObjectId });
+  if (!stock) throw ApiError.badRequest("Invalid ProductID");
+  if (stock.RemainingQuantity < requestedQty)
+    throw ApiError.badRequest(`Only ${stock.RemainingQuantity} unit(s) available`);
 
   const existing = await cartRepository.findByUserAndProduct(userObjectId, productObjectId);
   if (existing) throw ApiError.conflict("Product already in cart");
@@ -24,7 +28,7 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
   const result = await cartRepository.insertOne({
     UserID: userObjectId,
     ProductID: productObjectId,
-    Quantity: Quantity || 1,
+    Quantity: requestedQty,
   });
   sendResponse(res, HTTP_STATUS.CREATED, "Product added to cart successfully", result);
 });
@@ -45,6 +49,13 @@ export const getCartItemByProduct = asyncHandler(async (req: Request, res: Respo
 
 export const updateCartProductQuantity = asyncHandler(
   async (req: Request, res: Response) => {
+    const cartItem = await cartRepository.findById(req.params.cartID);
+    if (!cartItem) throw ApiError.notFound("Cart item not found");
+
+    const [stock] = await productRepository.getEnrichedWithStatus({ _id: cartItem.ProductID });
+    if (!stock || stock.RemainingQuantity < req.body.Quantity)
+      throw ApiError.badRequest(`Only ${stock?.RemainingQuantity ?? 0} unit(s) available`);
+
     const result = await cartRepository.updateById(req.params.cartID, {
       Quantity: req.body.Quantity,
     });

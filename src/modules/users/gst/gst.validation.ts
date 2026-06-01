@@ -11,6 +11,14 @@ const BUSINESS_TYPES = [
   "Other",
 ];
 
+const DOCUMENT_TYPES = ["GSTCertificate", "AddressProof", "PANCard", "CancelledCheque", "BankStatement", "Other"];
+
+const documentSchema = Joi.object({
+  url: Joi.string().uri().required(),
+  key: Joi.string().optional(),
+  documentType: Joi.string().valid(...DOCUMENT_TYPES).optional(),
+});
+
 export const createGSTSchema = Joi.object({
   GSTIN: Joi.string()
     .trim()
@@ -30,6 +38,7 @@ export const createGSTSchema = Joi.object({
     .pattern(/^[0-9]{6}$/)
     .optional()
     .messages({ "string.pattern.base": "PinCode must be 6 digits" }),
+  Documents: Joi.array().items(documentSchema).optional(),
 });
 
 export const updateGSTSchema = Joi.object({
@@ -48,4 +57,5 @@ export const updateGSTSchema = Joi.object({
     .pattern(/^[0-9]{6}$/)
     .allow("")
     .messages({ "string.pattern.base": "PinCode must be 6 digits" }),
+  Documents: Joi.array().items(documentSchema).optional(),
 }).min(1);

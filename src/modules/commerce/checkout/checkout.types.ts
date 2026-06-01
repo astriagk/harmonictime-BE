@@ -5,6 +5,13 @@ export interface OrderItem {
   OrderItemID: string;
 }
 
+export interface SellerConfirmation {
+  SellerID: ObjectId;
+  Status: "Pending" | "Approved" | "Rejected";
+  Reason?: string;
+  UpdatedAt: Date;
+}
+
 export interface Checkout {
   _id?: ObjectId;
   OrderID: string;
@@ -16,4 +23,5 @@ export interface Checkout {
   CheckoutDate: Date;
   ProductIDs: ObjectId[];
   OrderItems: OrderItem[];
+  SellerConfirmations: SellerConfirmation[];
 }

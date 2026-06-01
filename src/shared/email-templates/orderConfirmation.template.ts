@@ -7,6 +7,7 @@ const BRAND_PHONE = "(+91) 88673 47448";
 
 export interface OrderConfirmationItem {
   productName: string;
+  quantity: number;
   mrp: number;
   offerPercentage: number;
   offerAmount: number;
@@ -46,6 +47,9 @@ function itemRows(items: OrderConfirmationItem[]): string {
     <tr>
       <td style="padding:14px 12px;font-size:14px;color:#18181b;border-bottom:1px solid #f4f4f5;">
         ${item.productName}
+      </td>
+      <td style="padding:14px 12px;font-size:14px;color:#18181b;text-align:center;border-bottom:1px solid #f4f4f5;">
+        ${item.quantity}
       </td>
       <td style="padding:14px 12px;font-size:14px;color:#18181b;text-align:right;border-bottom:1px solid #f4f4f5;">
         ${fmt(item.mrp)}
@@ -166,8 +170,11 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
                     <th style="padding:12px 12px;font-size:11px;font-weight:bold;color:#ffffff;text-align:left;letter-spacing:0.04em;">
                       ITEM DESCRIPTION
                     </th>
+                    <th style="padding:12px 12px;font-size:11px;font-weight:bold;color:#ffffff;text-align:center;letter-spacing:0.04em;">
+                      QTY
+                    </th>
                     <th style="padding:12px 12px;font-size:11px;font-weight:bold;color:#ffffff;text-align:right;letter-spacing:0.04em;">
-                      MRP
+                      UNIT MRP
                     </th>
                     <th style="padding:12px 12px;font-size:11px;font-weight:bold;color:#ffffff;text-align:right;letter-spacing:0.04em;">
                       OFFER
@@ -239,7 +246,7 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
   const itemLines = data.items
     .map(
       (i) =>
-        `${i.productName}: ${fmt(i.amount)}${i.offerAmount > 0 ? ` (${i.offerPercentage}% off)` : ""}`
+        `${i.productName} × ${i.quantity}: ${fmt(i.amount)}${i.offerAmount > 0 ? ` (${i.offerPercentage}% off)` : ""}`
     )
     .join("\n");
 

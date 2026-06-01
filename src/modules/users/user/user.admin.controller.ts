@@ -13,8 +13,34 @@ import {
   accountRestoredEmail,
   EmailTemplate,
 } from "../../../shared/email-templates";
+import { userRoleRepository, roleRepository } from "../role/role.repository";
+import { gstRepository } from "../gst/gst.repository";
+import { bankAccountRepository } from "../../wallet/bank_account/bank_account.repository";
 
-// GET /admin/users?status=blocked — list all customers, optionally filtered by status.
+const stripSensitive = ({ password, otp, otpExpiry, refreshTokenHash, emailVerificationToken, emailVerificationTokenExpiry, ...u }: any) => ({
+  ...u,
+  status: u.status ?? "active",
+});
+
+// Resolve RoleID integers to role name strings for a set of users in one batch.
+// Returns a map of userId (string) → role names array.
+const batchResolveRoles = async (userIds: ObjectId[]): Promise<Map<string, string[]>> => {
+  const userRoleDocs = await userRoleRepository.find({ UserID: { $in: userIds } } as any);
+  const roleIds = [...new Set(userRoleDocs.map((r) => r.RoleID))];
+  const roleDocs = await roleRepository.find({ RoleID: { $in: roleIds } } as any);
+  const roleMap = new Map(roleDocs.map((r) => [r.RoleID, r.RoleName]));
+
+  const result = new Map<string, string[]>();
+  for (const ur of userRoleDocs) {
+    const key = ur.UserID.toString();
+    const roleName = roleMap.get(ur.RoleID) ?? String(ur.RoleID);
+    if (!result.has(key)) result.set(key, []);
+    result.get(key)!.push(roleName);
+  }
+  return result;
+};
+
+// GET /admin/users?status=blocked — list all users with their roles.
 export const listCustomers = asyncHandler(
   async (req: Request, res: Response) => {
     const status = req.query.status as UserStatus | undefined;
@@ -22,23 +48,45 @@ export const listCustomers = asyncHandler(
       ? await userRepository.findByStatus(status)
       : await userRepository.find();
 
-    const safe = users.map(({ password, otp, otpExpiry, ...u }) => ({
-      ...u,
-      status: u.status ?? "active",
+    const userIds = users.map((u) => u._id as ObjectId);
+    const rolesMap = await batchResolveRoles(userIds);
+
+    const safe = users.map((u) => ({
+      ...stripSensitive(u),
+      roles: rolesMap.get(u._id!.toString()) ?? [],
     }));
+
     sendResponse(res, HTTP_STATUS.OK, "Customers retrieved successfully", safe);
   }
 );
 
-// GET /admin/users/:id — fetch a single customer.
+// GET /admin/users/:id — full user profile: user info + roles + GST + bank accounts.
 export const getCustomer = asyncHandler(
   async (req: Request, res: Response) => {
-    const user = await userRepository.findById(req.params.id);
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) throw ApiError.badRequest("Invalid user id");
+
+    const user = await userRepository.findById(id);
     if (!user) throw ApiError.notFound("User not found");
-    const { password, otp, otpExpiry, ...rest } = user as any;
-    sendResponse(res, HTTP_STATUS.OK, "Customer retrieved successfully", {
-      ...rest,
-      status: rest.status ?? "active",
+
+    const userObjId = new ObjectId(id);
+
+    const [userRoleDocs, gst, bankAccounts] = await Promise.all([
+      userRoleRepository.findByUser(userObjId),
+      gstRepository.findBySeller(userObjId),
+      bankAccountRepository.findBySeller(userObjId),
+    ]);
+
+    const roleIds = userRoleDocs.map((r) => r.RoleID);
+    const roleDocs = roleIds.length > 0
+      ? await roleRepository.find({ RoleID: { $in: roleIds } } as any)
+      : [];
+
+    sendResponse(res, HTTP_STATUS.OK, "User retrieved successfully", {
+      user: stripSensitive(user),
+      roles: roleDocs.map((r) => ({ roleId: r.RoleID, roleName: r.RoleName })),
+      gst: gst ?? null,
+      bankAccounts,
     });
   }
 );

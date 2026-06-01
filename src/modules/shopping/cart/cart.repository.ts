@@ -24,6 +24,42 @@ class CartRepository extends BaseRepository<CartItem> {
       { $lookup: { from: COLLECTIONS.PRODUCTS, localField: "ProductID", foreignField: "_id", as: "ProductDetails" } },
       { $unwind: { path: "$ProductDetails", preserveNullAndEmptyArrays: false } },
       { $match: { "ProductDetails.IsAvailable": true } },
+      // Count how many units of this product are already sold so we can derive
+      // RemainingQuantity for the cart page quantity stepper.
+      {
+        $lookup: {
+          from: COLLECTIONS.CHECKOUT,
+          let: { pid: "$ProductID" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$PaymentStatus", "Paid"] } } },
+            {
+              $project: {
+                count: {
+                  $size: {
+                    $filter: {
+                      input: { $ifNull: ["$ProductIDs", []] },
+                      as: "p",
+                      cond: { $eq: ["$$p", "$$pid"] },
+                    },
+                  },
+                },
+              },
+            },
+            { $match: { count: { $gt: 0 } } },
+          ],
+          as: "_PaidOrders",
+        },
+      },
+      {
+        $addFields: {
+          RemainingQuantity: {
+            $max: [
+              { $subtract: ["$ProductDetails.Quantity", { $sum: "$_PaidOrders.count" }] },
+              0,
+            ],
+          },
+        },
+      },
       { $lookup: { from: COLLECTIONS.PRODUCT_DESCRIPTION, localField: "ProductID", foreignField: "ProductID", as: "ProductDescription" } },
       { $unwind: { path: "$ProductDescription", preserveNullAndEmptyArrays: true } },
       { $lookup: { from: COLLECTIONS.PRODUCT_DETAILS, localField: "ProductID", foreignField: "ProductID", as: "ProductSpecs" } },
@@ -70,6 +106,7 @@ class CartRepository extends BaseRepository<CartItem> {
               else: "$$REMOVE",
             },
           },
+          RemainingQuantity: 1,
           IsAvailable: "$ProductDetails.IsAvailable",
           DateListed: "$ProductDetails.DateListed",
           Description: {
