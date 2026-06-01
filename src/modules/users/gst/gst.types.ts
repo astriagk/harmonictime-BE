@@ -7,6 +7,20 @@ export type GSTBusinessType =
   | "LLP"
   | "Other";
 
+export type GSTDocumentType =
+  | "GSTCertificate"
+  | "AddressProof"
+  | "PANCard"
+  | "CancelledCheque"
+  | "BankStatement"
+  | "Other";
+
+export interface GSTDocument {
+  url: string;
+  key?: string;
+  documentType?: GSTDocumentType;
+}
+
 export interface SellerGSTDetails {
   _id?: ObjectId;
   UserID: ObjectId;
@@ -17,6 +31,7 @@ export interface SellerGSTDetails {
   RegisteredAddress?: string;
   State?: string;
   PinCode?: string;
+  Documents?: GSTDocument[];
   IsVerified: boolean;
   CreatedAt: Date;
   UpdatedAt: Date;

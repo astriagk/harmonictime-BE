@@ -14,11 +14,12 @@ export const addItemToCheckout = asyncHandler(async (req: Request, res: Response
   if (!(await checkoutRepository.findById(CheckoutID)))
     throw ApiError.badRequest("Invalid CheckoutID");
 
-  const productObjectIds = (ProductIDs as string[]).map((id) => new ObjectId(id));
+  const uniqueProductIDs = [...new Set(ProductIDs as string[])];
+  const productObjectIds = uniqueProductIDs.map((id) => new ObjectId(id));
   const found = await productRepository.find({ _id: { $in: productObjectIds } } as any);
-  if (found.length !== productObjectIds.length) {
+  if (found.length !== uniqueProductIDs.length) {
     const foundIds = found.map((p) => p._id!.toString());
-    const missing = (ProductIDs as string[]).filter((id) => !foundIds.includes(id));
+    const missing = uniqueProductIDs.filter((id) => !foundIds.includes(id));
     throw ApiError.badRequest(`Invalid ProductIDs: ${missing.join(", ")}`);
   }
 

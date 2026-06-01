@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 
 export type UserStatus = "active" | "blocked" | "suspended";
 export type AccountType = "individual" | "business";
-export type SellerVerificationStatus = "Unverified" | "Pending" | "Approved" | "Rejected";
+export type SellerVerificationStatus = "Unverified" | "Pending" | "Approved" | "Rejected" | "Resubmitted";
 
 export interface User {
   _id?: ObjectId;

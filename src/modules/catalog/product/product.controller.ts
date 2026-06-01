@@ -116,7 +116,7 @@ export const getProductById = asyncHandler(
     if (approvalStatus !== "Approved" && !isOwner)
       throw ApiError.notFound("Product not found");
 
-    const enriched = await productRepository.getEnriched({ _id });
+    const enriched = await productRepository.getEnrichedWithStatus({ _id });
     sendResponse(res, HTTP_STATUS.OK, "ProductDetails Data !", enriched);
   },
 );
@@ -279,4 +279,41 @@ export const deleteProduct = asyncHandler(
     if (result.deletedCount === 0) throw ApiError.notFound("Product not found");
     sendResponse(res, HTTP_STATUS.OK, "Product deleted successfully");
   },
+);
+
+// Pre-flight stock check for the checkout review page. Accepts a list of
+// { ProductID, Quantity } items and returns per-item availability so the FE
+// can show "Only N left" warnings and block payment if any item is unavailable.
+export const checkAvailability = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { items } = req.body as { items: { ProductID: string; Quantity: number }[] };
+
+    const flatIds = items.flatMap(({ ProductID, Quantity }) =>
+      Array(Quantity).fill(ProductID)
+    );
+
+    const issues = await productRepository.checkAvailability(flatIds);
+    const issueMap = new Map(issues.map((i) => [i.ProductID, i.reason]));
+
+    const uniqueIds = [...new Set(items.map((i) => i.ProductID))];
+    const stocks = await productRepository.getEnrichedWithStatus({
+      _id: { $in: uniqueIds.map((id) => new ObjectId(id)) },
+    } as Filter<Product>);
+    const stockMap = new Map(stocks.map((s) => [s._id.toString(), s]));
+
+    const result = items.map(({ ProductID, Quantity }) => {
+      const stock = stockMap.get(ProductID);
+      return {
+        ProductID,
+        RequestedQuantity: Quantity,
+        RemainingQuantity: stock?.RemainingQuantity ?? 0,
+        Status: stock?.Status ?? "Sold",
+        Available: !issueMap.has(ProductID),
+        Reason: issueMap.get(ProductID) ?? null,
+      };
+    });
+
+    const allAvailable = result.every((r) => r.Available);
+    sendResponse(res, HTTP_STATUS.OK, "Availability checked", { allAvailable, items: result });
+  }
 );

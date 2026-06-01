@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import { Filter, ObjectId } from "mongodb";
 import { Product } from "../../catalog/product/product.types";
+import { SellerConfirmation } from "../checkout/checkout.types";
 import { asyncHandler } from "../../../shared/middlewares/asyncHandler";
 import { ApiError } from "../../../shared/utils/apiError";
 import { sendResponse } from "../../../shared/utils/apiResponse";
@@ -174,6 +175,14 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
     OrderItemID: generateItemID(),
   }));
 
+  const sellerProducts = await productRepository.find({ _id: { $in: orderedProductIDs } });
+  const uniqueSellerIDs = [...new Set(sellerProducts.map((p) => p.UserID.toString()))];
+  const sellerConfirmations: SellerConfirmation[] = uniqueSellerIDs.map((sid) => ({
+    SellerID: new ObjectId(sid),
+    Status: "Pending",
+    UpdatedAt: new Date(),
+  }));
+
   const checkoutResult = await checkoutRepository.insertOne({
     OrderID: orderID,
     UserID: payment.UserID,
@@ -186,6 +195,7 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       : new Date(),
     ProductIDs: orderedProductIDs,
     OrderItems: orderItems,
+    SellerConfirmations: sellerConfirmations,
   });
   const CheckoutID = checkoutResult.insertedId;
 
@@ -250,18 +260,28 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
         enrichedAfterSale.map((p: any) => [p._id.toString(), p.ProductName as string])
       );
 
+      // Count how many units of each product were purchased (ProductIDs is a
+      // flat array where the same id appears once per unit ordered).
+      const qtyMap = new Map<string, number>();
+      for (const id of soldProductIds) {
+        const key = id.toString();
+        qtyMap.set(key, (qtyMap.get(key) ?? 0) + 1);
+      }
+
       const lineItems = soldProducts.map((p) => {
+        const qty = qtyMap.get(p._id.toString()) ?? 1;
         const offerPercentage = p.OfferDiscountPercentage ?? 0;
-        const offerAmount = Math.round(p.Price * offerPercentage / 100);
-        const grossAmount = p.Price - offerAmount;
-        const buyerCommission = Math.round(grossAmount * env.BUYER_COMMISSION_RATE);
-        const amount = grossAmount + buyerCommission;
+        const unitOfferAmount = Math.round(p.Price * offerPercentage / 100);
+        const unitGross = p.Price - unitOfferAmount;
+        const unitCommission = Math.round(unitGross * env.BUYER_COMMISSION_RATE);
+        const unitAmount = unitGross + unitCommission;
         return {
           productName: nameMap.get(p._id.toString()) ?? "Product",
-          mrp: amount + offerAmount,
+          quantity: qty,
+          mrp: unitAmount + unitOfferAmount,        // unit MRP (before offer)
           offerPercentage,
-          offerAmount,
-          amount,
+          offerAmount: unitOfferAmount * qty,       // total offer saving for this line
+          amount: unitAmount * qty,                 // total line amount (qty × net unit)
           isTaxInclusive: p.IsPriceInclusiveOfTax ?? false,
         };
       });
