@@ -100,6 +100,19 @@ class CheckoutRepository extends BaseRepository<Checkout> {
           CheckoutDate: { $first: "$CheckoutDate" },
           DeliveryStatus: { $first: "$DeliveryStatus" },
           Shipments: { $first: "$Shipments" },
+          SellerConfirmations: {
+            $first: {
+              $map: {
+                input: { $ifNull: ["$SellerConfirmations", []] },
+                as: "sc",
+                in: {
+                  Status: "$$sc.Status",
+                  Reason: "$$sc.Reason",
+                  UpdatedAt: "$$sc.UpdatedAt",
+                },
+              },
+            },
+          },
           Products: {
             $push: {
               ProductID: "$Products._id",
