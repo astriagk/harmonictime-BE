@@ -21,12 +21,18 @@ const nextVerificationStatus = (current?: string): string => {
   return "Pending";
 };
 
-// Assign Seller role and mark accountType as "business" if not already done.
+// Assign Seller role, mark accountType as "business", and set initial
+// sellerVerificationStatus to "Pending" so the admin review queue picks it up.
 const ensureSellerRole = async (userId: ObjectId): Promise<void> => {
   const [existing, user] = await Promise.all([
     userRoleRepository.find({ UserID: userId, RoleID: RoleId.SELLER } as any),
     userRepository.findById(userId.toString()),
   ]);
+
+  const userUpdates: Record<string, any> = {};
+  if (user?.accountType !== "business") userUpdates.accountType = "business";
+  // Only set Pending on first submission — don't overwrite an Approved/Rejected status.
+  if (!user?.sellerVerificationStatus) userUpdates.sellerVerificationStatus = "Pending";
 
   await Promise.all([
     existing.length === 0
@@ -36,8 +42,8 @@ const ensureSellerRole = async (userId: ObjectId): Promise<void> => {
           RoleID: RoleId.SELLER,
         })
       : Promise.resolve(),
-    user?.accountType !== "business"
-      ? userRepository.updateById(userId.toString(), { accountType: "business" } as any)
+    Object.keys(userUpdates).length > 0
+      ? userRepository.updateById(userId.toString(), userUpdates as any)
       : Promise.resolve(),
   ]);
 };

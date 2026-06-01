@@ -204,6 +204,11 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   //     price/offer changes never rewrite history. Becomes withdrawable only
   //     after delivery + the hold window (see earning module).
   const soldProductIds = draft.checkout.ProductIDs.map((id) => new ObjectId(id));
+  const qtyMap = new Map<string, number>();
+  for (const id of soldProductIds) {
+    const key = id.toString();
+    qtyMap.set(key, (qtyMap.get(key) ?? 0) + 1);
+  }
   const soldProducts = await productRepository.findWithActiveOffer(soldProductIds);
   await earningRepository.createForCheckout(
     CheckoutID,
@@ -213,7 +218,8 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       Price: p.Price,
       OfferDiscountPercentage: p.OfferDiscountPercentage ?? 0,
       IsPriceInclusiveOfTax: p.IsPriceInclusiveOfTax ?? false,
-    }))
+    })),
+    qtyMap
   );
 
   // 2c. Auto-update IsAvailable based on remaining stock after this sale.
@@ -259,14 +265,6 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
       const nameMap = new Map<string, string>(
         enrichedAfterSale.map((p: any) => [p._id.toString(), p.ProductName as string])
       );
-
-      // Count how many units of each product were purchased (ProductIDs is a
-      // flat array where the same id appears once per unit ordered).
-      const qtyMap = new Map<string, number>();
-      for (const id of soldProductIds) {
-        const key = id.toString();
-        qtyMap.set(key, (qtyMap.get(key) ?? 0) + 1);
-      }
 
       const lineItems = soldProducts.map((p) => {
         const qty = qtyMap.get(p._id.toString()) ?? 1;

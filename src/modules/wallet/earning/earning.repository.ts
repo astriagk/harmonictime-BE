@@ -26,26 +26,26 @@ class EarningRepository extends BaseRepository<SellerEarning> {
   // on top of the buyer's DisplayPrice and stays with the platform separately.
   async createForCheckout(
     checkoutId: ObjectId,
-    products: SoldProduct[]
+    products: SoldProduct[],
+    qtyMap: Map<string, number>
   ): Promise<void> {
     if (products.length === 0) return;
     const sellerRate = env.PLATFORM_COMMISSION_RATE;
     const now = new Date();
-
     const gstRate = env.GST_RATE;
 
-    const docs: SellerEarning[] = products.map((p) => {
+    const docs: SellerEarning[] = products.flatMap((p) => {
       const offerDiscount  = p.OfferDiscountPercentage ?? 0;
       const discountAmount = Math.round(p.Price * offerDiscount / 100);
       const effectivePrice = p.Price - discountAmount;
       const commission     = Math.round(effectivePrice * sellerRate);
       const netAmount      = effectivePrice - commission;
-
       const isTaxInclusive    = p.IsPriceInclusiveOfTax ?? false;
       const gstAmount         = Math.round(netAmount * gstRate / 100);
       const netAmountAfterGST = netAmount - gstAmount;
 
-      return {
+      const qty = qtyMap.get(p._id.toString()) ?? 1;
+      return Array.from({ length: qty }, () => ({
         SellerID: p.UserID,
         CheckoutID: checkoutId,
         ProductID: p._id,
@@ -59,11 +59,11 @@ class EarningRepository extends BaseRepository<SellerEarning> {
         GSTRate: gstRate,
         GSTAmount: gstAmount,
         NetAmountAfterGST: netAmountAfterGST,
-        Status: "Pending",
+        Status: "Pending" as const,
         SaleDate: now,
         WithdrawalID: null,
         CreatedAt: now,
-      };
+      }));
     });
     await this.insertMany(docs);
   }
@@ -124,13 +124,21 @@ class EarningRepository extends BaseRepository<SellerEarning> {
 
   // Totals per status (in NetAmountAfterGST) for the wallet summary.
   // Falls back to NetAmount for legacy earnings that predate the GST fields.
+  // counts reflect distinct product lines (CheckoutID+ProductID groups), not raw units.
   async getBalances(sellerId: ObjectId) {
     const rows = await this.aggregate<{ _id: EarningStatus; total: number; count: number }>([
       { $match: { SellerID: sellerId } },
       {
         $group: {
-          _id: "$Status",
-          total: { $sum: { $ifNull: ["$NetAmountAfterGST", "$NetAmount"] } },
+          _id: { status: "$Status", checkoutId: "$CheckoutID", productId: "$ProductID" },
+          status: { $first: "$Status" },
+          lineTotal: { $sum: { $ifNull: ["$NetAmountAfterGST", "$NetAmount"] } },
+        },
+      },
+      {
+        $group: {
+          _id: "$status",
+          total: { $sum: "$lineTotal" },
           count: { $sum: 1 },
         },
       },
@@ -154,7 +162,8 @@ class EarningRepository extends BaseRepository<SellerEarning> {
     };
   }
 
-  // Itemized earnings with product name + primary image, optionally by status.
+  // Itemized earnings grouped by CheckoutID + ProductID, with quantity and
+  // total amounts. Each row represents one product line in one order.
   getItems(sellerId: ObjectId, status?: EarningStatus) {
     return this.aggregate([
       { $match: { SellerID: sellerId, ...(status ? { Status: status } : {}) } },
@@ -178,14 +187,48 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           as: "Image",
         },
       },
+      // Group multiple earning docs (one per unit) into a single product line.
+      {
+        $group: {
+          _id: { CheckoutID: "$CheckoutID", ProductID: "$ProductID" },
+          CheckoutID: { $first: "$CheckoutID" },
+          ProductID: { $first: "$ProductID" },
+          WithdrawalID: { $first: "$WithdrawalID" },
+          Status: { $first: "$Status" },
+          OfferDiscountPercentage: { $first: "$OfferDiscountPercentage" },
+          // Per-unit amounts (identical across all docs in the group).
+          GrossAmount: { $first: "$GrossAmount" },
+          CommissionRate: { $first: "$CommissionRate" },
+          CommissionAmount: { $first: "$CommissionAmount" },
+          NetAmount: { $first: "$NetAmount" },
+          IsTaxInclusive: { $first: "$IsTaxInclusive" },
+          GSTRate: { $first: "$GSTRate" },
+          GSTAmount: { $first: "$GSTAmount" },
+          NetAmountAfterGST: { $first: "$NetAmountAfterGST" },
+          SaleDate: { $first: "$SaleDate" },
+          AvailableAt: { $first: "$AvailableAt" },
+          Quantity: { $sum: 1 },
+          // Totals across all units in the group.
+          TotalGrossAmount: { $sum: "$GrossAmount" },
+          TotalCommissionAmount: { $sum: "$CommissionAmount" },
+          TotalNetAmount: { $sum: "$NetAmount" },
+          TotalGSTAmount: { $sum: "$GSTAmount" },
+          TotalNetAmountAfterGST: { $sum: { $ifNull: ["$NetAmountAfterGST", "$NetAmount"] } },
+          TotalOfferDiscountAmount: { $sum: "$OfferDiscountAmount" },
+          ProductName: { $first: { $arrayElemAt: ["$Product.ProductName", 0] } },
+          ImageURL: { $first: { $arrayElemAt: ["$Image.ImageURL", 0] } },
+        },
+      },
       {
         $project: {
-          ProductID: 1,
+          _id: 0,
           CheckoutID: 1,
+          ProductID: 1,
           WithdrawalID: 1,
           Status: 1,
           OfferDiscountPercentage: 1,
-          OfferDiscountAmount: 1,
+          Quantity: 1,
+          // Per-unit amounts.
           GrossAmount: 1,
           CommissionRate: 1,
           CommissionAmount: 1,
@@ -194,10 +237,17 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           GSTRate: 1,
           GSTAmount: 1,
           NetAmountAfterGST: 1,
+          // Total amounts for the line (per-unit × quantity).
+          TotalGrossAmount: 1,
+          TotalCommissionAmount: 1,
+          TotalNetAmount: 1,
+          TotalGSTAmount: 1,
+          TotalOfferDiscountAmount: 1,
+          TotalNetAmountAfterGST: 1,
           SaleDate: 1,
           AvailableAt: 1,
-          ProductName: { $arrayElemAt: ["$Product.ProductName", 0] },
-          ImageURL: { $arrayElemAt: ["$Image.ImageURL", 0] },
+          ProductName: 1,
+          ImageURL: 1,
         },
       },
       { $sort: { SaleDate: -1 } },
