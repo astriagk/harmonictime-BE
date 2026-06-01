@@ -31,6 +31,7 @@ export const adminListSellers = asyncHandler(
       "Pending",
       "Approved",
       "Rejected",
+      "Resubmitted",
     ];
     if (status && !allowed.includes(status as SellerVerificationStatus))
       throw ApiError.badRequest(

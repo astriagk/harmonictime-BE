@@ -9,6 +9,7 @@ import { userRepository } from "../../users/user/user.repository";
 import { addressRepository } from "../../users/address/address.repository";
 import { productRepository } from "../../catalog/product/product.repository";
 import { generateOrderID, generateItemID } from "../../../shared/utils/orderIdGenerator";
+import { SellerConfirmation } from "./checkout.types";
 
 export const createCheckout = asyncHandler(async (req: Request, res: Response) => {
   const { UserID, AddressID, TotalAmount, PaymentStatus, DeliveryStatus, CheckoutDate, ProductIDs } =
@@ -36,6 +37,16 @@ export const createCheckout = asyncHandler(async (req: Request, res: Response) =
     OrderItemID: generateItemID(),
   }));
 
+  // Build one SellerConfirmation entry per unique seller so each seller must
+  // explicitly approve before the order is dispatched.
+  const sellerProducts = await productRepository.find({ _id: { $in: productObjectIDs } });
+  const uniqueSellerIDs = [...new Set(sellerProducts.map((p) => p.UserID.toString()))];
+  const sellerConfirmations: SellerConfirmation[] = uniqueSellerIDs.map((sid) => ({
+    SellerID: new ObjectId(sid),
+    Status: "Pending",
+    UpdatedAt: new Date(),
+  }));
+
   const result = await checkoutRepository.insertOne({
     OrderID: orderID,
     UserID: new ObjectId(UserID),
@@ -46,6 +57,7 @@ export const createCheckout = asyncHandler(async (req: Request, res: Response) =
     CheckoutDate: new Date(CheckoutDate),
     ProductIDs: productObjectIDs,
     OrderItems: orderItems,
+    SellerConfirmations: sellerConfirmations,
   });
   sendResponse(res, HTTP_STATUS.CREATED, "Checkout created successfully", {
     ...result,
@@ -101,3 +113,30 @@ export const deleteCheckout = asyncHandler(async (req: Request, res: Response) =
   if (result.deletedCount === 0) throw ApiError.notFound("Checkout not found");
   sendResponse(res, HTTP_STATUS.OK, "Checkout deleted successfully");
 });
+
+// Seller approves or rejects their portion of an order.
+export const updateSellerApproval = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { sellerID, checkoutID } = req.params;
+    if (!ObjectId.isValid(sellerID)) throw ApiError.badRequest("Invalid sellerID");
+    if (!ObjectId.isValid(checkoutID)) throw ApiError.badRequest("Invalid checkoutID");
+
+    const { Status, Reason } = req.body;
+
+    const result = await checkoutRepository.updateSellerApproval(
+      new ObjectId(checkoutID),
+      new ObjectId(sellerID),
+      Status,
+      Reason
+    );
+
+    if (result.matchedCount === 0)
+      throw ApiError.notFound("Order not found or seller has no confirmation entry for it");
+
+    sendResponse(
+      res,
+      HTTP_STATUS.OK,
+      `Order ${Status === "Approved" ? "approved" : "rejected"} successfully`
+    );
+  }
+);
