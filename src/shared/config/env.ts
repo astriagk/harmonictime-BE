@@ -62,4 +62,11 @@ export const env = {
   // Threshold: seller must supply GST details once cumulative gross sales exceed this value.
   GST_RATE: Number(process.env.GST_RATE ?? 18),
   SELLER_GST_THRESHOLD: Number(process.env.SELLER_GST_THRESHOLD ?? 200000),
+
+  // TrackingMore — used by tracking.service.ts to fetch live courier scan events.
+  // Free plan at https://www.trackingmore.com — supports Delhivery, BlueDart, DTDC, Ekart, etc.
+  TRACKINGMORE_API_KEY: process.env.TRACKINGMORE_API_KEY || "",
+  // Shared secret for verifying inbound webhook calls from TrackingMore.
+  // Set any random string here and mirror it in the TrackingMore webhook settings.
+  TRACKING_WEBHOOK_SECRET: process.env.TRACKING_WEBHOOK_SECRET || "",
 };

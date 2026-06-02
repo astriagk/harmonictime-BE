@@ -2,11 +2,14 @@ import { EmailTemplate } from "./types";
 import { layout } from "./layout";
 import { verifyEmailUrl } from "../constants/frontend";
 
-export const verifyEmailTemplate = (token: string, email: string): EmailTemplate => {
+export const verifyEmailTemplate = (
+  token: string,
+  email: string,
+): EmailTemplate => {
   const link = verifyEmailUrl(token, email);
 
   return {
-    subject: "Verify your Harmonic Time email address",
+    subject: "Verify your Krono² email address",
     text: `Please verify your email address by clicking the link below.\n\nThis link expires in 24 hours.\n\n${link}\n\nIf you didn't create an account, you can safely ignore this email.`,
     html: layout(`
       <h2 style="margin:0 0 16px;">Verify your email address</h2>

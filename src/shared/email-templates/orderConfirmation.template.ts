@@ -1,8 +1,8 @@
 import { EmailTemplate } from "./types";
 
-const BRAND_NAME = "Harmonic Time";
+const BRAND_NAME = "Krono²";
 const BRAND_ADDRESS = "22, 1st cross, BHK Layout, Bangalore - 560026";
-const BRAND_EMAIL = "harmonictime@astriagk.com";
+const BRAND_EMAIL = "krono2@astriagk.com";
 const BRAND_PHONE = "(+91) 88673 47448";
 
 export interface OrderConfirmationItem {
@@ -66,12 +66,14 @@ function itemRows(items: OrderConfirmationItem[]): string {
         ${fmt(item.amount)}
         ${item.isTaxInclusive ? `<span style="display:block;font-size:10px;font-weight:normal;color:#71717a;">incl. GST</span>` : ""}
       </td>
-    </tr>`
+    </tr>`,
     )
     .join("");
 }
 
-export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTemplate => {
+export const orderConfirmationEmail = (
+  data: OrderConfirmationData,
+): EmailTemplate => {
   const issuedOnStr = data.issuedOn.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "long",
@@ -246,7 +248,7 @@ export const orderConfirmationEmail = (data: OrderConfirmationData): EmailTempla
   const itemLines = data.items
     .map(
       (i) =>
-        `${i.productName} × ${i.quantity}: ${fmt(i.amount)}${i.offerAmount > 0 ? ` (${i.offerPercentage}% off)` : ""}`
+        `${i.productName} × ${i.quantity}: ${fmt(i.amount)}${i.offerAmount > 0 ? ` (${i.offerPercentage}% off)` : ""}`,
     )
     .join("\n");
 
