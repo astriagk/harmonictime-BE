@@ -7,7 +7,7 @@ export interface OrderItem {
 
 export interface SellerConfirmation {
   SellerID: ObjectId;
-  Status: "Pending" | "Approved" | "Rejected";
+  Status: "Pending" | "Approved" | "Unavailable";
   Reason?: string;
   UpdatedAt: Date;
 }

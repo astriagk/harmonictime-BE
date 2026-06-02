@@ -2,7 +2,7 @@
 // body markup; this wraps it with the brand header and a footer.
 import { env } from "../config/env";
 
-const BRAND = "Harmonic Time";
+const BRAND = "Krono²";
 
 // Logo image when LOGO_URL is configured, otherwise the text wordmark. Both sit
 // on the same dark header background for a consistent look.

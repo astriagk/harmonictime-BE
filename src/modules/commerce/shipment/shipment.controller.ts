@@ -7,6 +7,8 @@ import { HTTP_STATUS } from "../../../shared/constants/httpStatus";
 import { shipmentRepository } from "./shipment.repository";
 import { checkoutRepository } from "../checkout/checkout.repository";
 import { userRepository } from "../../users/user/user.repository";
+import { trackingService } from "../../../shared/services/tracking.service";
+import { env } from "../../../shared/config/env";
 
 // A shipment's status maps onto the parent checkout's DeliveryStatus so buyers
 // see consistent state without querying the shipment directly.
@@ -112,4 +114,67 @@ export const deleteShipment = asyncHandler(async (req: Request, res: Response) =
   const result = await shipmentRepository.deleteById(req.params.shipmentID);
   if (result.deletedCount === 0) throw ApiError.notFound("Shipment not found");
   sendResponse(res, HTTP_STATUS.OK, "Shipment deleted successfully");
+});
+
+export const getShipmentTracking = asyncHandler(async (req: Request, res: Response) => {
+  const shipment = await shipmentRepository.findById(req.params.shipmentID);
+  if (!shipment) throw ApiError.notFound("Shipment not found");
+  if (!shipment.TrackingNumber) throw ApiError.badRequest("No tracking number on this shipment");
+
+  const result = await trackingService.fetchTracking(shipment.TrackingNumber, shipment.Courier);
+
+  await shipmentRepository.updateById(req.params.shipmentID, {
+    TrackingEvents: result.Events,
+    LastTrackedAt: new Date(),
+    TrackingProvider: "TrackingMore",
+  } as any);
+
+  sendResponse(res, HTTP_STATUS.OK, "Tracking fetched successfully", result);
+});
+
+// Shiprocket pushes a POST to this endpoint on every scan event.
+// No JWT auth — verified via shared webhook secret header instead.
+export const handleTrackingWebhook = asyncHandler(async (req: Request, res: Response) => {
+  const secret = req.headers["x-trackingmore-secret"] ?? req.headers["x-webhook-secret"];
+  if (env.TRACKING_WEBHOOK_SECRET && secret !== env.TRACKING_WEBHOOK_SECRET) {
+    throw ApiError.unauthorized("Invalid webhook secret");
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const awb = trackingService.getWebhookAwb(body);
+  if (!awb) {
+    res.status(HTTP_STATUS.OK).json({ received: true });
+    return;
+  }
+
+  const shipment = await shipmentRepository.findByTrackingNumber(awb);
+  if (!shipment) {
+    res.status(HTTP_STATUS.OK).json({ received: true });
+    return;
+  }
+
+  const event = trackingService.parseWebhookPayload(body);
+  const now = new Date();
+  const existingEvents = shipment.TrackingEvents ?? [];
+  const updatedEvents = [...existingEvents, event];
+
+  const patch: Record<string, unknown> = {
+    TrackingEvents: updatedEvents,
+    LastTrackedAt: now,
+    TrackingProvider: "Shiprocket",
+  };
+
+  if (trackingService.isDeliveredEvent(event) && !shipment.DeliveredAt) {
+    patch.ShipmentStatus = "Delivered";
+    patch.DeliveredAt = now;
+    if (!shipment.ShippedAt) patch.ShippedAt = now;
+
+    await checkoutRepository.updateById(shipment.CheckoutID, {
+      DeliveryStatus: DELIVERY_STATUS["Delivered"],
+    } as any);
+  }
+
+  await shipmentRepository.updateById(shipment._id!, patch);
+
+  res.status(HTTP_STATUS.OK).json({ received: true });
 });

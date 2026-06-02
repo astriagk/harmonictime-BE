@@ -16,6 +16,6 @@ export const updateCheckoutStatusSchema = Joi.object({
 }).min(1);
 
 export const sellerApprovalSchema = Joi.object({
-  Status: Joi.string().valid("Approved", "Rejected").required(),
+  Status: Joi.string().valid("Approved", "Unavailable").required(),
   Reason: Joi.string().max(500).optional(),
 });

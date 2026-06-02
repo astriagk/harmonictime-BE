@@ -8,12 +8,12 @@ import { resetPasswordUrl } from "../constants/frontend";
 // comes from env.FRONTEND_URL — see src/shared/constants/frontend.ts).
 export const passwordResetOtpEmail = (
   otp: string,
-  token: string
+  token: string,
 ): EmailTemplate => {
   const link = resetPasswordUrl(token);
 
   return {
-    subject: "Reset your Harmonic Time password",
+    subject: "Reset your Krono² password",
     text: `Your password reset code is: ${otp}\n\nThis code expires in 10 minutes.\nReset your password here: ${link}\n\nIf you didn't request it, you can ignore this email.`,
     html: layout(`
       <h2 style="margin:0 0 16px;">Password reset code</h2>
