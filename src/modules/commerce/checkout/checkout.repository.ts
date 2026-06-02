@@ -387,7 +387,7 @@ class CheckoutRepository extends BaseRepository<Checkout> {
   updateSellerApproval(
     checkoutId: ObjectId,
     sellerId: ObjectId,
-    status: "Approved" | "Rejected",
+    status: "Approved" | "Unavailable",
     reason?: string
   ) {
     return this.collection.updateOne(
