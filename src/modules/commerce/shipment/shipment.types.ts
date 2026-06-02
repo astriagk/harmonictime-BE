@@ -7,6 +7,13 @@ export type ShipmentStatus =
   | "OutForDelivery"
   | "Delivered";
 
+export interface TrackingEvent {
+  Status: string;
+  Location?: string;
+  Description?: string;
+  Timestamp: Date;
+}
+
 export interface Shipment {
   _id?: ObjectId;
   CheckoutID: ObjectId;
@@ -20,4 +27,7 @@ export interface Shipment {
   DeliveredAt?: Date;
   Notes?: string;
   CreatedAt: Date;
+  TrackingProvider?: string;
+  TrackingEvents?: TrackingEvent[];
+  LastTrackedAt?: Date;
 }

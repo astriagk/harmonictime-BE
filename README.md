@@ -38,7 +38,7 @@ Key groups:
 | SMS / OTP | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, `TWILIO_VERIFY_SERVICE_SID` |
 | Payments | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_ACCOUNT_NUMBER` |
 | File Storage | `STORAGE_REGION`, `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, `STORAGE_BUCKET_NAME` |
-| Tracking | `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`, `TRACKING_WEBHOOK_SECRET` |
+| Tracking | `TRACKINGMORE_API_KEY`, `TRACKING_WEBHOOK_SECRET` |
 | Business | `BUYER_COMMISSION_RATE`, `PLATFORM_COMMISSION_RATE`, `PAYOUT_HOLD_DAYS`, `GST_RATE`, `SELLER_GST_THRESHOLD` |
 
 ---
@@ -53,7 +53,7 @@ docs/accounts/
 
 | Service | Guide | What it's used for |
 |---------|-------|--------------------|
-| Shiprocket | [docs/accounts/shiprocket.md](docs/accounts/shiprocket.md) | Live package tracking, delivery webhooks |
+| TrackingMore | [docs/accounts/trackingmore.md](docs/accounts/trackingmore.md) | Live package tracking, delivery webhooks (free plan) |
 
 > Add a new file to `docs/accounts/` whenever a new external service is integrated.
 

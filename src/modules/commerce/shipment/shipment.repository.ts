@@ -15,6 +15,10 @@ class ShipmentRepository extends BaseRepository<Shipment> {
   findBySeller(sellerId: string | ObjectId) {
     return this.find({ SellerID: this.toObjectId(sellerId) });
   }
+
+  findByTrackingNumber(awb: string) {
+    return this.findOne({ TrackingNumber: awb });
+  }
 }
 
 export const shipmentRepository = new ShipmentRepository();
