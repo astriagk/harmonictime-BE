@@ -253,7 +253,7 @@ class ProductRepository extends BaseRepository<Product> {
   resubmitIfRejected(productId: string | ObjectId) {
     return this.collection.updateOne(
       { _id: this.toObjectId(productId), ApprovalStatus: { $in: ["Approved", "Rejected"] } } as any,
-      { $set: { ApprovalStatus: "Pending" } } as any
+      { $set: { ApprovalStatus: "Pending", IsAvailable: false } } as any
     );
   }
 
