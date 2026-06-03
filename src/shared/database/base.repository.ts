@@ -4,6 +4,7 @@ import {
   Filter,
   ObjectId,
   OptionalUnlessRequiredId,
+  Sort,
   UpdateFilter,
   WithId,
 } from "mongodb";
@@ -38,8 +39,9 @@ export class BaseRepository<T extends Document> {
     return this.collection.findOne(filter);
   }
 
-  async find(filter: Filter<T> = {} as Filter<T>): Promise<WithId<T>[]> {
-    return this.collection.find(filter).toArray();
+  async find(filter: Filter<T> = {} as Filter<T>, sort?: Sort): Promise<WithId<T>[]> {
+    const cursor = this.collection.find(filter);
+    return (sort ? cursor.sort(sort) : cursor).toArray();
   }
 
   async updateById(id: string | ObjectId, update: Partial<T>) {

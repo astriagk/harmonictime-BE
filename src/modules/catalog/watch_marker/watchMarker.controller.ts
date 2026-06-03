@@ -23,7 +23,7 @@ export const createWatchMarker = asyncHandler(async (req: Request, res: Response
 });
 
 export const getAllWatchMarkers = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await watchMarkerRepository.find();
+  const items = await watchMarkerRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

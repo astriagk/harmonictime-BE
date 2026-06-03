@@ -23,7 +23,7 @@ export const createDeliveryOption = asyncHandler(async (req: Request, res: Respo
 });
 
 export const getAllDeliveryOptions = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await deliveryOptionRepository.find();
+  const items = await deliveryOptionRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

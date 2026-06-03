@@ -10,6 +10,10 @@ class MovementRepository extends BaseRepository<Movement> {
   findByName(MovementName: string) {
     return this.findOne({ MovementName });
   }
+
+  findAll() {
+    return this.find({}, { MovementName: 1 });
+  }
 }
 
 export const movementRepository = new MovementRepository();

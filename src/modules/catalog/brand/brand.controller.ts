@@ -35,7 +35,7 @@ export const createMultipleBrands = asyncHandler(
 );
 
 export const getAllBrands = asyncHandler(async (_req: Request, res: Response) => {
-  const brands = await brandRepository.find();
+  const brands = await brandRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", brands);
 });
 

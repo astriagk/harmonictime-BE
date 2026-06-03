@@ -23,7 +23,7 @@ export const createCategory = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getAllCategories = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await categoryRepository.find();
+  const items = await categoryRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

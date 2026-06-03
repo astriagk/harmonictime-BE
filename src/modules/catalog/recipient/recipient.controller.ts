@@ -23,7 +23,7 @@ export const createRecipient = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const getAllRecipients = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await recipientRepository.find();
+  const items = await recipientRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

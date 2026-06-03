@@ -23,7 +23,7 @@ export const createStrapMaterial = asyncHandler(async (req: Request, res: Respon
 });
 
 export const getAllStrapMaterials = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await strapMaterialRepository.find();
+  const items = await strapMaterialRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 
