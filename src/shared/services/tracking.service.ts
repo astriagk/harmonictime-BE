@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { env } from "../config/env";
-import { TrackingEvent } from "../../modules/commerce/shipment/shipment.types";
+import { ShipmentStatus, TrackingEvent } from "../../modules/commerce/shipment/shipment.types";
 
 const BASE_URL = "https://api.trackingmore.com/v4";
 
@@ -112,6 +112,16 @@ class TrackingService {
 
   isDeliveredEvent(event: TrackingEvent): boolean {
     return /delivered/i.test(event.Status);
+  }
+
+  // Maps TrackingMore's delivery_status to our internal ShipmentStatus.
+  // Returns null for statuses that don't warrant a state change (pending, exception, etc.).
+  mapToShipmentStatus(deliveryStatus: string): ShipmentStatus | null {
+    const s = deliveryStatus.toLowerCase();
+    if (s === "pickup") return "Shipped";
+    if (s === "transit") return "InTransit";
+    if (/delivered/.test(s)) return "Delivered";
+    return null;
   }
 }
 
