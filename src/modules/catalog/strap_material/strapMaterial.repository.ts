@@ -10,6 +10,10 @@ class StrapMaterialRepository extends BaseRepository<StrapMaterial> {
   findByName(StrapMaterialName: string) {
     return this.findOne({ StrapMaterialName });
   }
+
+  findAll() {
+    return this.find({}, { StrapMaterialName: 1 });
+  }
 }
 
 export const strapMaterialRepository = new StrapMaterialRepository();

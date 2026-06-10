@@ -23,7 +23,7 @@ export const createMovement = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getAllMovements = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await movementRepository.find();
+  const items = await movementRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

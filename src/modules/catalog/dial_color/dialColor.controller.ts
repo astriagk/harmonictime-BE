@@ -23,7 +23,7 @@ export const createDialColor = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const getAllDialColors = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await dialColorRepository.find();
+  const items = await dialColorRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

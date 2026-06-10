@@ -14,6 +14,10 @@ class BrandRepository extends BaseRepository<Brand> {
   findByNames(names: string[]) {
     return this.find({ BrandName: { $in: names } });
   }
+
+  findAll() {
+    return this.find({}, { BrandName: 1 });
+  }
 }
 
 export const brandRepository = new BrandRepository();

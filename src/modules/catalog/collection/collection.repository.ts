@@ -13,7 +13,7 @@ class CollectionRepository extends BaseRepository<WatchCollection> {
   }
 
   list(filter: Filter<WatchCollection> = {}) {
-    return this.find(filter);
+    return this.find(filter, { CollectionName: 1 });
   }
 }
 
