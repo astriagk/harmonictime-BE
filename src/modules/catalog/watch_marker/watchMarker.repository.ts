@@ -10,6 +10,10 @@ class WatchMarkerRepository extends BaseRepository<WatchMarker> {
   findByName(WatchMarkerName: string) {
     return this.findOne({ WatchMarkerName });
   }
+
+  findAll() {
+    return this.find({}, { WatchMarkerName: 1 });
+  }
 }
 
 export const watchMarkerRepository = new WatchMarkerRepository();

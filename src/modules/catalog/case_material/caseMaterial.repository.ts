@@ -10,6 +10,10 @@ class CaseMaterialRepository extends BaseRepository<CaseMaterial> {
   findByName(CaseMaterialName: string) {
     return this.findOne({ CaseMaterialName });
   }
+
+  findAll() {
+    return this.find({}, { CaseMaterialName: 1 });
+  }
 }
 
 export const caseMaterialRepository = new CaseMaterialRepository();

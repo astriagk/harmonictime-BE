@@ -23,7 +23,7 @@ export const createCaseMaterial = asyncHandler(async (req: Request, res: Respons
 });
 
 export const getAllCaseMaterials = asyncHandler(async (_req: Request, res: Response) => {
-  const items = await caseMaterialRepository.find();
+  const items = await caseMaterialRepository.findAll();
   sendResponse(res, HTTP_STATUS.OK, "", items);
 });
 

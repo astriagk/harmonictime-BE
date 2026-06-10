@@ -48,6 +48,7 @@ export const adminApproveProduct = asyncHandler(
 
     await productRepository.updateById(productID, {
       ApprovalStatus: "Approved",
+      IsAvailable: true,
       ApprovalNote: undefined,
       ApprovedBy: adminId,
       ApprovedAt: new Date(),

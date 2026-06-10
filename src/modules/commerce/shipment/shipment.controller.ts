@@ -20,6 +20,15 @@ const DELIVERY_STATUS: Record<string, string> = {
   Delivered: "Delivered",
 };
 
+// Used to guard against status regression (e.g. Delivered → InTransit must never happen).
+const STATUS_ORDER: Record<string, number> = {
+  Pending: 0,
+  Shipped: 1,
+  InTransit: 2,
+  OutForDelivery: 3,
+  Delivered: 4,
+};
+
 export const createShipment = asyncHandler(async (req: Request, res: Response) => {
   // DeliveredAt is intentionally pulled out and ignored — it's stamped
   // server-side below so a client can't backdate/forge payout eligibility.
@@ -161,16 +170,24 @@ export const handleTrackingWebhook = asyncHandler(async (req: Request, res: Resp
   const patch: Record<string, unknown> = {
     TrackingEvents: updatedEvents,
     LastTrackedAt: now,
-    TrackingProvider: "Shiprocket",
+    TrackingProvider: "TrackingMore",
   };
 
-  if (trackingService.isDeliveredEvent(event) && !shipment.DeliveredAt) {
-    patch.ShipmentStatus = "Delivered";
-    patch.DeliveredAt = now;
-    if (!shipment.ShippedAt) patch.ShippedAt = now;
+  const deliveryStatus = body.delivery_status as string | undefined;
+  const targetStatus = deliveryStatus ? trackingService.mapToShipmentStatus(deliveryStatus) : null;
+  const currentOrder = STATUS_ORDER[shipment.ShipmentStatus] ?? 0;
+  const targetOrder = targetStatus ? (STATUS_ORDER[targetStatus] ?? -1) : -1;
 
+  if (targetStatus && targetOrder > currentOrder) {
+    patch.ShipmentStatus = targetStatus;
+    if (targetStatus === "Shipped" || (targetOrder >= STATUS_ORDER["Shipped"] && !shipment.ShippedAt)) {
+      patch.ShippedAt = now;
+    }
+    if (targetStatus === "Delivered" && !shipment.DeliveredAt) {
+      patch.DeliveredAt = now;
+    }
     await checkoutRepository.updateById(shipment.CheckoutID, {
-      DeliveryStatus: DELIVERY_STATUS["Delivered"],
+      DeliveryStatus: DELIVERY_STATUS[targetStatus],
     } as any);
   }
 

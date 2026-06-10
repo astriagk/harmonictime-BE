@@ -10,6 +10,10 @@ class DeliveryOptionRepository extends BaseRepository<DeliveryOption> {
   findByName(DeliveryOptionName: string) {
     return this.findOne({ DeliveryOptionName });
   }
+
+  findAll() {
+    return this.find({}, { DeliveryOptionName: 1 });
+  }
 }
 
 export const deliveryOptionRepository = new DeliveryOptionRepository();

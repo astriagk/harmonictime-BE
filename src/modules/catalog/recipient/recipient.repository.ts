@@ -10,6 +10,10 @@ class RecipientRepository extends BaseRepository<Recipient> {
   findByName(RecipientName: string) {
     return this.findOne({ RecipientName });
   }
+
+  findAll() {
+    return this.find({}, { RecipientName: 1 });
+  }
 }
 
 export const recipientRepository = new RecipientRepository();

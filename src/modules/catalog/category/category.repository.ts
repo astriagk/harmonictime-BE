@@ -10,6 +10,10 @@ class CategoryRepository extends BaseRepository<Category> {
   findByName(CategoryName: string) {
     return this.findOne({ CategoryName });
   }
+
+  findAll() {
+    return this.find({}, { CategoryName: 1 });
+  }
 }
 
 export const categoryRepository = new CategoryRepository();

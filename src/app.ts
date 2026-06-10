@@ -7,6 +7,7 @@ import { requestLogger } from "./shared/middlewares/requestLogger.middleware";
 import { errorMiddleware } from "./shared/middlewares/error.middleware";
 import logger from "./shared/utils/logger";
 import routes from "./routes";
+import { startTrackingSyncJob } from "./shared/jobs/trackingSync.job";
 
 const app = express();
 
@@ -17,7 +18,10 @@ app.use(helmet());
 app.use(requestLogger);
 
 connectDB()
-  .then(() => logger.info("Connected to database"))
+  .then(() => {
+    logger.info("Connected to database");
+    startTrackingSyncJob();
+  })
   .catch((err) => logger.error(`Database connection failed: ${err}`));
 
 app.use("/api", routes);
