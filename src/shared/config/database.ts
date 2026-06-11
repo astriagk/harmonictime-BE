@@ -8,6 +8,7 @@ export const connectDB = async (): Promise<Db> => {
   if (db) return db;
   const client = new MongoClient(env.MONGO_URI, {
     tls: true,
+    tlsAllowInvalidCertificates: true,
     serverSelectionTimeoutMS: 10000,
   });
   await client.connect();
