@@ -8,7 +8,7 @@ Used for: storing product images, GST documents, and site content (like the emai
 ## Step 1 — Create an AWS Account
 
 1. Go to [https://aws.amazon.com](https://aws.amazon.com) and click **"Create an AWS Account"**
-2. Enter your email and choose an account name (e.g. `harmonic-time`)
+2. Enter your email and choose an account name (e.g. `krono-square`)
 3. Provide a credit/debit card — AWS won't charge unless you exceed the free tier
 4. Complete identity verification (phone OTP)
 5. Choose the **Free** support plan
@@ -24,7 +24,7 @@ Used for: storing product images, GST documents, and site content (like the emai
 
    | Field | Value |
    |-------|-------|
-   | **Bucket name** | `harmonictime` (must be globally unique — add a suffix if taken, e.g. `harmonictime-prod`) |
+   | **Bucket name** | `kronosquare` (must be globally unique — add a suffix if taken, e.g. `kronosquare-prod`) |
    | **AWS Region** | `eu-north-1` (Stockholm) or `ap-south-1` (Mumbai) for India-based users |
    | **Object Ownership** | ACLs disabled (recommended) |
    | **Block Public Access** | **Uncheck** "Block all public access" — we need files publicly readable |
@@ -40,7 +40,7 @@ After creating the bucket:
 
 1. Open the bucket → **Permissions** tab
 2. Scroll to **Bucket Policy** → click **Edit**
-3. Paste this policy (replace `harmonictime` with your actual bucket name):
+3. Paste this policy (replace `kronosquare` with your actual bucket name):
 
 ```json
 {
@@ -51,7 +51,7 @@ After creating the bucket:
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::harmonictime/*"
+      "Resource": "arn:aws:s3:::kronosquare/*"
     }
   ]
 }
@@ -68,7 +68,7 @@ After creating the bucket:
 Don't use your root AWS account credentials in `.env`. Create a limited IAM user instead.
 
 1. In the AWS Console, go to **IAM → Users → Create user**
-2. Username: `harmonictime-app`
+2. Username: `kronosquare-app`
 3. Click **"Next"** (skip "Add to group" for now)
 4. On the **"Set permissions"** page → choose **"Attach policies directly"**
 5. Search for and attach **`AmazonS3FullAccess`**
@@ -92,7 +92,7 @@ Add these to your `.env` file:
 STORAGE_REGION=eu-north-1
 STORAGE_ACCESS_KEY=your_access_key_id
 STORAGE_SECRET_KEY=your_secret_access_key
-STORAGE_BUCKET_NAME=harmonictime
+STORAGE_BUCKET_NAME=kronosquare
 ```
 
 - `STORAGE_REGION` — must match the region you chose in Step 2
@@ -116,7 +116,7 @@ file: [attach any image file]
 
 The response should include a URL in the format:
 ```
-https://harmonictime.s3.eu-north-1.amazonaws.com/product-images/uuid-timestamp
+https://kronosquare.s3.eu-north-1.amazonaws.com/product-images/uuid-timestamp
 ```
 
 Open that URL in a browser — if the image loads, the bucket policy and credentials are both correct.

@@ -22,7 +22,7 @@ Used for: live package tracking, AWB status, delivery webhooks.
 1. In the dashboard, go to **Developer** (left sidebar)
 2. Click **API Key**
 3. Click **Generate API Key**
-4. Give it a name (e.g. `harmonic-time-prod`)
+4. Give it a name (e.g. `krono-square-prod`)
 5. Click **Create**
 6. **Copy the key immediately** — TrackingMore only shows it once
 
