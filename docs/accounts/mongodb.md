@@ -70,13 +70,13 @@ Add these to your `.env` file:
 
 ```env
 MONGO_URI=mongodb+srv://your_username:your_password@your-cluster.xxxxx.mongodb.net/?appName=development
-DB_NAME=harmonictime-dev
+DB_NAME=kronosquare-dev
 ```
 
 - `MONGO_URI` — full connection string from Step 5 (include username + password)
 - `DB_NAME` — the database name Atlas will create automatically on first write
 
-> Use `harmonictime-dev` for development and `harmonictime-prod` for production. Atlas creates the DB automatically — no manual creation needed.
+> Use `kronosquare-dev` for development and `kronosquare-prod` for production. Atlas creates the DB automatically — no manual creation needed.
 
 ---
 

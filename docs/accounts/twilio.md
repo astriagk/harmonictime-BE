@@ -49,7 +49,7 @@ The OTP flow uses Twilio Verify — a managed service that handles code generati
 
 1. In the Twilio Console go to **Verify → Services**
 2. Click **"Create new Service"**
-3. Give it a friendly name (e.g. `harmonic-time`)
+3. Give it a friendly name (e.g. `krono-square`)
 4. Click **"Create"**
 5. You'll land on the service settings page — copy the **Service SID** (starts with `VA...`)
 

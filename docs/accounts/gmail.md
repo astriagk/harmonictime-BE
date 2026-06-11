@@ -8,8 +8,8 @@ Used for: sending transactional emails — email verification, password reset OT
 ## Step 1 — Use an Existing Gmail Account (or Create One)
 
 You need a Gmail account dedicated to sending app emails. Don't use your personal Gmail — use or create one like:
-- `harmonictime.noreply@gmail.com`
-- `mail.harmonictime@gmail.com`
+- `kronosquare.noreply@gmail.com`
+- `mail.kronosquare@gmail.com`
 
 Go to [https://accounts.google.com](https://accounts.google.com) to create it if needed.
 
@@ -29,7 +29,7 @@ App passwords require 2FA to be active on the account.
 
 1. Go to [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
    (If you don't see this option, 2FA isn't enabled — do Step 2 first)
-2. Under **"App name"** type a name like `harmonic-time-server`
+2. Under **"App name"** type a name like `krono-square-server`
 3. Click **"Create"**
 4. Google shows a 16-character password like `xxxx xxxx xxxx xxxx`
 5. **Copy it** — it's shown only once
@@ -80,7 +80,7 @@ Content-Type: application/json
 }
 ```
 
-Check the inbox of `test@example.com` — you should receive a "Verify your Harmonic Time email address" email within a few seconds.
+Check the inbox of `test@example.com` — you should receive a "Verify your Krono Square email address" email within a few seconds.
 
 If you don't receive it, check the server logs for `Failed to send email:` errors.
 
@@ -90,9 +90,9 @@ If you don't receive it, check the server logs for `Failed to send email:` error
 
 | Trigger | Subject |
 |---------|---------|
-| New registration | "Verify your Harmonic Time email address" |
-| Resend verification | "Verify your Harmonic Time email address" |
-| Password reset (email OTP) | "Reset your Harmonic Time password" |
+| New registration | "Verify your Krono Square email address" |
+| Resend verification | "Verify your Krono Square email address" |
+| Password reset (email OTP) | "Reset your Krono Square password" |
 | Order confirmed (buyer) | Order confirmation with itemised summary |
 | Admin blocks account | Account blocked notification |
 | Admin suspends account | Account suspended notification |
