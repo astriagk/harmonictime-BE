@@ -18,5 +18,5 @@ export const uploadMiddleware = multer({
       cb(new Error(`Invalid file type: ${file.mimetype}. Only images, videos, and PDFs are allowed.`));
     }
   },
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB (videos are compressed before S3 upload)
 });
