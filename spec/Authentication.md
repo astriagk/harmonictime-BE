@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0 | **Status:** Active | **Audience:** Developers & Reviewers
 
-> This document covers how authentication works end-to-end in the Harmonic Time backend —
+> This document covers how authentication works end-to-end in the Krono Square backend —
 > including registration, login, token lifecycle, email delivery, input validation, and data storage.
 
 ---
@@ -103,8 +103,8 @@ All JWT operations live in `src/shared/services/token.service.ts`.
 
 | Token | Method | Secret Env Var | Default Expiry | Stored in DB? |
 |---|---|---|---|---|
-| Access Token | `jsonwebtoken.sign` | `JWT_SECRET` (default: `"harmonic_time"`) | `JWT_EXPIRES_IN` (default: `15d`) | No — stateless |
-| Refresh Token | `jsonwebtoken.sign` | `JWT_REFRESH_SECRET` (default: `"harmonic_time_refresh"`) | `JWT_REFRESH_EXPIRES_IN` (default: `30d`) | bcrypt hash in `User.refreshTokenHash` |
+| Access Token | `jsonwebtoken.sign` | `JWT_SECRET` (default: `"krono_square"`) | `JWT_EXPIRES_IN` (default: `15d`) | No — stateless |
+| Refresh Token | `jsonwebtoken.sign` | `JWT_REFRESH_SECRET` (default: `"krono_square_refresh"`) | `JWT_REFRESH_EXPIRES_IN` (default: `30d`) | bcrypt hash in `User.refreshTokenHash` |
 | Email Verification Token | `crypto.randomBytes` → SHA-256 | — | 24 hours (hard-coded) | SHA-256 hash in `User.emailVerificationToken` |
 | Password Reset Token | `jsonwebtoken.sign` | `JWT_SECRET` | 10 minutes (hard-coded) | No |
 | OTP | 6-digit random number | — | 10 minutes (hard-coded) | SHA-256 hash in `User.otp` |
@@ -179,9 +179,9 @@ verifyRefreshToken(token: string): TokenPayload
 
 | Trigger | Template | Subject |
 |---|---|---|
-| New registration | `verifyEmail.template.ts` | "Verify your Harmonic Time email address" |
-| Resend verification | `verifyEmail.template.ts` | "Verify your Harmonic Time email address" |
-| Password reset (email OTP) | `passwordResetOtp.template.ts` | "Reset your Harmonic Time password" |
+| New registration | `verifyEmail.template.ts` | "Verify your Krono² email address" |
+| Resend verification | `verifyEmail.template.ts` | "Verify your Krono² email address" |
+| Password reset (email OTP) | `passwordResetOtp.template.ts` | "Reset your Krono² password" |
 | Admin blocks account | `accountStatus.template.ts` | Account blocked notification |
 | Admin suspends account | `accountStatus.template.ts` | Account suspended notification |
 | Admin restores account | `accountStatus.template.ts` | Account restored notification |
