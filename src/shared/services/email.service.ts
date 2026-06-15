@@ -3,12 +3,12 @@ import { env } from "../config/env";
 import logger from "../utils/logger";
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  host: env.EMAIL_HOST,
+  port: env.EMAIL_PORT,
+  secure: env.EMAIL_SECURE,
   auth: {
     user: env.EMAIL_USER,
-    // Strip spaces so a pasted Gmail app password ("xxxx xxxx xxxx xxxx") authenticates.
+    // Strip spaces so a pasted app password ("xxxx xxxx xxxx xxxx") authenticates.
     pass: env.EMAIL_PASS.replace(/\s/g, ""),
   },
 });

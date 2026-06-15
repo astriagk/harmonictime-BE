@@ -5,10 +5,10 @@ dotenv.config();
 export const env = {
   PORT: process.env.PORT || 5000,
   MONGO_URI: process.env.MONGO_URI || "",
-  DB_NAME: process.env.DB_NAME || "harmoniv_time",
-  JWT_SECRET: process.env.JWT_SECRET || "harmonic_time",
+  DB_NAME: process.env.DB_NAME || "krono_square",
+  JWT_SECRET: process.env.JWT_SECRET || "krono_square",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "15d",
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "harmonic_time_refresh",
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "krono_square_refresh",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
 
   // Base URL of the frontend app — used to build links in emails. Override per
@@ -20,8 +20,17 @@ export const env = {
   // images. When empty, emails fall back to the text wordmark.
   LOGO_URL:
     process.env.LOGO_URL ||
-    "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/email_logo/056ffe15-e090-459d-825f-00aa192b1ecb-1779439111383",
+    "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/email_logo/056ffe15-e090-459d-825f-00aa192b1ecb-1779439111383",
 
+  // SMTP transport. Defaults to Gmail, but Gmail's port 465 is often blocked on
+  // cloud hosts (e.g. Railway) — set these to a relay like Brevo
+  // (smtp-relay.brevo.com / 587 / secure=false) in production.
+  EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
+  EMAIL_PORT: Number(process.env.EMAIL_PORT ?? 465),
+  // secure=true for port 465 (implicit TLS), false for 587 (STARTTLS).
+  EMAIL_SECURE: process.env.EMAIL_SECURE
+    ? process.env.EMAIL_SECURE === "true"
+    : Number(process.env.EMAIL_PORT ?? 465) === 465,
   EMAIL_USER: process.env.EMAIL_USER || "",
   EMAIL_PASS: process.env.EMAIL_PASS || "",
   // Where contact-form submissions are emailed. Falls back to the sender account.
