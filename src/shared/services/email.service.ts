@@ -4,14 +4,12 @@ import logger from "../utils/logger";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
+  port: 465,
+  secure: true,
   auth: {
     user: env.EMAIL_USER,
     // Strip spaces so a pasted Gmail app password ("xxxx xxxx xxxx xxxx") authenticates.
     pass: env.EMAIL_PASS.replace(/\s/g, ""),
-  },
-  tls: {
-    rejectUnauthorized: false,
   },
 });
 
