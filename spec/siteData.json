@@ -4,7 +4,7 @@
     "data": [
       {
         "id": 1,
-        "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/hero_slider/dd4e9818-06b0-409b-8f94-7e5004ae1262-1779444094794",
+        "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/hero_slider/dd4e9818-06b0-409b-8f94-7e5004ae1262-1779444094794",
         "sm_title": "Founded in 1755",
         "meta": true,
         "title": "Vacheron Constantin",
@@ -12,7 +12,7 @@
       },
       {
         "id": 2,
-        "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/hero_slider/3deca549-89dc-43a1-aaba-fbbd343cb50a-1779443686822",
+        "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/hero_slider/3deca549-89dc-43a1-aaba-fbbd343cb50a-1779443686822",
         "sm_title": "Founded in 1775",
         "title": "Breguet",
         "subtitle": "Modern Era, Cultural Significance.",
@@ -20,7 +20,7 @@
       },
       {
         "id": 3,
-        "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/hero_slider/e276614e-9acf-47f1-b930-ef5d39905349-1779443775866",
+        "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/hero_slider/e276614e-9acf-47f1-b930-ef5d39905349-1779443775866",
         "sm_title": "Founded in 1833",
         "title": "Jaeger-LeCoultre",
         "subtitle": "Iconic creations, Contemporary presence.",
@@ -35,21 +35,21 @@
     "data": [
       {
         "id": 1,
-        "img": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/category_banner/5ef3aa73-06df-41ff-b5a6-56a6706cb492-1779444764206",
+        "img": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/category_banner/5ef3aa73-06df-41ff-b5a6-56a6706cb492-1779444764206",
         "parentTitle": "Vintage",
         "children": ["Omega"],
         "smDesc": "Rare classics and iconic timepieces from the golden era of watchmaking."
       },
       {
         "id": 2,
-        "img": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/category_banner/e0b9ec0a-b14e-470b-94a9-1da831cfdf4d-1779444823441",
+        "img": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/category_banner/e0b9ec0a-b14e-470b-94a9-1da831cfdf4d-1779444823441",
         "parentTitle": "Heritage",
         "children": ["Longines"],
         "smDesc": "Timeless craftsmanship inspired by generations of horological tradition."
       },
       {
         "id": 3,
-        "img": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/category_banner/2a1129b3-a688-4b33-98ac-8eeb70b641d7-1779444886723",
+        "img": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/category_banner/2a1129b3-a688-4b33-98ac-8eeb70b641d7-1779444886723",
         "parentTitle": "Timeless",
         "children": ["Rolex"],
         "smDesc": "Elegant watches designed to remain iconic across every generation."
@@ -62,7 +62,7 @@
     "type": "video_area",
     "data": [
       {
-        "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/video_area/dadacacb-09fc-40a7-bde1-8f0c38f0e1bb-1779435991494",
+        "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/video_area/dadacacb-09fc-40a7-bde1-8f0c38f0e1bb-1779435991494",
         "videoTitle": "Art of Restoring",
         "videoId": "8nsL3Uryv0U",
         "description": "“Art of Restoring” celebrates the craftsmanship behind bringing vintage and pre-owned watches back to life with precision, care, and timeless passion."
@@ -75,7 +75,7 @@
     "type": "breadcrumb",
     "data": [
       {
-        "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/breadcrumb/c8fc84e8-2316-4bee-9e64-73b517f5318f-1779435215818"
+        "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/breadcrumb/c8fc84e8-2316-4bee-9e64-73b517f5318f-1779435215818"
       }
     ],
     "order": 1,

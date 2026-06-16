@@ -1,6 +1,6 @@
-# Harmonic Time — Platform Journey Document
+# Krono Square — Platform Journey Document
 
-**Platform:** Harmonic Time (Watch Marketplace)
+**Platform:** Krono Square (Watch Marketplace)
 **Roles:** Admin · Seller · Buyer
 **Last Updated:** 2026-05-27
 

@@ -38,7 +38,7 @@ In Postman:
 ```json
 {
   "message": "Image uploaded successfully",
-  "data": { "url": "https://harmonic-time.s3.us-east-1.amazonaws.com/site-content/hero/..." }
+  "data": { "url": "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/hero/..." }
 }
 ```
 
@@ -67,7 +67,7 @@ Common fields:
   "type": "hero_slider",
   "order": 1,
   "data": {
-    "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/hero/e-01.webp",
+    "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/hero/e-01.webp",
     "sm_title": "Milky White",
     "meta": true,
     "title": "HMT Janata",
@@ -82,7 +82,7 @@ Common fields:
   "type": "category_banner",
   "order": 1,
   "data": {
-    "img": "https://harmonic-time.s3.us-east-1.amazonaws.com/cms/gautam.jpg",
+    "img": "https://kronosquare.s3.us-east-1.amazonaws.com/cms/gautam.jpg",
     "parentTitle": "HMT GAUTAM",
     "children": ["Watch"],
     "smDesc": ""
@@ -96,7 +96,7 @@ Common fields:
   "type": "video_area",
   "order": 1,
   "data": {
-    "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/cms/video-bg.jpg",
+    "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/cms/video-bg.jpg",
     "videoTitle": "Crafted by hand",
     "videoId": "dQw4w9WgXcQ",
     "description": "A short film on how each piece is assembled."
@@ -158,7 +158,7 @@ Query params can be combined, e.g. `/api/site-content?type=hero_slider&isActive=
 ```json
 {
   "data": {
-    "bgImg": "https://harmonic-time.s3.us-east-1.amazonaws.com/hero/new.webp",
+    "bgImg": "https://kronosquare.s3.us-east-1.amazonaws.com/hero/new.webp",
     "title": "HMT Janata (Updated)"
   },
   "order": 2,

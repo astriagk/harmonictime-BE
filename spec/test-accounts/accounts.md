@@ -22,10 +22,10 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 **Capabilities:** List products, manage inventory, view orders, request withdrawals, manage bank account.
 
-| #   | Email                   | Password    | Store Name            |
-| --- | ----------------------- | ----------- | --------------------- |
-| S1  | gowtham0794@gmail.com   | 252318Gow@# | Technomad Horology 01 |
-| S5  | gowtham0794k@gmail.com  | 252318Gow@# | Technomad Horology 05 |
+| #   | Email                   | Password    | Store Name          |
+| --- | ----------------------- | ----------- | ------------------- |
+| S1  | gowtham0794@gmail.com   | 252318Gow@# | Chrono Vault        |
+| S5  | gowtham0794k@gmail.com  | 252318Gow@# | Gearworks Watch Co  |
 
 ---
 
@@ -42,12 +42,10 @@ Use these accounts for end-to-end testing across all roles. Real email accounts 
 
 ## Seller GST Details
 
-| #   | GSTIN           | LegalBusinessName         | TradeName             | BusinessType | State       | PinCode |
-| --- | --------------- | ------------------------- | --------------------- | ------------ | ----------- | ------- |
-| S1  | 27AAPFT1234A1Z5 | Technomad Horology 01 LLP | Technomad Horology 01 | LLP          | Maharashtra | 400001  |
-| S2  | 29AAPFT5678B1Z3 | Technomad Horology 02 LLP | Technomad Horology 02 | LLP          | Karnataka   | 560001  |
-| S3  | 33AAPFT9012C1Z1 | Technomad Horology 03 LLP | Technomad Horology 03 | LLP          | Tamil Nadu  | 600001  |
-| S4  | 07AAPFT3456D1Z9 | Technomad Horology 04 LLP | Technomad Horology 04 | LLP          | Delhi       | 110001  |
+| #   | GSTIN           | LegalBusinessName       | TradeName          | BusinessType | State       | PinCode |
+| --- | --------------- | ----------------------- | ------------------ | ------------ | ----------- | ------- |
+| S1  | 27AABFC1234A1Z5 | Chrono Vault Retail LLP | Chrono Vault       | LLP          | Maharashtra | 400001  |
+| S5  | 24AACFG7890E1Z7 | Gearworks Watch Co LLP  | Gearworks Watch Co | LLP          | Gujarat     | 380001  |
 
 > GSTINs above follow valid Indian format (state code + PAN pattern + entity + Z + check). Use these only for test environment — not real GSTINs.
 

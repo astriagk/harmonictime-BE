@@ -1,4 +1,4 @@
-# Harmonic Time — Backend API
+# Krono Square — Backend API
 
 TypeScript + Node.js + Express + MongoDB e-commerce API.
 
