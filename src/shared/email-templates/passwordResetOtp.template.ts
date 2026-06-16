@@ -1,6 +1,7 @@
 import { EmailTemplate } from "./types";
 import { layout } from "./layout";
 import { resetPasswordUrl } from "../constants/frontend";
+import { env } from "../config/env";
 
 // OTP sent when a user requests a password reset (POST /api/verify-email).
 // The code is valid for 10 minutes. The link carries a signed reset token so
@@ -13,7 +14,7 @@ export const passwordResetOtpEmail = (
   const link = resetPasswordUrl(token);
 
   return {
-    subject: "Reset your Krono² password",
+    subject: `Reset your ${env.BRAND_NAME} password`,
     text: `Your password reset code is: ${otp}\n\nThis code expires in 10 minutes.\nReset your password here: ${link}\n\nIf you didn't request it, you can ignore this email.`,
     html: layout(`
       <h2 style="margin:0 0 16px;">Password reset code</h2>
