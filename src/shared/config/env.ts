@@ -22,34 +22,29 @@ export const env = {
     process.env.LOGO_URL ||
     "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/email_logo/056ffe15-e090-459d-825f-00aa192b1ecb-1779439111383",
 
-  // SMTP transport (Gmail). Default to port 587 (STARTTLS): port 465 (implicit
-  // TLS) is the most aggressively blocked SMTP port on cloud hosts (e.g.
-  // Railway), so 465 is a poor default when EMAIL_PORT is unset in the host's
-  // dashboard. If 587 is ALSO blocked on your host, SMTP can't reach Gmail at
-  // all — switch to the Gmail API (HTTPS) instead of any SMTP port.
-  EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
-  EMAIL_PORT: Number(process.env.EMAIL_PORT ?? 587),
-  // secure=true for port 465 (implicit TLS), false for 587 (STARTTLS).
-  EMAIL_SECURE: process.env.EMAIL_SECURE
-    ? process.env.EMAIL_SECURE === "true"
-    : Number(process.env.EMAIL_PORT ?? 587) === 465,
-  EMAIL_USER: process.env.EMAIL_USER || "",
-  EMAIL_PASS: process.env.EMAIL_PASS || "",
+  // Brand identity shown in transactional emails — the header wordmark, the
+  // invoice footer, and the "shopping with …" sign-offs. Override per
+  // environment via the BRAND_* env vars; the defaults match production.
+  BRAND_NAME: process.env.BRAND_NAME || "Krono²",
+  BRAND_ADDRESS:
+    process.env.BRAND_ADDRESS ||
+    "22, 1st cross, BHK Layout, Bangalore - 560026",
+  BRAND_EMAIL: process.env.BRAND_EMAIL || "krono2@astriagk.com",
+  BRAND_PHONE: process.env.BRAND_PHONE || "(+91) 88673 47448",
 
-  // Amazon SES (HTTPS) transport — the primary email channel. Sends over port
-  // 443 (never blocked, unlike SMTP). Reuses the AWS credentials below; the IAM
-  // user must have the ses:SendEmail permission. The SMTP settings above are
-  // only used as a local/dev fallback when EMAIL_FROM is unset.
+  // Amazon SES (HTTPS) transport — the only email channel. Sends over port 443
+  // (never blocked, unlike SMTP). Reuses the AWS credentials below; the IAM user
+  // must have the ses:SendEmail permission.
   //
   // EMAIL_FROM: the verified SES sender, e.g. "Harmonic Time
   // <noreply@yourdomain.com>". The domain (or address) must be verified in the
-  // SES console. Falls back to EMAIL_USER when unset.
-  EMAIL_FROM: process.env.EMAIL_FROM || process.env.EMAIL_USER || "",
+  // SES console.
+  EMAIL_FROM: process.env.EMAIL_FROM || "",
   // SES region — defaults to the S3 region. Verify your domain in this region.
   SES_REGION: process.env.SES_REGION || process.env.STORAGE_REGION || "us-east-1",
-  // Where contact-form submissions are emailed. Falls back to the sender account.
+  // Where contact-form submissions are emailed. Falls back to the SES sender.
   CONTACT_RECIPIENT:
-    process.env.CONTACT_RECIPIENT || process.env.EMAIL_USER || "",
+    process.env.CONTACT_RECIPIENT || process.env.EMAIL_FROM || "",
 
   TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || "",
   TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || "",

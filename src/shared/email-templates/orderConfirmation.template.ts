@@ -1,9 +1,10 @@
 import { EmailTemplate } from "./types";
+import { env } from "../config/env";
 
-const BRAND_NAME = "Krono²";
-const BRAND_ADDRESS = "22, 1st cross, BHK Layout, Bangalore - 560026";
-const BRAND_EMAIL = "krono2@astriagk.com";
-const BRAND_PHONE = "(+91) 88673 47448";
+const BRAND_NAME = env.BRAND_NAME;
+const BRAND_ADDRESS = env.BRAND_ADDRESS;
+const BRAND_EMAIL = env.BRAND_EMAIL;
+const BRAND_PHONE = env.BRAND_PHONE;
 
 export interface OrderConfirmationItem {
   productName: string;
