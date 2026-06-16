@@ -35,7 +35,7 @@ export const createContactMessage = asyncHandler(
       );
     } else {
       console.warn(
-        "[contact] CONTACT_RECIPIENT/EMAIL_USER not set — skipping email",
+        "[contact] CONTACT_RECIPIENT/EMAIL_FROM not set — skipping email",
       );
     }
 

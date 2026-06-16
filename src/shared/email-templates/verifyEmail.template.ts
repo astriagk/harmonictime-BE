@@ -1,6 +1,7 @@
 import { EmailTemplate } from "./types";
 import { layout } from "./layout";
 import { verifyEmailUrl } from "../constants/frontend";
+import { env } from "../config/env";
 
 export const verifyEmailTemplate = (
   token: string,
@@ -9,7 +10,7 @@ export const verifyEmailTemplate = (
   const link = verifyEmailUrl(token, email);
 
   return {
-    subject: "Verify your Krono² email address",
+    subject: `Verify your ${env.BRAND_NAME} email address`,
     text: `Please verify your email address by clicking the link below.\n\nThis link expires in 24 hours.\n\n${link}\n\nIf you didn't create an account, you can safely ignore this email.`,
     html: layout(`
       <h2 style="margin:0 0 16px;">Verify your email address</h2>
