@@ -1,6 +1,23 @@
 import nodemailer from "nodemailer";
+import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { env } from "../config/env";
 import logger from "../utils/logger";
+
+// Primary transport is Amazon SES over HTTPS (port 443). SMTP is blocked on the
+// deploy host (all SMTP ports time out), so SES is the only channel that works
+// in production. SMTP is kept only as a local/dev fallback for when EMAIL_FROM
+// is not configured.
+const useSes = !!env.EMAIL_FROM;
+
+const ses = useSes
+  ? new SESv2Client({
+      region: env.SES_REGION,
+      credentials: {
+        accessKeyId: env.STORAGE_ACCESS_KEY,
+        secretAccessKey: env.STORAGE_SECRET_KEY,
+      },
+    })
+  : null;
 
 const transporter = nodemailer.createTransport({
   host: env.EMAIL_HOST,
@@ -14,30 +31,32 @@ const transporter = nodemailer.createTransport({
     pass: env.EMAIL_PASS.replace(/\s/g, ""),
   },
   // Fail fast instead of hanging the request when the SMTP host is slow or
-  // unreachable (Gmail's port 465 is often blocked/throttled on cloud hosts —
-  // see env.ts). Without these, sendMail can stall for minutes and surface as a
+  // unreachable. Without these, sendMail can stall for minutes and surface as a
   // gateway timeout on whichever endpoint awaited it.
   connectionTimeout: 10_000,
   greetingTimeout: 10_000,
   socketTimeout: 15_000,
 });
 
-// Verify the SMTP connection once at startup. A "Connection timeout" here means
-// the host is blocking outbound SMTP (common on Railway/Render) — the app can't
-// reach Gmail over SMTP at all, regardless of port. This logs the real cause
-// instead of letting every send fail silently later.
-transporter.verify().then(
-  () =>
-    logger.info(
-      `SMTP ready: ${env.EMAIL_HOST}:${env.EMAIL_PORT} (secure=${env.EMAIL_SECURE}) as ${env.EMAIL_USER}`,
-    ),
-  (err) =>
-    logger.error(
-      `SMTP connection failed for ${env.EMAIL_HOST}:${env.EMAIL_PORT} — ${err}. ` +
-        `If this is a connection timeout, your host is blocking outbound SMTP; ` +
-        `use the Gmail API over HTTPS instead.`,
-    ),
-);
+// Log the active transport once at startup so failures are easy to diagnose.
+if (useSes) {
+  logger.info(
+    `Email transport: Amazon SES (${env.SES_REGION}) from ${env.EMAIL_FROM}`,
+  );
+} else {
+  transporter.verify().then(
+    () =>
+      logger.info(
+        `Email transport: SMTP ${env.EMAIL_HOST}:${env.EMAIL_PORT} (secure=${env.EMAIL_SECURE}) as ${env.EMAIL_USER}`,
+      ),
+    (err) =>
+      logger.error(
+        `SMTP connection failed for ${env.EMAIL_HOST}:${env.EMAIL_PORT} — ${err}. ` +
+          `If this is a connection timeout, your host is blocking outbound SMTP; ` +
+          `set EMAIL_FROM (a verified SES sender) to send via Amazon SES over HTTPS.`,
+      ),
+  );
+}
 
 export const sendEmail = async (
   to: string,
@@ -46,13 +65,33 @@ export const sendEmail = async (
   html?: string
 ): Promise<boolean> => {
   try {
-    await transporter.sendMail({
-      from: env.EMAIL_USER,
-      to,
-      subject,
-      text: message,
-      ...(html ? { html } : {}),
-    });
+    if (useSes) {
+      await ses!.send(
+        new SendEmailCommand({
+          FromEmailAddress: env.EMAIL_FROM,
+          Destination: { ToAddresses: [to] },
+          Content: {
+            Simple: {
+              Subject: { Data: subject, Charset: "UTF-8" },
+              Body: {
+                Text: { Data: message, Charset: "UTF-8" },
+                ...(html
+                  ? { Html: { Data: html, Charset: "UTF-8" } }
+                  : {}),
+              },
+            },
+          },
+        }),
+      );
+    } else {
+      await transporter.sendMail({
+        from: env.EMAIL_FROM || env.EMAIL_USER,
+        to,
+        subject,
+        text: message,
+        ...(html ? { html } : {}),
+      });
+    }
     return true;
   } catch (err) {
     logger.error(`Failed to send email: ${err}`);

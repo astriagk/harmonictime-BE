@@ -35,6 +35,18 @@ export const env = {
     : Number(process.env.EMAIL_PORT ?? 587) === 465,
   EMAIL_USER: process.env.EMAIL_USER || "",
   EMAIL_PASS: process.env.EMAIL_PASS || "",
+
+  // Amazon SES (HTTPS) transport — the primary email channel. Sends over port
+  // 443 (never blocked, unlike SMTP). Reuses the AWS credentials below; the IAM
+  // user must have the ses:SendEmail permission. The SMTP settings above are
+  // only used as a local/dev fallback when EMAIL_FROM is unset.
+  //
+  // EMAIL_FROM: the verified SES sender, e.g. "Harmonic Time
+  // <noreply@yourdomain.com>". The domain (or address) must be verified in the
+  // SES console. Falls back to EMAIL_USER when unset.
+  EMAIL_FROM: process.env.EMAIL_FROM || process.env.EMAIL_USER || "",
+  // SES region — defaults to the S3 region. Verify your domain in this region.
+  SES_REGION: process.env.SES_REGION || process.env.STORAGE_REGION || "us-east-1",
   // Where contact-form submissions are emailed. Falls back to the sender account.
   CONTACT_RECIPIENT:
     process.env.CONTACT_RECIPIENT || process.env.EMAIL_USER || "",
