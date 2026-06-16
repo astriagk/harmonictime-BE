@@ -11,6 +11,13 @@ const transporter = nodemailer.createTransport({
     // Strip spaces so a pasted app password ("xxxx xxxx xxxx xxxx") authenticates.
     pass: env.EMAIL_PASS.replace(/\s/g, ""),
   },
+  // Fail fast instead of hanging the request when the SMTP host is slow or
+  // unreachable (Gmail's port 465 is often blocked/throttled on cloud hosts —
+  // see env.ts). Without these, sendMail can stall for minutes and surface as a
+  // gateway timeout on whichever endpoint awaited it.
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 15_000,
 });
 
 export const sendEmail = async (

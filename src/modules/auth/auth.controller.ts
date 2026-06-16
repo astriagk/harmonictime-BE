@@ -86,11 +86,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     RoleID: assignedRole,
   });
 
-  // Send verification email — best-effort; the mailer swallows its own errors.
-  await sendTemplateEmail(
-    email,
-    verifyEmailTemplate(rawToken, email),
-  );
+  // Send verification email — best-effort and fire-and-forget so a slow/blocked
+  // SMTP host never stalls the registration response. The mailer swallows its
+  // own errors; users who don't receive it can use the resend-verification flow.
+  void sendTemplateEmail(email, verifyEmailTemplate(rawToken, email));
 
   sendResponse(
     res,
