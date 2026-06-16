@@ -22,15 +22,17 @@ export const env = {
     process.env.LOGO_URL ||
     "https://kronosquare.s3.us-east-1.amazonaws.com/site-content/email_logo/056ffe15-e090-459d-825f-00aa192b1ecb-1779439111383",
 
-  // SMTP transport. Defaults to Gmail, but Gmail's port 465 is often blocked on
-  // cloud hosts (e.g. Railway) — set these to a relay like Brevo
-  // (smtp-relay.brevo.com / 587 / secure=false) in production.
+  // SMTP transport (Gmail). Default to port 587 (STARTTLS): port 465 (implicit
+  // TLS) is the most aggressively blocked SMTP port on cloud hosts (e.g.
+  // Railway), so 465 is a poor default when EMAIL_PORT is unset in the host's
+  // dashboard. If 587 is ALSO blocked on your host, SMTP can't reach Gmail at
+  // all — switch to the Gmail API (HTTPS) instead of any SMTP port.
   EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
-  EMAIL_PORT: Number(process.env.EMAIL_PORT ?? 465),
+  EMAIL_PORT: Number(process.env.EMAIL_PORT ?? 587),
   // secure=true for port 465 (implicit TLS), false for 587 (STARTTLS).
   EMAIL_SECURE: process.env.EMAIL_SECURE
     ? process.env.EMAIL_SECURE === "true"
-    : Number(process.env.EMAIL_PORT ?? 465) === 465,
+    : Number(process.env.EMAIL_PORT ?? 587) === 465,
   EMAIL_USER: process.env.EMAIL_USER || "",
   EMAIL_PASS: process.env.EMAIL_PASS || "",
   // Where contact-form submissions are emailed. Falls back to the sender account.
