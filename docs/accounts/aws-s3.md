@@ -179,11 +179,33 @@ New SES accounts start in the **sandbox**: max **200 emails/day**, 1 email/sec, 
 
 ## Step 10 — Grant the IAM User SES Permission
 
-The app reuses the IAM user from Step 4 (same `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY`). It needs permission to send:
+The app reuses the IAM user from Step 4 (same `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY`). Without SES permission, every send fails with:
 
-1. IAM → **Users → `kronosquare-app` → Add permissions → Attach policies directly**
-2. Attach **`AmazonSESFullAccess`** (or a custom policy allowing `ses:SendEmail` and `ses:SendRawEmail`)
-3. Save
+```
+AccessDeniedException: User arn:aws:iam::<account-id>:user/<user> is not
+authorized to perform `ses:SendEmail' on resource `...identity/astriagk.com'
+```
+
+To fix it, grant that IAM user permission to send:
+
+1. IAM → **Users → select the user behind your access key** (e.g. `skolo`) → **Add permissions → Attach policies directly**
+2. Attach **`AmazonSESFullAccess`**, then **Next → Add permissions**
+3. This is an AWS-side change — **no redeploy needed**. Retry the send.
+
+> **Least-privilege alternative:** instead of `AmazonSESFullAccess`, add this inline policy (IAM → user → **Add permissions → Create inline policy → JSON**):
+>
+> ```json
+> {
+>   "Version": "2012-10-17",
+>   "Statement": [
+>     {
+>       "Effect": "Allow",
+>       "Action": ["ses:SendEmail", "ses:SendRawEmail"],
+>       "Resource": "*"
+>     }
+>   ]
+> }
+> ```
 
 ---
 
