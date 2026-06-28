@@ -8,6 +8,7 @@ export const FRONTEND_ROUTES = {
   VERIFY_EMAIL: "/auth/verify-email",
   POST_VERIFICATION_INDIVIDUAL: "/buyer/products",
   POST_VERIFICATION_BUSINESS: "/auth/gst-onboarding",
+  ORDERS: "/buyer/orders",
 } as const;
 
 // Join FRONTEND_URL with a route path (handles a trailing slash on the base).
@@ -27,3 +28,7 @@ export const resetPasswordUrl = (token?: string): string => {
 // frontend can pre-fill the resend form without asking the user to type it.
 export const verifyEmailUrl = (token: string, email: string): string =>
   `${buildFrontendUrl(FRONTEND_ROUTES.VERIFY_EMAIL)}?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`;
+
+// Buyer's orders page, where they can view the full invoice and download it.
+// Order confirmation emails link here instead of attaching the invoice.
+export const ordersUrl = (): string => buildFrontendUrl(FRONTEND_ROUTES.ORDERS);

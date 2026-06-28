@@ -18,6 +18,7 @@ import { earningRepository } from "../../wallet/earning";
 import { cartRepository } from "../../shopping/cart/cart.repository";
 import { sendTemplateEmail } from "../../../shared/services/email.service";
 import { orderConfirmationEmail } from "../../../shared/email-templates";
+import { ordersUrl } from "../../../shared/constants/frontend";
 import logger from "../../../shared/utils/logger";
 import { generateOrderID, generateItemID } from "../../../shared/utils/orderIdGenerator";
 
@@ -254,8 +255,10 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
     AddressID,
   });
 
-  // 5. Send order confirmation email with invoice to the buyer.
-  //    Fire-and-forget: a failed email must never affect the payment response.
+  // 5. Send an order confirmation email (NOT an invoice) to the buyer.
+  //    The full tax invoice lives in their account, where they can view and
+  //    download it. Fire-and-forget: a failed email must never affect the
+  //    payment response.
   (async () => {
     try {
       const buyer = await userRepository.findById(payment.UserID.toString());
@@ -266,51 +269,38 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
         enrichedAfterSale.map((p: any) => [p._id.toString(), p.ProductName as string])
       );
 
+      // Per-line amount the buyer actually paid (gross − offer + buyer commission),
+      // plus the GST charged on tax-exclusive items, to arrive at the total paid.
+      let subtotal = 0;
+      let taxExclusiveSubtotal = 0;
       const lineItems = soldProducts.map((p) => {
         const qty = qtyMap.get(p._id.toString()) ?? 1;
         const offerPercentage = p.OfferDiscountPercentage ?? 0;
         const unitOfferAmount = Math.round(p.Price * offerPercentage / 100);
         const unitGross = p.Price - unitOfferAmount;
         const unitCommission = Math.round(unitGross * env.BUYER_COMMISSION_RATE);
-        const unitAmount = unitGross + unitCommission;
+        const amount = (unitGross + unitCommission) * qty;
+        subtotal += amount;
+        if (!(p.IsPriceInclusiveOfTax ?? false)) taxExclusiveSubtotal += amount;
         return {
           productName: nameMap.get(p._id.toString()) ?? "Product",
           quantity: qty,
-          mrp: unitAmount + unitOfferAmount,        // unit MRP (before offer)
-          offerPercentage,
-          offerAmount: unitOfferAmount * qty,       // total offer saving for this line
-          amount: unitAmount * qty,                 // total line amount (qty × net unit)
-          isTaxInclusive: p.IsPriceInclusiveOfTax ?? false,
+          amount,
         };
       });
-
-      const subtotal = lineItems.reduce((sum, i) => sum + i.amount, 0);
-      // GST is charged only on items whose price does not already include tax.
-      const taxExclusiveSubtotal = lineItems
-        .filter((i) => !i.isTaxInclusive)
-        .reduce((sum, i) => sum + i.amount, 0);
       const gst = Math.round(taxExclusiveSubtotal * env.GST_RATE / 100);
 
       await sendTemplateEmail(
         buyer.email,
         orderConfirmationEmail({
-          invoiceNumber: orderID,
-          buyerEmail: buyer.email,
+          orderNumber: orderID,
           buyerName: `${resolvedAddress.FirstName} ${resolvedAddress.LastName}`,
-          buyerPhone: resolvedAddress.Phone,
-          buyerAddressLine1: resolvedAddress.AddressLine1,
-          buyerAddressLine2: resolvedAddress.AddressLine2,
-          buyerCity: resolvedAddress.City,
-          buyerState: resolvedAddress.State,
-          buyerPostalCode: resolvedAddress.PostalCode,
-          buyerCountry: resolvedAddress.Country,
-          issuedOn: draft.checkout.CheckoutDate
+          orderDate: draft.checkout.CheckoutDate
             ? new Date(draft.checkout.CheckoutDate)
             : new Date(),
           items: lineItems,
-          subtotal,
-          gst,
           total: subtotal + gst,
+          invoiceUrl: ordersUrl(),
         })
       );
     } catch (err) {

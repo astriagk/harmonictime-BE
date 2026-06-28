@@ -6,10 +6,14 @@
 //  extends the Catalog domain to support any product type beyond watches.
 //
 //  Key V2 changes vs V1:
-//    1. Products.ProductType  — discriminator field added
+//    1. Category is the dynamic discriminator — Products.CategoryID drives which
+//       attribute set (form) applies. No hard-coded product types.
 //    2. ProductDetails        — fixed watch columns replaced by generic `attributes`
-//    3. ProductAttributeSchemas (NEW) — admin-managed per-type field definitions
-//    4. AttributeOptions (NEW) — unified enum lookup, replaces 5 watch-only tables
+//    3. ProductAttributeSchemas (NEW) — admin-managed, ONE schema per Category.
+//       Each attribute descriptor carries full form-render + validation + buyer
+//       display metadata, so forms and product pages are 100% data-driven.
+//    4. AttributeOptions (NEW) — unified enum lookup (scoped by Category +
+//       attribute key), replaces the 5 watch-only tables.
 //    5. DialColors / Movements / StrapMaterials / CaseMaterials / WatchMarkers
 //                             — DEPRECATED; data migrated to AttributeOptions
 //
@@ -25,17 +29,20 @@ Project harmoniv_time_v2 {
   Note: '''
     # Harmoniv Time V2
 
-    A multi-category marketplace. V1 was watch-only; V2 makes the catalog
-    product-type-agnostic. An admin defines attribute schemas per product type
-    (watch, jewelry, apparel, …). Sellers fill in ProductDetails.attributes
-    according to the schema for their product type. Enum values are stored in
-    a single AttributeOptions collection.
+    A fully dynamic, category-agnostic marketplace. V1 was watch-only; V2 lets
+    an admin create any Category and define its attribute schema — no product
+    types are hard-coded in the schema or the code. Choosing a Category drives
+    the seller form (which fields, widgets, validation) and the buyer display
+    (which fields show on the card vs detail page, units, filters). Sellers fill
+    ProductDetails.attributes per the Category's schema. Enum values live in a
+    single AttributeOptions collection scoped by Category.
 
     ## Domains
     - **Identity**    : Users, Roles, UserRoles, Address
-    - **Catalog**     : Products (+ ProductType) · ProductDescription ·
-                        ProductDetails (attributes map) · ProductImages ·
-                        DeliveryReturns · ProductAttributeSchemas (NEW) ·
+    - **Catalog**     : Products (CategoryID = dynamic discriminator) ·
+                        ProductDescription · ProductDetails (attributes map) ·
+                        ProductImages · DeliveryReturns ·
+                        ProductAttributeSchemas (NEW, one per Category) ·
                         AttributeOptions (NEW) · plus unchanged lookups
                         (Brands, Collections, Categories, Recipients,
                         DeliveryOptions)
@@ -44,10 +51,11 @@ Project harmoniv_time_v2 {
     - **Settlement**  : SellerEarnings, SellerBankAccounts, Withdrawals
     - **Reviews**     : Reviews, UserReviews
 
-    ## Deprecated (V1 watch-only lookup tables)
-    DialColors, Movements, StrapMaterials, CaseMaterials, WatchMarkers are
-    kept read-only during migration then dropped once all ProductDetails rows
-    are migrated to AttributeOptions.
+    ## Removed (V1 watch-only lookup tables)
+    DialColors, Movements, StrapMaterials, CaseMaterials, WatchMarkers no longer
+    exist in V2 — their values live in AttributeOptions under the "Watch"
+    category. A one-time V1→V2 migration copies the rows across, then drops the
+    old tables.
   '''
 }
 
@@ -105,15 +113,16 @@ Table Products {
   _id              objectid    [pk]
   UserID           objectid    [not null, note: 'seller']
   ProductName      string      [not null]
-  ProductType      string      [not null, default: 'watch', note: '''
-    V2 discriminator. Must match a ProductAttributeSchemas.ProductType value.
-    Examples: watch | jewelry | apparel | accessory
-    Existing watch products default to "watch" during migration.
-  ''']
   BrandID          objectid    [not null]
   CollectionID     objectid    [null]
-  CategoryID       objectid    [not null]
+  CategoryID       objectid    [not null, note: '''
+    V2 dynamic discriminator. Resolves to exactly one ProductAttributeSchemas
+    (by CategoryID), whose Attributes[] define the seller form and buyer view.
+    Admin-created — no hard-coded product types. Existing watch products are
+    migrated to the seeded "Watch" category during migration.
+  ''']
   RecipientID      objectid    [null]
+  DeliveryOptionID objectid    [null, note: 'global, cross-cutting — applies to any category (not a per-category attribute)']
   Price            decimal     [not null]
   Quantity         int         [not null, default: 1, note: 'total stock; RemainingQuantity = Quantity - SoldCount (derived)']
   OfferID          objectid    [null]
@@ -142,7 +151,7 @@ Table ProductDetails {
   ProductID    objectid   [not null]
   attributes   object     [not null, note: '''
     V2: generic key-value map replacing fixed watch columns.
-    Shape is defined by ProductAttributeSchemas for the product''s ProductType.
+    Shape is defined by ProductAttributeSchemas for the product''s CategoryID.
 
     Enum-ref keys store an ObjectId → AttributeOptions._id.
     Free-text / numeric keys store the value inline.
@@ -154,7 +163,6 @@ Table ProductDetails {
       "strapMaterialId":        ObjectId,   // was StrapMaterialID
       "caseMaterialId":         ObjectId,   // was CaseMaterialID
       "watchMarkerId":          ObjectId,   // was WatchMarkersID
-      "deliveryOptionId":       ObjectId,   // was DeliveryOptionID
       "diameter":               "40mm",
       "waterResistant":         "100m",
       "manufacturerProductNumber": "AB-1234",
@@ -171,8 +179,8 @@ Table ProductDetails {
     }
 
     Enum refs inside attributes are resolved in application code via a single
-    $in lookup against AttributeOptions after reading ProductAttributeSchemas
-    to identify which keys are ObjectId refs.
+    $in lookup against AttributeOptions after reading the CategoryID''s
+    ProductAttributeSchemas to identify which keys are ObjectId refs.
   ''']
 
   Note: 'One-to-one with Products (joined by ProductID).'
@@ -206,21 +214,48 @@ Table DeliveryReturns {
 
 Table ProductAttributeSchemas {
   _id            objectid    [pk]
-  ProductType    string      [unique, not null, note: 'lowercase, no spaces — e.g. watch | jewelry | apparel']
+  CategoryID     objectid    [unique, not null, note: 'one schema per Category — the dynamic discriminator']
   DisplayName    string      [not null, note: 'UI label shown to sellers, e.g. "Watches"']
   Attributes     array       [not null, note: '''
-    Ordered list of attribute descriptors. Each element:
+    Ordered list of attribute descriptors. Each element carries EVERYTHING the
+    seller form and the buyer view need, so rendering is 100% data-driven:
     {
+      // identity
       key:           string,    // camelCase — matches key in ProductDetails.attributes
-      label:         string,    // seller-facing label
-      type:          string,    // "enum" | "text" | "number" | "boolean"
-      refCollection: string,    // only for type=enum: "AttributeOptions"
-      required:      boolean
+      label:         string,    // seller/buyer-facing label
+      type:          string,    // "enum" | "multi-enum" | "text" | "number" | "boolean" | "date"
+      refCollection: string,    // only for enum/multi-enum: "AttributeOptions"
+
+      // form rendering
+      inputWidget:   string,    // "select" | "radio" | "checkbox" | "textarea" | "text" | "number" | "toggle"
+      placeholder:   string,
+      helpText:      string,
+      defaultValue:  any,
+      group:         string,    // section header to group fields in the form
+      displayOrder:  number,    // order within the form / detail page
+
+      // validation (data-driven — no code branching)
+      required:      boolean,
+      min:           number,    // number/date
+      max:           number,
+      minLength:     number,    // text
+      maxLength:     number,
+      pattern:       string,    // regex
+      unit:          string,    // shown after value, e.g. "mm", "g"
+
+      // buyer-facing display control
+      showOnCard:    boolean,   // render on listing card
+      showOnDetail:  boolean,   // render on product detail page
+      isFilterable:  boolean,   // expose as a facet filter on listing pages
+      isSearchable:  boolean,   // include in text search
+
+      // conditional fields (dynamic forms)
+      visibleWhen:   object     // e.g. { key: "hasBattery", equals: true } | null
     }
 
     Admin creates/edits these via POST|PUT /api/admin/product-attribute-schemas.
-    The Attributes array drives form rendering, server-side validation, and
-    enrichment-pipeline resolution (identifying which attributes.* keys hold
+    The Attributes array drives form rendering, server-side validation, buyer
+    display, and enrichment resolution (identifying which attributes.* keys hold
     ObjectId refs vs inline values).
   ''']
   CreatedAt      timestamp
@@ -229,21 +264,24 @@ Table ProductAttributeSchemas {
 
 Table AttributeOptions {
   _id            objectid    [pk]
-  ProductType    string      [not null, note: 'scopes the option to a product type, e.g. watch']
+  CategoryID     objectid    [not null, note: 'scopes the option to a Category']
   AttributeKey   string      [not null, note: 'matches key in ProductAttributeSchemas.Attributes, e.g. dialColorId']
   Value          string      [not null, note: 'display value, e.g. "Black", "Swiss ETA 2824"']
+  DisplayOrder   int         [default: 0, note: 'order within the dropdown']
+  IsActive       boolean     [default: true, note: 'hide from new selections without deleting history']
+  Meta           object      [null, note: 'optional render hints, e.g. { hex: "#000", icon: "..." } for a color swatch']
   CreatedAt      timestamp
 
   Note: '''
-    Unique index on (ProductType, AttributeKey, Value).
+    Unique index on (CategoryID, AttributeKey, Value).
     Unified replacement for the five V1 watch-only tables.
 
-    V1 migration:
-      DialColors.*      → ProductType="watch", AttributeKey="dialColorId"
-      Movements.*       → ProductType="watch", AttributeKey="movementId"
-      StrapMaterials.*  → ProductType="watch", AttributeKey="strapMaterialId"
-      CaseMaterials.*   → ProductType="watch", AttributeKey="caseMaterialId"
-      WatchMarkers.*    → ProductType="watch", AttributeKey="watchMarkerId"
+    V1 migration (into the seeded "Watch" category):
+      DialColors.*      → AttributeKey="dialColorId"
+      Movements.*       → AttributeKey="movementId"
+      StrapMaterials.*  → AttributeKey="strapMaterialId"
+      CaseMaterials.*   → AttributeKey="caseMaterialId"
+      WatchMarkers.*    → AttributeKey="watchMarkerId"
 
     After all ProductDetails rows are migrated, the five V1 tables are dropped.
   '''
@@ -277,42 +315,17 @@ Table Recipients {
 Table DeliveryOptions {
   _id                  objectid   [pk]
   DeliveryOptionName   string     [unique, not null]
+
+  Note: 'Global, cross-cutting lookup — same options for every category. Referenced directly by Products.DeliveryOptionID, NOT via the per-category attributes map.'
 }
 
-// ============================================================================
-//  DEPRECATED — V1 watch-only lookup tables
-//  Keep read-only during migration; drop after AttributeOptions migration.
-// ============================================================================
-
-Table DialColors {
-  _id             objectid   [pk]
-  DialColorName   string     [unique, not null]
-  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / dialColorId).'
-}
-
-Table Movements {
-  _id            objectid   [pk]
-  MovementName   string     [unique, not null]
-  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / movementId).'
-}
-
-Table StrapMaterials {
-  _id                 objectid   [pk]
-  StrapMaterialName   string     [unique, not null]
-  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / strapMaterialId).'
-}
-
-Table CaseMaterials {
-  _id                objectid   [pk]
-  CaseMaterialName   string     [unique, not null]
-  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / caseMaterialId).'
-}
-
-Table WatchMarkers {
-  _id               objectid   [pk]
-  WatchMarkerName   string     [unique, not null]
-  Note: 'DEPRECATED in V2. Data migrated to AttributeOptions (watch / watchMarkerId).'
-}
+// ----------------------------------------------------------------------------
+//  REMOVED in V2 — the V1 watch-only lookup tables DialColors / Movements /
+//  StrapMaterials / CaseMaterials / WatchMarkers no longer exist. Their values
+//  now live in AttributeOptions under the seeded "Watch" category, keyed by
+//  dialColorId / movementId / strapMaterialId / caseMaterialId / watchMarkerId.
+//  (One-time V1→V2 migration copies the rows across, then drops the tables.)
+// ----------------------------------------------------------------------------
 
 // ============================================================================
 //  DOMAIN: SHOPPING  (unchanged from V1)
@@ -507,13 +520,15 @@ Ref: Products.BrandID      > Brands._id
 Ref: Products.CollectionID > Collections._id
 Ref: Products.CategoryID   > Categories._id
 Ref: Products.RecipientID  > Recipients._id
+Ref: Products.DeliveryOptionID > DeliveryOptions._id
 Ref: Products.OfferID      > Offers._id
 Ref: Products.ApprovedBy   > Users._id
 Ref: Collections.BrandID   > Brands._id
 
-// --- Catalog: V2 type system ---
-Ref: Products.ProductType                > ProductAttributeSchemas.ProductType
-Ref: AttributeOptions.ProductType        > ProductAttributeSchemas.ProductType
+// --- Catalog: V2 dynamic category-driven type system ---
+Ref: ProductAttributeSchemas.CategoryID  - Categories._id   // one schema per category
+Ref: AttributeOptions.CategoryID         > Categories._id   // options scoped by category
+// Products.CategoryID > Categories._id is declared below; it also selects the schema.
 // ProductDetails.attributes.* → AttributeOptions._id resolved in application code
 
 // --- Catalog: product 1:1 / 1:N satellites ---
@@ -582,14 +597,6 @@ TableGroup Catalog {
   Categories
   Recipients
   DeliveryOptions
-}
-
-TableGroup CatalogDeprecated {
-  DialColors
-  Movements
-  StrapMaterials
-  CaseMaterials
-  WatchMarkers
 }
 
 TableGroup Shopping {
