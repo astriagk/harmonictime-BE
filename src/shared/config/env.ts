@@ -46,10 +46,21 @@ export const env = {
   CONTACT_RECIPIENT:
     process.env.CONTACT_RECIPIENT || process.env.EMAIL_FROM || "",
 
-  TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || "",
-  TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || "",
-  TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER || "",
-  TWILIO_VERIFY_SERVICE_SID: process.env.TWILIO_VERIFY_SERVICE_SID || "",
+  // Amazon SNS — SMS / mobile OTP. Reuses the AWS credentials below; the IAM
+  // user must have the sns:Publish permission.
+  //
+  // SMS_REGION is separate from SES_REGION on purpose: since 30 Apr 2025 AWS
+  // only routes India local SMS through ap-south-1 / ap-south-2. Sending from
+  // us-east-1 falls back to the international route.
+  SMS_REGION: process.env.SMS_REGION || "ap-south-1",
+  // Approved sender header, 3–6 letters, case-sensitive (e.g. "KRONO2").
+  SMS_SENDER_ID: process.env.SMS_SENDER_ID || "",
+  // TRAI DLT Principal Entity ID and per-message template IDs. Required for
+  // Indian numbers — carriers drop messages without a matching registration.
+  // See docs/accounts/aws/sns-sms.md.
+  SMS_DLT_ENTITY_ID: process.env.SMS_DLT_ENTITY_ID || "",
+  SMS_DLT_TEMPLATE_ID_OTP: process.env.SMS_DLT_TEMPLATE_ID_OTP || "",
+  SMS_DLT_TEMPLATE_ID_RESET: process.env.SMS_DLT_TEMPLATE_ID_RESET || "",
 
   RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "",
   RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "",

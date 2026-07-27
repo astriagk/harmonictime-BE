@@ -58,34 +58,39 @@ In your S3 bucket → **Permissions** → **CORS configuration**:
 
 ---
 
-## Twilio — OTP Verification
+## AWS SNS — OTP Verification
 
-Used for phone number verification during signup and sensitive actions.
+Used for phone number verification during signup and sensitive actions. Replaced Twilio — SNS reuses the same AWS IAM user as S3 and SES.
 
 ### Setup
 
-1. Log in at https://console.twilio.com
-2. **Verify** → **Services** → **Create new Service**
-3. Name: `Krono Square` → copy the **Service SID**
-4. Go to account dashboard → copy **Account SID** and **Auth Token**
+Full guide: [docs/accounts/aws/sns-sms.md](../docs/accounts/aws/sns-sms.md). Summary:
+
+1. Attach `sns:Publish` to the existing app IAM user
+2. Register with a TRAI DLT portal → Principal Entity ID + two templates (**3–7 days**)
+3. Register the sender ID in AWS End User Messaging (`ap-south-1`)
+4. Open a support case to leave the SMS sandbox and raise the spend quota (**~24h**)
 
 Set in Railway:
 ```
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=<auth token>
-TWILIO_PHONE_NUMBER=+1xxxxxxxxxx
-TWILIO_VERIFY_SERVICE_SID=VAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SMS_REGION=ap-south-1
+SMS_SENDER_ID=KRONO2
+SMS_DLT_ENTITY_ID=<TRAI principal entity id>
+SMS_DLT_TEMPLATE_ID_OTP=<DLT template id>
+SMS_DLT_TEMPLATE_ID_RESET=<DLT template id>
 ```
+
+> ⚠️ Steps 2 and 4 gate go-live and can't be rushed. Start them well before the deploy date.
 
 ### Cost
 
 | Action | Cost |
 |---|---|
-| OTP sent via SMS (India) | ~$0.05 per verification |
-| 100 OTPs/month | ~$5 |
-| 300 OTPs/month | ~$15 |
+| OTP sent via SMS (India, local/DLT route) | ~$0.00278 (~₹0.24) |
+| 300 OTPs/month | ~$0.83 |
+| 10,000 seller verifications (one-off) | ~$28 (~₹2,400) |
 
-> To reduce cost: add email OTP as a fallback for non-critical flows (password reset, etc.).
+> Prices assume the India local route from `ap-south-1`. The international fallback route costs considerably more and is heavily filtered by Indian carriers.
 
 ---
 

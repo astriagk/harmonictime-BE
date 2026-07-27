@@ -40,14 +40,17 @@ Set all of these in Railway under the **Variables** tab.
 | `CONTACT_RECIPIENT` | No | `support@kronosquare.in` | Where contact form emails go; falls back to `EMAIL_USER` |
 | `LOGO_URL` | No | S3 URL | Public URL for the Krono Square logo shown in email headers |
 
-## Twilio
+## SMS / OTP (AWS SNS)
+
+Uses the same `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY` as S3 and SES — no separate credentials. Full setup in [docs/accounts/aws/sns-sms.md](../docs/accounts/aws/sns-sms.md).
 
 | Variable | Required | Example | Notes |
 |---|---|---|---|
-| `TWILIO_ACCOUNT_SID` | Yes | `ACxxxxxxxxxxxxxxxx` | From Twilio console dashboard |
-| `TWILIO_AUTH_TOKEN` | Yes | `<token>` | From Twilio console dashboard |
-| `TWILIO_PHONE_NUMBER` | Yes | `+1xxxxxxxxxx` | Your Twilio phone number |
-| `TWILIO_VERIFY_SERVICE_SID` | Yes | `VAxxxxxxxxxxxxxxxx` | From Twilio Verify service |
+| `SMS_REGION` | No | `ap-south-1` | Defaults to `ap-south-1`. India local routes only work from `ap-south-1` / `ap-south-2` |
+| `SMS_SENDER_ID` | Yes (India) | `KRONO2` | Approved sender header, 3–6 letters, case-sensitive |
+| `SMS_DLT_ENTITY_ID` | Yes (India) | `1234567890123456789` | TRAI Principal Entity ID |
+| `SMS_DLT_TEMPLATE_ID_OTP` | Yes (India) | `9876543210987654321` | DLT template for the phone-verification SMS |
+| `SMS_DLT_TEMPLATE_ID_RESET` | Yes (India) | `9876543210987654322` | DLT template for the password-reset SMS |
 
 ## Razorpay
 

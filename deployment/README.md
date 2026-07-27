@@ -45,11 +45,11 @@ Early-stage production deployment across all apps with cost-cutting in mind.
 | Email | Brevo (300/day free) | $0 |
 | Image hosting | ImgBB | $0 |
 | Courier tracking | TrackingMore Free | $0 |
-| OTP / SMS | Twilio Verify | ~$5–15 |
+| OTP / SMS | AWS SNS | ~$1 |
 | Domain | Namecheap / GoDaddy | ~$1 |
-| **Total** | | **~$12–24/month** |
+| **Total** | | **~$8–10/month** |
 
-> Twilio OTP is the biggest variable — $0.05 per verification sent.
+> SMS scales with signups — ~$0.00278 per OTP on the India local route. A one-off push of 10,000 seller verifications adds ~$28.
 
 ## Deployment Order
 
@@ -60,7 +60,7 @@ Follow these docs in sequence:
 3. [Angular on Cloudflare Pages](./03-angular.md) — needs the backend API URL
 4. [Next.js on Vercel](./04-nextjs.md) — needs the backend API URL
 5. [Email (Brevo)](./05-email-brevo.md) — swap Gmail for a production SMTP sender
-6. [Third-party Services](./06-third-party.md) — AWS S3, Twilio, Razorpay, TrackingMore, ImgBB
+6. [Third-party Services](./06-third-party.md) — AWS S3, AWS SNS, Razorpay, TrackingMore, ImgBB
 7. [Environment Variables Reference](./07-env-reference.md) — full list of all env vars
 
 ## Scale-up Triggers
