@@ -23,6 +23,12 @@ export const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
+export const googleSignInSchema = Joi.object({
+  // Google ID token (a JWT). Only bounded here for sanity — the real
+  // verification happens in google-auth.service.ts.
+  idToken: Joi.string().min(50).max(4096).required(),
+});
+
 export const verifyEmailSchema = Joi.object({
   email: Joi.string().email().required(),
 });

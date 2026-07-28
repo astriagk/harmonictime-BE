@@ -1,5 +1,5 @@
 {
-  "current": "1.0.4",
+  "current": "1.0.5",
   "history": [
     {
       "version": "1.0.1",
@@ -23,6 +23,12 @@
       "version": "1.0.4",
       "timestamp": "2026-05-27T15:06:55.018Z",
       "endpoints": 192,
+      "gateways": 5
+    },
+    {
+      "version": "1.0.5",
+      "timestamp": "2026-07-28T16:37:59.351Z",
+      "endpoints": 205,
       "gateways": 5
     }
   ]
