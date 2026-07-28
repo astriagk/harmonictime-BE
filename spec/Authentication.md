@@ -146,7 +146,7 @@ verifyRefreshToken(token: string): TokenPayload
 2. 6-digit OTP generated (`Math.floor(Math.random() * 900000) + 100000`)
 3. OTP SHA-256 hashed → stored in `User.otp`; expiry stored in `User.otpExpiry` (10 min)
 4. Short-lived reset token (JWT, 10-min expiry) issued — contains `userId` — not stored in DB
-5. OTP + reset link sent via email (`passwordResetOtp.template.ts`) or SMS (Twilio)
+5. OTP + reset link sent via email (`passwordResetOtp.template.ts`) or SMS (AWS SNS)
 6. Response always returns a **generic success message** (prevents user enumeration)
 
 ### Step 2 — Submit new password
@@ -187,8 +187,11 @@ verifyRefreshToken(token: string): TokenPayload
 | Admin restores account | `accountStatus.template.ts` | Account restored notification |
 
 **SMS (phone OTP):**  
-Provider: Twilio (`src/shared/services/sms.service.ts`)  
-Config: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`
+Provider: AWS SNS (`src/shared/services/sms.service.ts`)  
+Config: `SMS_REGION`, `SMS_SENDER_ID`, `SMS_DLT_ENTITY_ID`, `SMS_DLT_TEMPLATE_ID_OTP`, `SMS_DLT_TEMPLATE_ID_RESET`  
+Credentials: reuses `STORAGE_ACCESS_KEY` / `STORAGE_SECRET_KEY`. Setup: [docs/accounts/aws/sns-sms.md](../docs/accounts/aws/sns-sms.md)
+
+The OTP itself is generated and stored by the app (`user.otp` hashed, `user.otpExpiry`, `user.otpAttempts`) — SNS only delivers the text. Codes expire after 10 minutes and are voided after 5 wrong attempts.
 
 ---
 

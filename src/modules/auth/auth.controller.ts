@@ -19,9 +19,8 @@ import {
 } from "../../shared/constants/frontend";
 import { sendTemplateEmail } from "../../shared/services/email.service";
 import {
-  sendSMS,
+  sendPasswordResetSMS,
   sendMobileOTP as sendMobileOTPService,
-  verifyMobileOTP as verifyMobileOTPService,
 } from "../../shared/services/sms.service";
 import {
   welcomeEmail,
@@ -29,6 +28,8 @@ import {
   verifyEmailTemplate,
 } from "../../shared/email-templates";
 import { generateOTP, hashOTP } from "../../shared/utils/otp";
+import logger from "../../shared/utils/logger";
+import { ObjectId } from "mongodb";
 import { userRepository } from "../users/user/user.repository";
 import { userRoleRepository } from "../users/role/role.repository";
 
@@ -41,6 +42,11 @@ const generateEmailVerificationToken = (): { raw: string; hashed: string } => {
 };
 
 const OTP_TTL_MS = 10 * 60 * 1000;
+
+// Formats phone + countryCode into an E.164 string (+{cc}{number}). Strips a
+// leading 0 and any spaces/dashes — SNS rejects anything that isn't strict E.164.
+const toE164 = (phone: string, countryCode: string): string =>
+  `+${countryCode.replace(/^\+/, "")}${phone.replace(/[\s-]/g, "").replace(/^0+/, "")}`;
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const {
@@ -186,9 +192,10 @@ export const verifyPhone = asyncHandler(async (req: Request, res: Response) => {
     "10m",
   );
 
-  await sendSMS(
-    `${countryCode}${phone}`,
-    `Your OTP is: ${otp}. Reset your password: ${resetPasswordUrl(resetToken)}`,
+  await sendPasswordResetSMS(
+    toE164(phone, countryCode),
+    otp,
+    resetPasswordUrl(resetToken),
   );
   sendResponse(res, HTTP_STATUS.OK, "OTP sent to phone");
 });
@@ -490,43 +497,73 @@ export const resendVerification = asyncHandler(
   },
 );
 
-// Formats phone + countryCode into an E.164 string (+{cc}{number})
-const toE164 = (phone: string, countryCode: string): string =>
-  `+${countryCode.replace(/^\+/, "")}${phone}`;
-
 export const sendMobileOTP = asyncHandler(async (req: Request, res: Response) => {
   const { phone, countryCode } = req.body;
+
+  const otp = generateOTP();
+  await userRepository.updateOne(
+    { _id: new ObjectId(req.user!.userId) },
+    {
+      $set: {
+        otp: hashOTP(otp),
+        otpExpiry: new Date(Date.now() + OTP_TTL_MS),
+        otpAttempts: 0,
+      },
+    },
+  );
+
   try {
-    await sendMobileOTPService(toE164(phone, countryCode));
+    await sendMobileOTPService(toE164(phone, countryCode), otp);
   } catch (err: any) {
-    // Twilio error 20003 = bad credentials; others = delivery failure
-    const msg =
-      err?.status === 20003
-        ? "SMS service authentication failed. Check Twilio credentials."
-        : `Failed to send OTP: ${err?.message ?? "unknown error"}`;
-    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, msg);
+    // Don't leak SNS/AWS internals (account state, quotas) to the client —
+    // log the detail and return something generic.
+    logger.error(`SNS SMS send failed: ${err?.name}: ${err?.message}`);
+    throw new ApiError(
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      "Unable to send OTP right now. Please try again shortly.",
+    );
   }
   sendResponse(res, HTTP_STATUS.OK, "OTP sent to mobile number");
 });
 
+// SNS is a plain send channel — unlike Twilio Verify it does not track attempts,
+// so the OTP is stored hashed on the user (same fields as the email flow) and
+// checked here. Without a cap a 6-digit code is trivially brute-forceable.
+const MAX_OTP_ATTEMPTS = 5;
+
 export const verifyMobileOTP = asyncHandler(async (req: Request, res: Response) => {
   const { phone, countryCode, otp } = req.body;
-  const e164 = toE164(phone, countryCode);
 
-  let approved: boolean;
-  try {
-    approved = await verifyMobileOTPService(e164, otp);
-  } catch (err: any) {
-    const msg =
-      err?.status === 20003
-        ? "SMS service authentication failed. Check Twilio credentials."
-        : `OTP verification failed: ${err?.message ?? "unknown error"}`;
-    throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, msg);
+  const user = await userRepository.findById(req.user!.userId);
+  if (!user) throw ApiError.notFound("User not found");
+
+  if (!user.otp || !user.otpExpiry || new Date() > user.otpExpiry)
+    throw ApiError.badRequest("Invalid or expired OTP");
+
+  if ((user.otpAttempts ?? 0) >= MAX_OTP_ATTEMPTS) {
+    await userRepository.updateOne(
+      { _id: user._id },
+      { $unset: { otp: "", otpExpiry: "", otpAttempts: "" } },
+    );
+    throw ApiError.badRequest(
+      "Too many incorrect attempts. Please request a new OTP.",
+    );
   }
 
-  if (!approved) throw ApiError.badRequest("Invalid or expired OTP");
+  if (hashOTP(otp) !== user.otp) {
+    await userRepository.updateOne({ _id: user._id }, { $inc: { otpAttempts: 1 } });
+    throw ApiError.badRequest("Invalid or expired OTP");
+  }
 
-  await userRepository.updateById(req.user!.userId, { isPhoneVerified: true } as any);
+  // Persist the number that was actually verified — isPhoneVerified is
+  // meaningless without it.
+  await userRepository.updateOne(
+    { _id: user._id },
+    {
+      $set: { isPhoneVerified: true, phone: toE164(phone, countryCode) },
+      $unset: { otp: "", otpExpiry: "", otpAttempts: "" },
+    },
+  );
 
   sendResponse(res, HTTP_STATUS.OK, "Mobile number verified successfully", {
     verified: true,

@@ -73,7 +73,7 @@ src/
 │   ├── constants/                    ← enums · messages · httpStatus · collections · roles
 │   ├── database/                     ← base repository class
 │   ├── middlewares/                  ← auth · error · requestLogger · validate · asyncHandler
-│   ├── services/                     ← email.service (nodemailer) · sms.service (twilio) · token.service
+│   ├── services/                     ← email.service (SES) · sms.service (SNS) · token.service
 │   ├── types/                        ← global TS declarations (role.type, etc.)
 │   └── utils/                        ← apiError · apiResponse · logger · otp · helpers
 │

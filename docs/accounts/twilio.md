@@ -1,5 +1,13 @@
 # Twilio — Account Setup Guide
 
+> ## ⚠️ Superseded — no longer used
+>
+> SMS now goes through **AWS SNS**. See [aws/sns-sms.md](aws/sns-sms.md).
+>
+> The `TWILIO_*` env vars and the `twilio` package have been removed from the codebase; nothing here is wired up any more. Kept for reference only.
+>
+> **If the Twilio account is no longer needed, close it** — the credentials that were in `.env` are still live until you do. Console → **Admin → Account settings → Close account**.
+
 Used for: sending OTP SMS messages for phone-based password reset.  
 **Free trial available** — comes with a small credit balance, enough for development and testing.
 

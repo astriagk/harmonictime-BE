@@ -103,6 +103,42 @@ export const getAllProducts = asyncHandler(
   },
 );
 
+// Free-text marketplace search. Buyers type anything (e.g. "rolex chronograph",
+// "men leather", "diving") and we match it across product name, brand, category,
+// collection, recipient, dial color, materials and description. Same visibility
+// rules as the public catalog: only Approved + available products. Optional
+// BrandID / CategoryID narrow the results, and the response is paginated.
+export const searchProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const q = ((req.query.q as string) ?? "").trim();
+    if (q.length === 0)
+      throw ApiError.badRequest("Search query 'q' is required");
+
+    // Same buyer-visibility rules as getAllProducts: only admin-approved,
+    // available products are returned to the public marketplace.
+    const baseMatch: Filter<Product> = {
+      ApprovalStatus: "Approved",
+      IsAvailable: true,
+    } as Filter<Product>;
+
+    // Optional structured facets layered on top of the free-text search.
+    const { BrandID, CategoryID } = req.query;
+    if (BrandID && ObjectId.isValid(BrandID as string))
+      (baseMatch as any).BrandID = new ObjectId(BrandID as string);
+    if (CategoryID && ObjectId.isValid(CategoryID as string))
+      (baseMatch as any).CategoryID = new ObjectId(CategoryID as string);
+
+    // Returns the identical enriched array shape as GET /api/products.
+    const products = await productRepository.search(q, baseMatch);
+    sendResponse(
+      res,
+      HTTP_STATUS.OK,
+      "Products retrieved successfully.",
+      products,
+    );
+  }
+);
+
 export const getProductById = asyncHandler(
   async (req: Request, res: Response) => {
     const _id = new ObjectId(req.params.productID);
