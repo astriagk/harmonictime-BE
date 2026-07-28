@@ -122,6 +122,57 @@ const enrichmentStages = (): Document[] => [
   },
 ];
 
+// Tail stages shared by every enriched listing query: derive SoldCount /
+// RemainingQuantity / IsSold / Status from paid checkouts, drop the scratch
+// PaidOrders array, and sort newest-first. Kept separate so both
+// getEnrichedWithStatus and search can append it after their own $match stages.
+const statusStages = (): Document[] => [
+  {
+    $lookup: {
+      from: COLLECTIONS.CHECKOUT,
+      let: { pid: "$_id" },
+      pipeline: [
+        { $match: { $expr: { $eq: ["$PaymentStatus", "Paid"] } } },
+        {
+          $project: {
+            count: {
+              $size: {
+                $filter: {
+                  input: { $ifNull: ["$ProductIDs", []] },
+                  as: "p",
+                  cond: { $eq: ["$$p", "$$pid"] },
+                },
+              },
+            },
+          },
+        },
+        { $match: { count: { $gt: 0 } } },
+      ],
+      as: "PaidOrders",
+    },
+  },
+  { $addFields: { SoldCount: { $sum: "$PaidOrders.count" } } },
+  {
+    $addFields: {
+      IsSold: { $gt: ["$SoldCount", 0] },
+      RemainingQuantity: {
+        $max: [{ $subtract: ["$Quantity", "$SoldCount"] }, 0],
+      },
+      Status: {
+        $cond: [
+          { $lte: [{ $subtract: ["$Quantity", "$SoldCount"] }, 0] },
+          "Sold",
+          {
+            $cond: [{ $eq: ["$IsAvailable", true] }, "Available", "Unavailable"],
+          },
+        ],
+      },
+    },
+  },
+  { $project: { PaidOrders: 0 } },
+  { $sort: { DateListed: -1 } },
+];
+
 class ProductRepository extends BaseRepository<Product> {
   constructor() {
     super(COLLECTIONS.PRODUCTS);
@@ -146,56 +197,44 @@ class ProductRepository extends BaseRepository<Product> {
     return this.aggregate([
       { $match: match },
       ...enrichmentStages(),
+      ...statusStages(),
+    ]);
+  }
+
+  // Free-text catalog search. Produces the EXACT same enriched product shape as
+  // getEnrichedWithStatus / GET /api/products — it simply inserts a free-text
+  // $match between enrichment and the status tail. baseMatch carries the
+  // buyer-visibility filter (Approved + available) plus any structured facets;
+  // `q` is matched (case-insensitive substring) against the product name and
+  // every resolved lookup name — brand, category, collection, recipient, dial
+  // color, strap/case material, watch marker — and the description.
+  search(q: string, baseMatch: Filter<Product>) {
+    // Escape regex metacharacters so user input is treated as a literal phrase.
+    const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rx = new RegExp(escaped, "i");
+
+    return this.aggregate([
+      { $match: baseMatch },
+      ...enrichmentStages(),
       {
-        $lookup: {
-          from: COLLECTIONS.CHECKOUT,
-          let: { pid: "$_id" },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$PaymentStatus", "Paid"] } } },
-            // Count occurrences of this product within each paid checkout so a
-            // quantity > 1 purchase is fully reflected in the sold tally.
-            {
-              $project: {
-                count: {
-                  $size: {
-                    $filter: {
-                      input: { $ifNull: ["$ProductIDs", []] },
-                      as: "p",
-                      cond: { $eq: ["$$p", "$$pid"] },
-                    },
-                  },
-                },
-              },
-            },
-            { $match: { count: { $gt: 0 } } },
+        $match: {
+          $or: [
+            { ProductName: rx },
+            { "Details.BrandName": rx },
+            { "Details.CategoryName": rx },
+            { "Details.CollectionName": rx },
+            { "Details.RecipientName": rx },
+            { "Details.DialColorName": rx },
+            { "Details.StrapMaterialName": rx },
+            { "Details.CaseMaterialName": rx },
+            { "Details.WatchMarkerName": rx },
+            { "Description.Title": rx },
+            { "Description.Content": rx },
+            { "Description.AdditionalDetails": rx },
           ],
-          as: "PaidOrders",
         },
       },
-      {
-        $addFields: {
-          SoldCount: { $sum: "$PaidOrders.count" },
-        },
-      },
-      {
-        $addFields: {
-          IsSold: { $gt: ["$SoldCount", 0] },
-          RemainingQuantity: {
-            $max: [{ $subtract: ["$Quantity", "$SoldCount"] }, 0],
-          },
-          Status: {
-            $cond: [
-              { $lte: [{ $subtract: ["$Quantity", "$SoldCount"] }, 0] },
-              "Sold",
-              {
-                $cond: [{ $eq: ["$IsAvailable", true] }, "Available", "Unavailable"],
-              },
-            ],
-          },
-        },
-      },
-      { $project: { PaidOrders: 0 } },
-      { $sort: { DateListed: -1 } },
+      ...statusStages(),
     ]);
   }
 

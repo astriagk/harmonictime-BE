@@ -13,6 +13,7 @@ export interface User {
   dateCreated?: Date;
   otp?: string;
   otpExpiry?: Date;
+  otpAttempts?: number;   // Wrong-guess counter; the OTP is voided past MAX_OTP_ATTEMPTS
   refreshTokenHash?: string;
   acceptedTerms?: boolean;
   termsAcceptedAt?: Date;

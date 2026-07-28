@@ -48,10 +48,11 @@ EMAIL_USER=<brevo-smtp-login>
 EMAIL_PASS=<brevo-smtp-key>
 CONTACT_RECIPIENT=support@kronosquare.in
 
-TWILIO_ACCOUNT_SID=<from twilio console>
-TWILIO_AUTH_TOKEN=<from twilio console>
-TWILIO_PHONE_NUMBER=<your twilio number>
-TWILIO_VERIFY_SERVICE_SID=<from twilio verify service>
+SMS_REGION=ap-south-1
+SMS_SENDER_ID=<approved DLT sender header>
+SMS_DLT_ENTITY_ID=<TRAI principal entity id>
+SMS_DLT_TEMPLATE_ID_OTP=<DLT template id>
+SMS_DLT_TEMPLATE_ID_RESET=<DLT template id>
 
 RAZORPAY_KEY_ID=rzp_live_<your-live-key-id>
 RAZORPAY_KEY_SECRET=<from razorpay dashboard>

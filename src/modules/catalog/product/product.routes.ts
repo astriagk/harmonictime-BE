@@ -11,6 +11,7 @@ import {
   bulkUpdateProductOffer,
   deleteProduct,
   checkAvailability,
+  searchProducts,
 } from "./product.controller";
 import {
   createProductSchema,
@@ -27,6 +28,8 @@ const sellerGuard = [authMiddleware, requireApprovedSeller];
 router.post("/", ...sellerGuard, validate(createProductSchema), createProduct);
 router.post("/check-availability", validate(checkAvailabilitySchema), checkAvailability);
 router.get("/", getAllProducts);
+// Must be registered before "/:productID" so "search" isn't captured as an id.
+router.get("/search", searchProducts);
 router.get("/:productID", optionalAuthMiddleware, getProductById);
 router.put("/availability", ...sellerGuard, validate(updateAvailabilitySchema), updateProduct);
 router.put("/bulk-offer", ...sellerGuard, validate(bulkOfferSchema), bulkUpdateProductOffer);

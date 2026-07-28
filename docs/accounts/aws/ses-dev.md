@@ -84,7 +84,7 @@ Leaving the sandbox is a prod concern — see [ses-prod.md](ses-prod.md) Step 4.
 ## Step 5 — Set Email Environment Variables (`.env`)
 
 ```env
-EMAIL_FROM=support@astriagk.com
+EMAIL_FROM=support@krono2.com
 SES_REGION=us-east-1
 CONTACT_RECIPIENT=kronosqu2@gmail.com
 ```
@@ -97,7 +97,7 @@ CONTACT_RECIPIENT=kronosqu2@gmail.com
 On server start you should see:
 
 ```
-Email transport: Amazon SES (us-east-1) from support@astriagk.com
+Email transport: Amazon SES (us-east-1) from support@krono2.com
 ```
 
 Trigger any email (e.g. sign up for an OTP). Success returns no error; failures log as `Failed to send email: ...`.
