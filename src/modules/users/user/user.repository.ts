@@ -12,6 +12,19 @@ class UserRepository extends BaseRepository<User> {
     return this.findOne({ email });
   }
 
+  // Case-insensitive lookup. Emails are stored as the user typed them, so a
+  // local signup as "Foo@x.com" and a Google identity for "foo@x.com" are the
+  // same person and must link. Only the Google path needs this — plain login
+  // keeps the exact match so existing accounts behave exactly as before.
+  findByEmailInsensitive(email: string) {
+    const escaped = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return this.findOne({ email: { $regex: `^${escaped}$`, $options: "i" } });
+  }
+
+  findByGoogleId(googleId: string) {
+    return this.findOne({ googleId });
+  }
+
   findByPhone(phone: string) {
     return this.findOne({ phone });
   }

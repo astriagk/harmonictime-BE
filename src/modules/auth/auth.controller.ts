@@ -17,6 +17,7 @@ import {
   resetPasswordUrl,
   FRONTEND_ROUTES,
 } from "../../shared/constants/frontend";
+import { verifyGoogleIdToken } from "../../shared/services/google-auth.service";
 import { sendTemplateEmail } from "../../shared/services/email.service";
 import {
   sendPasswordResetSMS,
@@ -113,6 +114,16 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const user = await userRepository.findByEmail(email);
   if (!user) throw ApiError.unauthorized("Invalid email or password");
 
+  // Google-created accounts carry no password hash. bcrypt.compare would throw
+  // on an undefined hash (a 500), so short-circuit with a message the UI can
+  // act on. This does reveal that the address exists as a Google account —
+  // acceptable, since register() already leaks existence via its 409, and the
+  // alternative leaves the user with no way to understand why login fails.
+  if (!user.password)
+    throw ApiError.badRequest(
+      "This account was created with Google. Continue with Google, or use “Forgot password” to set a password.",
+    );
+
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) throw ApiError.unauthorized("Invalid email or password");
 
@@ -143,6 +154,156 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     refreshToken,
   });
 });
+
+// Google Sign-In, ID-token flow. The frontend obtains an ID token from Google
+// Identity Services and posts it here; we verify it and mint our own JWTs, so
+// everything downstream (authMiddleware, role checks, /verify-token) is
+// unchanged. Identity is keyed on the Google `sub`, not the email — `sub` is
+// stable, whereas an email can be changed on the Google side.
+export const googleSignIn = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { idToken } = req.body;
+
+    const profile = await verifyGoogleIdToken(idToken);
+
+    // Google's own verification of the address is what makes linking-by-email
+    // safe. Without it, a token claiming an arbitrary address would be an
+    // account-takeover primitive.
+    if (!profile.emailVerified) {
+      return sendResponse(
+        res,
+        HTTP_STATUS.FORBIDDEN,
+        "Your Google account email is not verified. Verify it with Google and try again.",
+        { emailVerified: false },
+      );
+    }
+
+    let user =
+      (await userRepository.findByGoogleId(profile.googleId)) ??
+      (await userRepository.findByEmailInsensitive(profile.email));
+
+    let isNewUser = false;
+    // True when an existing password account gained Google as a second sign-in
+    // method on this request.
+    const linked = !!user && !user.googleId;
+
+    if (!user) {
+      try {
+        const result = await userRepository.insertOne({
+          email: profile.email,
+          googleId: profile.googleId,
+          authProvider: "google",
+          ...(profile.name ? { displayName: profile.name } : {}),
+          ...(profile.picture ? { profilePicUrl: profile.picture } : {}),
+          acceptedTerms: true,
+          termsAcceptedAt: new Date(),
+          dateCreated: new Date(),
+          accountType: "individual",
+          status: "active",
+          isEmailVerified: true, // Google asserted email_verified
+          isPhoneVerified: false,
+          // No `password` key at all — not null, not "".
+        });
+        user = await userRepository.findById(result.insertedId);
+        isNewUser = true;
+      } catch (err: any) {
+        // Two concurrent first-time sign-ins race here; the unique email index
+        // turns the loser into E11000. Re-read and fall through to the link
+        // path rather than 500-ing.
+        if (err?.code !== 11000) throw err;
+        user = await userRepository.findByEmailInsensitive(profile.email);
+      }
+    }
+
+    if (!user)
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        "Could not complete Google sign-in",
+      );
+
+    if (user.status === "blocked") {
+      return sendResponse(res, HTTP_STATUS.FORBIDDEN, "Account blocked", {
+        blocked: true,
+        suspended: false,
+      });
+    }
+    if (user.status === "suspended") {
+      return sendResponse(res, HTTP_STATUS.FORBIDDEN, "Account suspended", {
+        blocked: false,
+        suspended: true,
+      });
+    }
+
+    const accessToken = signToken({
+      userId: user._id!.toString(),
+      email: user.email,
+    });
+    const refreshToken = signRefreshToken({
+      userId: user._id!.toString(),
+      email: user.email,
+    });
+
+    await userRepository.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          refreshTokenHash: await bcrypt.hash(refreshToken, 10),
+          googleId: profile.googleId,
+          // Google verified the address, so a half-finished local signup is
+          // completed here — that is the point of linking.
+          isEmailVerified: true,
+          // Backfill only; never overwrite what the user set themselves.
+          ...(!user.profilePicUrl && profile.picture
+            ? { profilePicUrl: profile.picture }
+            : {}),
+          ...(!user.displayName && profile.name
+            ? { displayName: profile.name }
+            : {}),
+        },
+        // Any pending email-verification link is now meaningless.
+        $unset: {
+          emailVerificationToken: "",
+          emailVerificationTokenExpiry: "",
+        },
+      },
+    );
+
+    // Role assignment is self-healing: register() inserts the UserRoles row
+    // after the user insert with no transaction, so orphaned users are already
+    // possible. Idempotent by design.
+    let roles = await userRoleRepository.findByUser(user._id!.toString());
+    if (roles.length === 0) {
+      await userRoleRepository.insertOne({
+        UserRoleID: DEFAULT_ROLE_ID,
+        UserID: user._id!,
+        RoleID: DEFAULT_ROLE_ID,
+      });
+      roles = await userRoleRepository.findByUser(user._id!.toString());
+    }
+
+    // Fire-and-forget, same as register(). No verification email — Google
+    // already proved the address.
+    if (isNewUser) void sendTemplateEmail(user.email, welcomeEmail());
+
+    const redirectTo =
+      user.postVerificationRedirect ??
+      (user.accountType === "business"
+        ? FRONTEND_ROUTES.POST_VERIFICATION_BUSINESS
+        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL);
+
+    sendResponse(res, HTTP_STATUS.OK, "Signed in with Google", {
+      token: accessToken,
+      refreshToken,
+      userId: user._id,
+      email: user.email,
+      accountType: user.accountType,
+      roles: roles.map((r) => r.RoleID),
+      redirectTo,
+      isNewUser,
+      linked,
+    });
+  },
+);
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;

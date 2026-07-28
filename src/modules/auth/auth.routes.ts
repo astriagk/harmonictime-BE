@@ -4,6 +4,7 @@ import { authMiddleware } from "../../shared/middlewares/auth.middleware";
 import {
   register,
   login,
+  googleSignIn,
   verifyEmail,
   verifyPhone,
   resetPassword,
@@ -18,6 +19,7 @@ import {
 import {
   registerSchema,
   loginSchema,
+  googleSignInSchema,
   verifyEmailSchema,
   verifyPhoneSchema,
   resetPasswordSchema,
@@ -34,6 +36,7 @@ const router: Router = Router();
 
 router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
+router.post("/google", validate(googleSignInSchema), googleSignIn);
 router.post("/verify-email", validate(verifyEmailSchema), verifyEmail);
 router.post("/verify-phone", validate(verifyPhoneSchema), verifyPhone);
 router.post("/reset-password", validate(resetPasswordSchema), resetPassword);

@@ -54,6 +54,7 @@ docs/accounts/
 | Service | Guide | What it's used for |
 |---------|-------|--------------------|
 | TrackingMore | [docs/accounts/trackingmore.md](docs/accounts/trackingmore.md) | Live package tracking, delivery webhooks (free plan) |
+| Google Sign-In | [docs/accounts/google-signin.md](docs/accounts/google-signin.md) | "Continue with Google" on login/register (free, no billing) |
 
 > Add a new file to `docs/accounts/` whenever a new external service is integrated.
 

@@ -2,12 +2,22 @@ import { ObjectId } from "mongodb";
 
 export type UserStatus = "active" | "blocked" | "suspended";
 export type AccountType = "individual" | "business";
+// How the account was originally created. Informational only — never branch an
+// auth decision on this. Use `!!user.password` / `!!user.googleId` instead: an
+// account can gain a password later (reset-password flow) or gain a googleId
+// later (Google auto-link), so origin and capability are not the same thing.
+export type AuthProvider = "local" | "google";
 export type SellerVerificationStatus = "Unverified" | "Pending" | "Approved" | "Rejected" | "Resubmitted";
 
 export interface User {
   _id?: ObjectId;
   email: string;
-  password: string;
+  // Optional: Google-created accounts have no password until the user runs the
+  // reset-password flow. Every read site must guard for undefined.
+  password?: string;
+  googleId?: string;          // Google `sub` claim — stable per user, never reused
+  authProvider?: AuthProvider; // absent on pre-existing rows, which are all "local"
+  displayName?: string;        // Google `name` claim; local signup has no equivalent
   phone?: string;
   status?: UserStatus;
   dateCreated?: Date;
