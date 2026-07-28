@@ -28,7 +28,7 @@ export const env = {
   BRAND_NAME: process.env.BRAND_NAME || "Krono²",
   BRAND_ADDRESS:
     process.env.BRAND_ADDRESS ||
-    "22, 1st cross, BHK Layout, Bangalore - 560026",
+    "No.12, 1st Floor, Kalappa Block, Srinagara, Pipeline, Bangalore - 560026",
   BRAND_EMAIL: process.env.BRAND_EMAIL || "krono2@astriagk.com",
   BRAND_PHONE: process.env.BRAND_PHONE || "(+91) 8861237563",
 
