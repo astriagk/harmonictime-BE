@@ -3,11 +3,13 @@ import { env } from "./shared/config/env";
 import logger from "./shared/utils/logger";
 import { initChatGateway } from "./modules/chat";
 import { connectDB } from "./shared/config/database";
+import { ensureIndexes } from "./shared/database/ensureIndexes";
 import { startTrackingSyncJob } from "./shared/jobs/trackingSync.job";
 
 async function bootstrap() {
   await connectDB();
   logger.info("Connected to database");
+  await ensureIndexes();
   startTrackingSyncJob();
 
   initChatGateway(httpServer);

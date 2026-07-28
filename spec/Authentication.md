@@ -90,6 +90,141 @@ Authentication is **JWT-based and stateless** for access tokens, with **stateful
 6. Refresh token hashed with bcrypt (10 rounds) → stored in `User.refreshTokenHash`
 7. Both tokens returned in the response body
 
+Step 2 is guarded: accounts created through Google Sign-In have no `password`
+field, so they short-circuit at **400 BAD REQUEST** with a "continue with
+Google" message rather than reaching bcrypt.
+
+---
+
+## 4b. Google Sign-In Flow
+
+**Endpoint:** `POST /api/auth/google` — body `{ "idToken": "<Google ID token>" }`
+
+The frontend obtains an ID token from Google Identity Services; the backend
+verifies it and issues its *own* JWTs, so everything downstream is unchanged.
+There is no redirect, no callback URL, and no client secret.
+
+**There is no separate "register with Google" endpoint.** This one endpoint is
+both sign-up and sign-in — a user who has never registered and clicks "Continue
+with Google" gets an account created silently on the spot and is logged straight
+in. They are never bounced to the register page, never asked to pick a password,
+and never sent a verification email. From their point of view there is no
+distinction between signing up and signing in; the `isNewUser` flag in the
+response is the only signal, and exists so the frontend can show onboarding.
+
+1. `verifyGoogleIdToken` (`src/shared/services/google-auth.service.ts`) verifies
+   the token locally against Google's cached public keys: signature, `exp`,
+   `iss`, and `aud` — which must equal `GOOGLE_CLIENT_ID` (or one of
+   `GOOGLE_ADDITIONAL_CLIENT_IDS`). Any failure → **401**, with the real reason
+   logged server-side only.
+2. `email_verified === true` is required → otherwise **403**. This claim is what
+   makes linking-by-email safe.
+3. User resolved by `googleId` (the Google `sub`), then by email
+   (case-insensitive):
+   - **No match** → new user created: `authProvider: "google"`, `googleId`,
+     `displayName`, `profilePicUrl`, `accountType: "individual"`,
+     `status: "active"`, `acceptedTerms: true`, `isEmailVerified: true`, and
+     **no `password` key at all**. A `UserRoles` row is inserted with
+     `RoleID: 3` (CUSTOMER). A welcome email is sent fire-and-forget; there is
+     no verification email — Google already proved the address.
+   - **Email matches an existing password account** → auto-linked: `googleId`
+     set, `isEmailVerified` forced to `true`, pending verification-token fields
+     unset, `displayName`/`profilePicUrl` backfilled only if empty. Both
+     credentials then coexist.
+   - **`googleId` matches** → returning user.
+4. `status` checked — `"blocked"` / `"suspended"` → **403**.
+5. Access + refresh tokens issued exactly as in §5; `refreshTokenHash` updated.
+6. Role rows are self-healing here — if the user somehow has none, CUSTOMER is
+   inserted.
+
+**200 response:** `{ token, refreshToken, userId, email, accountType, roles,
+redirectTo, isNewUser, linked }` — the same shape as `/confirm-email` plus
+`isNewUser` / `linked`, so the frontend can reuse its post-auth handler.
+
+### What gets written to the database
+
+Only four values ever come from Google: `sub`, `email`, `name`, `picture`.
+Everything else below is set by us. The raw ID token is verified and discarded —
+it is never stored, and no Google refresh token or access token is ever
+requested or held.
+
+**Case A — first-ever Google sign-in (no matching account).** A complete new
+`Users` document:
+
+```js
+{
+  _id:            ObjectId("..."),
+  email:          "user@gmail.com",   // Google `email`, lowercased
+  googleId:       "104928374651029384756",  // Google `sub`
+  authProvider:   "google",
+  displayName:    "Jane Doe",         // Google `name`   — omitted if absent
+  profilePicUrl:  "https://lh3.googleusercontent.com/...",  // Google `picture`
+  accountType:    "individual",
+  status:         "active",
+  acceptedTerms:  true,
+  termsAcceptedAt: ISODate("..."),
+  dateCreated:    ISODate("..."),
+  isEmailVerified: true,              // Google asserted email_verified
+  isPhoneVerified: false,
+  refreshTokenHash: "$2b$10$...",     // bcrypt of the issued refresh JWT
+  // NOTE: no `password` key at all — not null, not ""
+}
+```
+
+Plus one `UserRoles` document: `{ UserRoleID: 3, UserID: <_id>, RoleID: 3 }`.
+
+Fields deliberately **not** set: `password`, `phone`, `businessName`, `otp`,
+`emailVerificationToken`, and every `seller*` field. They are absent, not null.
+
+**Case B — Google email matches an existing password account (auto-link).**
+No new document; the existing one is updated:
+
+| Field | Action |
+|---|---|
+| `googleId` | set |
+| `isEmailVerified` | forced to `true` |
+| `refreshTokenHash` | replaced |
+| `displayName` | set **only if** currently empty |
+| `profilePicUrl` | set **only if** currently empty |
+| `emailVerificationToken`, `emailVerificationTokenExpiry` | unset |
+
+The existing `password`, `phone`, `accountType`, `businessName`, role rows and
+seller status are all left untouched — a business/seller account that links
+Google stays a business/seller account. Both credentials work from then on.
+
+**Case C — returning Google user.** Only `refreshTokenHash` changes (plus the
+idempotent `googleId` / `isEmailVerified` writes, which are no-ops).
+
+**Local vs Google account, side by side:**
+
+| Field | `/register` (local) | `/auth/google` |
+|---|---|---|
+| `password` | bcrypt hash | **absent** |
+| `googleId` | absent | Google `sub` |
+| `authProvider` | absent | `"google"` |
+| `displayName` | absent (never collected) | Google `name` |
+| `profilePicUrl` | absent until uploaded | Google `picture` |
+| `isEmailVerified` | `false` until the email link is clicked | `true` immediately |
+| `emailVerificationToken` | SHA-256 hash, 24h TTL | never set |
+| `status` | **absent** (undefined) | `"active"` |
+| `accountType` | from the request body | always `"individual"` |
+| `acceptedTerms` | from the request body | always `true` |
+| Role | SELLER if business, else CUSTOMER | always CUSTOMER |
+| Welcome email | not sent (verification email instead) | sent |
+
+> `status` being absent on locally-registered users is pre-existing behaviour —
+> `authMiddleware` only blocks on the explicit values `"blocked"` / `"suspended"`,
+> so `undefined` behaves as active. The Google path sets `"active"` explicitly.
+
+Notes:
+- Identity is keyed on `sub`, never on email alone — `sub` is stable and never
+  reused, whereas a Google email can change.
+- Only **ID tokens** are accepted. A Google *access* token (`ya29...`) is not
+  audience-bound and must never be taken here.
+- Sellers are not creatable via Google; business accounts still use `/register`.
+- Running the password-reset flow on a Google-only account is supported and
+  simply adds a password credential.
+
 ---
 
 ## 5. Token Generation & Lifecycle
@@ -225,7 +360,10 @@ Errors are returned as **400 BAD_REQUEST** with per-field detail messages.
 |---|---|---|
 | `_id` | ObjectId | Primary key |
 | `email` | string | Unique index |
-| `password` | string | bcrypt hash |
+| `password` | string? | bcrypt hash. **Absent on Google-created accounts** until the user runs the password-reset flow |
+| `googleId` | string? | Google `sub` claim. Partial unique index. Presence = "can sign in with Google" |
+| `authProvider` | `"local" \| "google"?` | Origin of the account. Informational only — never branch auth on it; absent on pre-existing rows |
+| `displayName` | string? | Google `name` claim; local signup has no equivalent |
 | `phone` | string? | Optional |
 | `status` | `"active" \| "blocked" \| "suspended"` | Default: `"active"` |
 | `isEmailVerified` | boolean | Login gate; starts as `false` |
@@ -245,13 +383,34 @@ Errors are returned as **400 BAD_REQUEST** with per-field detail messages.
 | `profilePicUrl` | string? | URI |
 | `dateCreated` | Date? | Creation timestamp |
 
+**Indexes** — created at startup by `ensureIndexes()`
+(`src/shared/database/ensureIndexes.ts`, called from `src/server.ts`):
+
+| Index | Type | Why |
+|---|---|---|
+| `{ email: 1 }` | unique | Until this existed, uniqueness rested only on the app-level `findByEmail` check in `register()`, so concurrent signups could create duplicates. Google auto-linking makes a duplicate unrecoverable |
+| `{ googleId: 1 }` | unique, partial (`googleId` is a string) | One Google account maps to at most one user. Partial rather than sparse so password-only accounts are unconstrained |
+
+`ensureIndexes()` logs and continues on failure rather than crashing the server —
+an existing collection with duplicate emails would otherwise make it unbootable.
+Check before deploying with:
+
+```js
+db.Users.aggregate([{ $group: { _id: { $toLower: "$email" }, n: { $sum: 1 } } },
+                    { $match: { n: { $gt: 1 } } }])
+```
+
+> Emails are stored as the user typed them. `findByEmail` is an exact match
+> (unchanged), but the Google path uses `findByEmailInsensitive` so a local
+> signup as `Foo@x.com` still links to the Google identity `foo@x.com`.
+
 **Roles (`UserRoles` collection):**
 
 | RoleID | Name | Assigned when |
 |---|---|---|
 | `1` | ADMIN | Manually assigned |
 | `2` | SELLER | `accountType === "business"` at registration |
-| `3` | CUSTOMER | `accountType === "individual"` at registration |
+| `3` | CUSTOMER | `accountType === "individual"` at registration, and for every Google sign-up |
 
 ---
 
@@ -290,6 +449,7 @@ All routes under `/api/auth` — no authentication required on any auth route.
 |---|---|---|
 | `/register` | POST | Create a new account |
 | `/login` | POST | Login and receive access + refresh tokens |
+| `/google` | POST | Sign in with a Google ID token; creates or links the account |
 | `/confirm-email` | POST | Verify email address with the token from the email link |
 | `/resend-verification` | POST | Re-send verification email |
 | `/update-unverified-email` | POST | Change email before verification is complete |
@@ -312,5 +472,7 @@ All routes under `/api/auth` — no authentication required on any auth route.
 | Account blocking | Enforced at middleware level on every authenticated request |
 | Email verification gate | Login blocked until `isEmailVerified === true` |
 | Admin elevation | Separate `requireAdmin` guard; not derivable from JWT alone |
+| Google token trust | `aud` pinned to `GOOGLE_CLIENT_ID`; `email_verified === true` required before any account link; identity keyed on `sub`; ID tokens only, never access tokens |
+| Email uniqueness | Unique index on `Users.email` + partial unique index on `Users.googleId`, created at startup by `ensureIndexes()` |
 | CORS | Currently `*` — must be restricted to known frontend origins in production |
 | Security headers | Helmet enabled |

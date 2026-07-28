@@ -11,6 +11,16 @@ export const env = {
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "krono_square_refresh",
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
 
+  // Google Sign-In (ID-token flow). The OAuth 2.0 *Web application* client ID
+  // from Google Cloud Console → APIs & Services → Credentials. Used as the
+  // required `audience` when verifying ID tokens, so a token minted for any
+  // other app is rejected. It is a public value (the frontend ships it too);
+  // the client *secret* is NOT needed for this flow — don't add one.
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
+  // Optional CSV of additional accepted `aud` values, for future native
+  // (Android/iOS) clients which mint tokens under their own client ids.
+  GOOGLE_ADDITIONAL_CLIENT_IDS: process.env.GOOGLE_ADDITIONAL_CLIENT_IDS || "",
+
   // Base URL of the frontend app — used to build links in emails. Override per
   // environment via the FRONTEND_URL env var.
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:4200",

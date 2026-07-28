@@ -25,6 +25,17 @@ Set all of these in Railway under the **Variables** tab.
 | `JWT_REFRESH_SECRET` | Yes | 64-char hex string | Must be different from `JWT_SECRET` |
 | `JWT_REFRESH_EXPIRES_IN` | No | `30d` | Refresh token lifetime |
 
+## Google Sign-In
+
+| Variable | Required | Example | Notes |
+|---|---|---|---|
+| `GOOGLE_CLIENT_ID` | Yes (for `POST /api/auth/google`) | `1234-abc.apps.googleusercontent.com` | OAuth 2.0 **Web application** client ID from Google Cloud Console → APIs & Services → Credentials. Must be the same id the frontend uses. Public value — no client secret is needed for the ID-token flow |
+| `GOOGLE_ADDITIONAL_CLIENT_IDS` | No | `ios-id...,android-id...` | Comma-separated extra accepted `aud` values, for native clients that mint tokens under their own client id |
+
+Add every frontend origin (e.g. `http://localhost:4200` and the production
+`FRONTEND_URL`) to **Authorized JavaScript origins** on that OAuth client, or
+Google Identity Services will refuse to issue a token to the page.
+
 ## Frontend
 
 | Variable | Required | Example | Notes |
