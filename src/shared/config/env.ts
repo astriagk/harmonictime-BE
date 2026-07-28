@@ -30,7 +30,7 @@ export const env = {
     process.env.BRAND_ADDRESS ||
     "22, 1st cross, BHK Layout, Bangalore - 560026",
   BRAND_EMAIL: process.env.BRAND_EMAIL || "krono2@astriagk.com",
-  BRAND_PHONE: process.env.BRAND_PHONE || "(+91) 88673 47448",
+  BRAND_PHONE: process.env.BRAND_PHONE || "(+91) 8861237563",
 
   // Amazon SES (HTTPS) transport — the only email channel. Sends over port 443
   // (never blocked, unlike SMTP). Reuses the AWS credentials below; the IAM user

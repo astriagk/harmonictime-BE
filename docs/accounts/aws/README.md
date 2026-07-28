@@ -23,8 +23,8 @@ SES and SNS reuse the **same IAM user / access keys** as S3 (`STORAGE_ACCESS_KEY
 |---|---|---|
 | S3 bucket | `harmonic-time` | `kronosquare` |
 | IAM user (access key) | `AKIAWNLFXE5WQIK7DGFH` | `AKIAWNLFXE5WRTC4KGVH` (`kronosquare-app`) |
-| SES sending domain | `astriagk.com` | `krono2.com` |
-| `EMAIL_FROM` | `support@astriagk.com` | `support@krono2.com` |
+| SES sending domain | `krono2.com` | `krono2.com` |
+| `EMAIL_FROM` | `support@krono2.com` | `support@krono2.com` |
 | `SES_REGION` | `us-east-1` | `us-east-1` |
 | `SMS_REGION` | `ap-south-1` | `ap-south-1` |
 
