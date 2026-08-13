@@ -285,11 +285,11 @@ export const googleSignIn = asyncHandler(
     // already proved the address.
     if (isNewUser) void sendTemplateEmail(user.email, welcomeEmail());
 
+    // Google sign-in always lands on the products page, business or not — GST
+    // onboarding belongs to the email-verification flow, not here.
     const redirectTo =
       user.postVerificationRedirect ??
-      (user.accountType === "business"
-        ? FRONTEND_ROUTES.POST_VERIFICATION_BUSINESS
-        : FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL);
+      FRONTEND_ROUTES.POST_VERIFICATION_INDIVIDUAL;
 
     sendResponse(res, HTTP_STATUS.OK, "Signed in with Google", {
       token: accessToken,
