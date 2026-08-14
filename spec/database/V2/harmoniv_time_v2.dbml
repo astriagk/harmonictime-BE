@@ -506,6 +506,50 @@ Table UserReviews {
 }
 
 // ============================================================================
+//  CONTENT (CMS)
+// ============================================================================
+
+Table Blogs {
+  _id           objectid    [pk]
+  Slug          string      [unique, not null, note: 'URL segment for /blog-details/:slug — generated from Title, kept stable after publish']
+  Title         string      [not null]
+  Excerpt       string      [not null, note: 'Plain text teaser (~150–200 chars) shown on the grid card. HTML is stripped on write']
+  Sections      object[]    [not null, note: 'Article body as an ordered array of { Heading?, Content, Image?, Caption? }. Min 1 entry. Array order IS render order — stored and returned unchanged. See note below']
+  Image         string      [not null, note: 'Cover image: the grid thumbnail (~370x250) and the article hero']
+  Author        string      [not null, note: 'Display name only — not a Users ref, posts may be ghost-written']
+  Category      string      [not null, note: 'Display label, e.g. "Buying Guides"']
+  CategorySlug  string      [not null, note: 'slugify(Category) — lets ?Category= accept the label or the slug']
+  Tags          string[]    [null]
+  Status        string      [not null, default: 'draft', note: 'draft | published | archived. archived = soft delete, detail route answers 410']
+  PublishedAt   timestamp   [null, note: 'Public only when Status=published AND PublishedAt <= now, so a future date schedules the post']
+  CreatedAt     timestamp
+  UpdatedAt     timestamp
+  Seo           object      [null, note: '{ MetaTitle, MetaDescription } — feeds the route meta tags']
+
+  indexes {
+    Slug [unique, name: 'uniq_blog_slug']
+    (Status, PublishedAt) [name: 'blog_status_published']
+    (CategorySlug, Status, PublishedAt) [name: 'blog_category_published']
+  }
+
+  Note: '''
+    Editorial posts behind /api/blogs. Standalone — no refs into Catalog or
+    Identity, so posts can be written before the products they discuss exist.
+
+    ## Sections[] entry
+    | Field    | Type   | Req | Notes |
+    |----------|--------|-----|-------|
+    | Heading  | string | No  | Plain text sub-heading above the copy. Max 200 |
+    | Content  | string | Yes | Sanitised HTML, min 10 chars. Whitelist: p, h3, h4, strong, em, ul, ol, li, a, blockquote, br — **no img** |
+    | Image    | string | No  | Full-width image URL rendered under the copy |
+    | Caption  | string | No  | Plain text caption under the image. Max 200 |
+
+    Pictures live in Sections[].Image rather than inside Content so each one
+    stays next to the copy it illustrates; an <img> inside Content is stripped.
+  '''
+}
+
+// ============================================================================
 //  RELATIONSHIPS
 // ============================================================================
 
@@ -623,4 +667,8 @@ TableGroup Settlement {
 TableGroup Reviews {
   Reviews
   UserReviews
+}
+
+TableGroup Content {
+  Blogs
 }
