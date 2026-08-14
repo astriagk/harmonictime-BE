@@ -18,6 +18,7 @@ import { offerRouter } from "../../modules/commerce/offer";
 import { reviewRouter } from "../../modules/catalog/review";
 import { userReviewRouter } from "../../modules/users/user_review";
 import { siteContentRouter } from "../../modules/cms/site_content";
+import { blogRouter } from "../../modules/cms/blog";
 import { contactRouter } from "../../modules/support/contact";
 import { fileUploadRouter } from "../../modules/file-upload";
 
@@ -43,6 +44,9 @@ router.use("/offers", offerRouter);
 router.use("/reviews", reviewRouter);
 router.use("/user-reviews", userReviewRouter);
 router.use("/site-content", siteContentRouter);
+// Public reads are open; the write endpoints inside guard themselves with
+// authMiddleware + requireAdmin.
+router.use("/blogs", blogRouter);
 router.use("/contact", contactRouter);
 router.use("/uploads", fileUploadRouter);
 
