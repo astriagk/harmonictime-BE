@@ -8,7 +8,8 @@
     "postinstall": "npm run build",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "docs:generate": "node postman/generate-api-docs.js",
-    "seed:reference": "ts-node src/scripts/seedReferenceData.ts"
+    "seed:reference": "ts-node src/scripts/seedReferenceData.ts",
+    "migrate:blog-sections": "ts-node src/scripts/migrateBlogSections.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.749.0",

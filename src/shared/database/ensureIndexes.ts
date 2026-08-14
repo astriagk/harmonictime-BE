@@ -40,4 +40,31 @@ export const ensureIndexes = async (): Promise<void> => {
       `Failed to ensure user indexes (duplicate data?): ${err?.message}`,
     );
   }
+
+  try {
+    // Slug is the public URL segment, so uniqueness is a correctness
+    // requirement, not an optimisation — generateUniqueSlug() reserves the
+    // value, this index enforces it under concurrent creates.
+    await db
+      .collection(COLLECTIONS.BLOGS)
+      .createIndex({ Slug: 1 }, { unique: true, name: "uniq_blog_slug" });
+
+    // Every public read is "published, newest first", optionally narrowed by
+    // category.
+    await db
+      .collection(COLLECTIONS.BLOGS)
+      .createIndex({ Status: 1, PublishedAt: -1 }, { name: "blog_status_published" });
+    await db
+      .collection(COLLECTIONS.BLOGS)
+      .createIndex(
+        { CategorySlug: 1, Status: 1, PublishedAt: -1 },
+        { name: "blog_category_published" },
+      );
+
+    logger.info("Blog indexes ensured");
+  } catch (err: any) {
+    logger.error(
+      `Failed to ensure blog indexes (duplicate slugs?): ${err?.message}`,
+    );
+  }
 };

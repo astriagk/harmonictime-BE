@@ -140,6 +140,9 @@ response is the only signal, and exists so the frontend can show onboarding.
 **200 response:** `{ token, refreshToken, userId, email, accountType, roles,
 redirectTo, isNewUser, linked }` — the same shape as `/confirm-email` plus
 `isNewUser` / `linked`, so the frontend can reuse its post-auth handler.
+`redirectTo` is `postVerificationRedirect` if the user has one, otherwise
+`/buyer/products` — unlike `/confirm-email`, business accounts are **not** sent
+to GST onboarding here.
 
 ### What gets written to the database
 
