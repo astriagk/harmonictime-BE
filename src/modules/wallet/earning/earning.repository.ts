@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
 import { env } from "../../../shared/config/env";
+import { computeUnitPricing } from "../../../shared/utils/pricing";
 import { EarningStatus, SellerEarning } from "./earning.types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -22,43 +23,44 @@ class EarningRepository extends BaseRepository<SellerEarning> {
 
   // Mint one Pending earning per sold product, applying the seller commission.
   // Offer discount and all amounts are snapshotted so later price/offer changes
-  // never rewrite history. Buyer commission is NOT deducted here — it is added
-  // on top of the buyer's DisplayPrice and stays with the platform separately.
+  // never rewrite history.
+  //
+  // GST is NEVER deducted from the seller. For a tax-exclusive product the GST
+  // is collected from the buyer on top of the price and passed straight through
+  // to the seller, who remits it; for a tax-inclusive product it already sits
+  // inside the price and is likewise the seller's to remit. The platform's only
+  // cut is the commission, charged on the GST-inclusive amount. See
+  // shared/utils/pricing.ts for the canonical formula.
   async createForCheckout(
     checkoutId: ObjectId,
     products: SoldProduct[],
     qtyMap: Map<string, number>
   ): Promise<void> {
     if (products.length === 0) return;
-    const sellerRate = env.PLATFORM_COMMISSION_RATE;
     const now = new Date();
-    const gstRate = env.GST_RATE;
 
     const docs: SellerEarning[] = products.flatMap((p) => {
-      const offerDiscount  = p.OfferDiscountPercentage ?? 0;
-      const discountAmount = Math.round(p.Price * offerDiscount / 100);
-      const effectivePrice = p.Price - discountAmount;
-      const commission     = Math.round(effectivePrice * sellerRate);
-      const netAmount      = effectivePrice - commission;
-      const isTaxInclusive    = p.IsPriceInclusiveOfTax ?? false;
-      const gstAmount         = Math.round(netAmount * gstRate / 100);
-      const netAmountAfterGST = netAmount - gstAmount;
+      const pricing = computeUnitPricing(
+        p.Price,
+        p.OfferDiscountPercentage ?? 0,
+        p.IsPriceInclusiveOfTax ?? false
+      );
 
       const qty = qtyMap.get(p._id.toString()) ?? 1;
       return Array.from({ length: qty }, () => ({
         SellerID: p.UserID,
         CheckoutID: checkoutId,
         ProductID: p._id,
-        OfferDiscountPercentage: offerDiscount,
-        OfferDiscountAmount: discountAmount,
-        GrossAmount: effectivePrice,
-        CommissionRate: sellerRate,
-        CommissionAmount: commission,
-        NetAmount: netAmount,
-        IsTaxInclusive: isTaxInclusive,
-        GSTRate: gstRate,
-        GSTAmount: gstAmount,
-        NetAmountAfterGST: netAmountAfterGST,
+        OfferDiscountPercentage: pricing.OfferDiscountPercentage,
+        OfferDiscountAmount: pricing.OfferDiscountAmount,
+        GrossAmount: pricing.EffectivePrice,
+        CommissionRate: pricing.SellerCommissionRate,
+        CommissionAmount: pricing.SellerCommissionAmount,
+        NetAmount: pricing.NetAmount,
+        IsTaxInclusive: pricing.IsTaxInclusive,
+        GSTRate: pricing.GSTRate,
+        GSTAmount: pricing.GSTAmount,
+        NetPayableAmount: pricing.NetPayableAmount,
         Status: "Pending" as const,
         SaleDate: now,
         WithdrawalID: null,
@@ -122,8 +124,11 @@ class EarningRepository extends BaseRepository<SellerEarning> {
     );
   }
 
-  // Totals per status (in NetAmountAfterGST) for the wallet summary.
-  // Falls back to NetAmount for legacy earnings that predate the GST fields.
+  // Totals per status (in NetPayableAmount) for the wallet summary.
+  // Legacy earnings predate NetPayableAmount and fall back to NetAmount: they
+  // were sold when no GST was collected from the buyer, so NetAmount is exactly
+  // what is owed. Their old NetAmountAfterGST field is deliberately ignored --
+  // it deducted GST the platform never actually collected.
   // counts reflect distinct product lines (CheckoutID+ProductID groups), not raw units.
   async getBalances(sellerId: ObjectId) {
     const rows = await this.aggregate<{ _id: EarningStatus; total: number; count: number }>([
@@ -132,7 +137,7 @@ class EarningRepository extends BaseRepository<SellerEarning> {
         $group: {
           _id: { status: "$Status", checkoutId: "$CheckoutID", productId: "$ProductID" },
           status: { $first: "$Status" },
-          lineTotal: { $sum: { $ifNull: ["$NetAmountAfterGST", "$NetAmount"] } },
+          lineTotal: { $sum: { $ifNull: ["$NetPayableAmount", "$NetAmount"] } },
         },
       },
       {
@@ -204,7 +209,7 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           IsTaxInclusive: { $first: "$IsTaxInclusive" },
           GSTRate: { $first: "$GSTRate" },
           GSTAmount: { $first: "$GSTAmount" },
-          NetAmountAfterGST: { $first: "$NetAmountAfterGST" },
+          NetPayableAmount: { $first: "$NetPayableAmount" },
           SaleDate: { $first: "$SaleDate" },
           AvailableAt: { $first: "$AvailableAt" },
           Quantity: { $sum: 1 },
@@ -213,7 +218,7 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           TotalCommissionAmount: { $sum: "$CommissionAmount" },
           TotalNetAmount: { $sum: "$NetAmount" },
           TotalGSTAmount: { $sum: "$GSTAmount" },
-          TotalNetAmountAfterGST: { $sum: { $ifNull: ["$NetAmountAfterGST", "$NetAmount"] } },
+          TotalNetPayableAmount: { $sum: { $ifNull: ["$NetPayableAmount", "$NetAmount"] } },
           TotalOfferDiscountAmount: { $sum: "$OfferDiscountAmount" },
           ProductName: { $first: { $arrayElemAt: ["$Product.ProductName", 0] } },
           ImageURL: { $first: { $arrayElemAt: ["$Image.ImageURL", 0] } },
@@ -236,14 +241,14 @@ class EarningRepository extends BaseRepository<SellerEarning> {
           IsTaxInclusive: 1,
           GSTRate: 1,
           GSTAmount: 1,
-          NetAmountAfterGST: 1,
+          NetPayableAmount: 1,
           // Total amounts for the line (per-unit × quantity).
           TotalGrossAmount: 1,
           TotalCommissionAmount: 1,
           TotalNetAmount: 1,
           TotalGSTAmount: 1,
           TotalOfferDiscountAmount: 1,
-          TotalNetAmountAfterGST: 1,
+          TotalNetPayableAmount: 1,
           SaleDate: 1,
           AvailableAt: 1,
           ProductName: 1,
