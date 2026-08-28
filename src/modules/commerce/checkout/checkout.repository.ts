@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
-import { env } from "../../../shared/config/env";
+import { buyerCommissionExpr, displayPriceExpr, gstAmountExpr, inclusiveFlagExpr } from "../../../shared/utils/pricing";
 import { Checkout } from "./checkout.types";
 
 class CheckoutRepository extends BaseRepository<Checkout> {
@@ -13,10 +13,15 @@ class CheckoutRepository extends BaseRepository<Checkout> {
   //   Price               – seller's original listed price
   //   OfferApplied        – offer active at purchase time (null if none)
   //   EffectivePrice      – Price after offer discount
-  //   BuyerCommissionAmount – platform's buyer-side cut
-  //   DisplayPrice        – what the buyer paid per unit (EffectivePrice + BuyerCommissionAmount)
+  //   GSTAmount           – GST collected from the buyer (0 if the price is tax-inclusive)
+  //   BuyerCommissionAmount – platform's buyer-side cut, charged on EffectivePrice + GSTAmount
+  //   DisplayPrice        – what the buyer paid per unit
+  //                         (EffectivePrice + GSTAmount + BuyerCommissionAmount)
   getEnrichedByUser(userId: ObjectId) {
-    const buyerRate = env.BUYER_COMMISSION_RATE;
+    // Price the buyer actually paid, from the earning snapshot taken at payment
+    // time; falls back to the live product price for pre-snapshot orders.
+    const effectivePriceExpr = { $ifNull: ["$Earning.GrossAmount", "$Products.Price"] };
+    const inclusiveExpr = inclusiveFlagExpr("$Products.IsPriceInclusiveOfTax");
     return this.aggregate([
       { $match: { UserID: userId } },
       { $lookup: { from: COLLECTIONS.PRODUCTS, localField: "ProductIDs", foreignField: "_id", as: "Products" } },
@@ -137,24 +142,12 @@ class CheckoutRepository extends BaseRepository<Checkout> {
                   null,
                 ],
               },
-              BuyerCommissionAmount: {
-                $round: [
-                  { $multiply: [{ $ifNull: ["$Earning.GrossAmount", "$Products.Price"] }, buyerRate] },
-                  0,
-                ],
-              },
-              // DisplayPrice = EffectivePrice + BuyerCommissionAmount
-              DisplayPrice: {
-                $add: [
-                  { $ifNull: ["$Earning.GrossAmount", "$Products.Price"] },
-                  {
-                    $round: [
-                      { $multiply: [{ $ifNull: ["$Earning.GrossAmount", "$Products.Price"] }, buyerRate] },
-                      0,
-                    ],
-                  },
-                ],
-              },
+              // Buyer commission is charged on the GST-inclusive amount; GST is
+              // shown separately because it passes through to the seller.
+              GSTAmount: gstAmountExpr(effectivePriceExpr, inclusiveExpr),
+              BuyerCommissionAmount: buyerCommissionExpr(effectivePriceExpr, inclusiveExpr),
+              // DisplayPrice = EffectivePrice + GSTAmount + BuyerCommissionAmount
+              DisplayPrice: displayPriceExpr(effectivePriceExpr, inclusiveExpr),
               ImageURL: "$PrimaryImage.ImageURL",
               IsPriceInclusiveOfTax: "$Products.IsPriceInclusiveOfTax",
             },

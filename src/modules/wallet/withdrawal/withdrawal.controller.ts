@@ -46,9 +46,11 @@ export const requestWithdrawal = asyncHandler(
     if (available.length === 0)
       throw ApiError.badRequest("No funds available to withdraw");
 
+    // GST is a pass-through, not a platform deduction: whatever was collected
+    // from the buyer is added on top of the seller's net and paid out with it.
     const amount = available.reduce((sum, e) => sum + e.NetAmount, 0);
-    const totalGSTDeducted = available.reduce((sum, e) => sum + (e.GSTAmount ?? 0), 0);
-    const finalPayableAmount = amount - totalGSTDeducted;
+    const totalGSTCollected = available.reduce((sum, e) => sum + (e.GSTAmount ?? 0), 0);
+    const finalPayableAmount = amount + totalGSTCollected;
     const earningIds = available.map((e) => e._id!);
 
     const result = await withdrawalRepository.insertOne({
@@ -61,7 +63,7 @@ export const requestWithdrawal = asyncHandler(
         BankName: account.BankName,
       },
       Amount: amount,
-      TotalGSTDeducted: totalGSTDeducted,
+      TotalGSTCollected: totalGSTCollected,
       FinalPayableAmount: finalPayableAmount,
       EarningIDs: earningIds,
       Status: "Pending",
@@ -73,7 +75,7 @@ export const requestWithdrawal = asyncHandler(
     sendResponse(res, HTTP_STATUS.CREATED, "Withdrawal requested successfully", {
       _id: result.insertedId,
       Amount: amount,
-      TotalGSTDeducted: totalGSTDeducted,
+      TotalGSTCollected: totalGSTCollected,
       FinalPayableAmount: finalPayableAmount,
       ItemCount: earningIds.length,
       Status: "Pending",

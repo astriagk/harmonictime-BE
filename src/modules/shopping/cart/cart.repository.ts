@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
-import { env } from "../../../shared/config/env";
+import { displayPriceExpr, gstAmountExpr, inclusiveFlagExpr } from "../../../shared/utils/pricing";
 import { CartItem } from "./cart.types";
 
 class CartRepository extends BaseRepository<CartItem> {
@@ -77,12 +77,16 @@ class CartRepository extends BaseRepository<CartItem> {
           Quantity: 1,
           ProductName: "$ProductDetails.ProductName",
           Price: "$ProductDetails.Price",
-          DisplayPrice: {
-            $add: [
-              "$ProductDetails.Price",
-              { $round: [{ $multiply: ["$ProductDetails.Price", env.BUYER_COMMISSION_RATE] }, 0] },
-            ],
-          },
+          // EffectivePrice + GST (tax-exclusive only) + buyer commission on that
+          // total. Canonical formula lives in shared/utils/pricing.ts.
+          DisplayPrice: displayPriceExpr(
+            "$ProductDetails.Price",
+            inclusiveFlagExpr("$ProductDetails.IsPriceInclusiveOfTax")
+          ),
+          GSTAmount: gstAmountExpr(
+            "$ProductDetails.Price",
+            inclusiveFlagExpr("$ProductDetails.IsPriceInclusiveOfTax")
+          ),
           OfferID: "$ProductDetails.OfferID",
           Offer: {
             $cond: {

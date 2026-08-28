@@ -21,6 +21,7 @@ import { orderConfirmationEmail } from "../../../shared/email-templates";
 import { ordersUrl } from "../../../shared/constants/frontend";
 import logger from "../../../shared/utils/logger";
 import { generateOrderID, generateItemID } from "../../../shared/utils/orderIdGenerator";
+import { computeUnitPricing } from "../../../shared/utils/pricing";
 
 // Create a Razorpay order for a checkout. The address + checkout data is stashed
 // as a draft on a pending Payment record and is NOT written to the Address /
@@ -269,26 +270,29 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
         enrichedAfterSale.map((p: any) => [p._id.toString(), p.ProductName as string])
       );
 
-      // Per-line amount the buyer actually paid (gross − offer + buyer commission),
-      // plus the GST charged on tax-exclusive items, to arrive at the total paid.
+      // Per-line amount the buyer actually paid. Uses the same canonical
+      // breakdown as the storefront and the wallet (shared/utils/pricing.ts),
+      // so the emailed total can never drift from what was charged.
       let subtotal = 0;
-      let taxExclusiveSubtotal = 0;
+      let gst = 0;
       const lineItems = soldProducts.map((p) => {
         const qty = qtyMap.get(p._id.toString()) ?? 1;
-        const offerPercentage = p.OfferDiscountPercentage ?? 0;
-        const unitOfferAmount = Math.round(p.Price * offerPercentage / 100);
-        const unitGross = p.Price - unitOfferAmount;
-        const unitCommission = Math.round(unitGross * env.BUYER_COMMISSION_RATE);
-        const amount = (unitGross + unitCommission) * qty;
+        const pricing = computeUnitPricing(
+          p.Price,
+          p.OfferDiscountPercentage ?? 0,
+          p.IsPriceInclusiveOfTax ?? false
+        );
+        // DisplayPrice already includes GST; keep the GST line separate for the
+        // email breakdown and exclude it from the subtotal to avoid double-count.
+        const amount = (pricing.DisplayPrice - pricing.GSTAmount) * qty;
         subtotal += amount;
-        if (!(p.IsPriceInclusiveOfTax ?? false)) taxExclusiveSubtotal += amount;
+        gst += pricing.GSTAmount * qty;
         return {
           productName: nameMap.get(p._id.toString()) ?? "Product",
           quantity: qty,
           amount,
         };
       });
-      const gst = Math.round(taxExclusiveSubtotal * env.GST_RATE / 100);
 
       await sendTemplateEmail(
         buyer.email,
