@@ -1,7 +1,7 @@
 import { Document, Filter, ObjectId } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
-import { env } from "../../../shared/config/env";
+import { displayPriceExpr, gstAmountExpr, inclusiveFlagExpr } from "../../../shared/utils/pricing";
 import { Product } from "./product.types";
 
 // Joins Products to its description / details / images / delivery + every
@@ -43,12 +43,10 @@ const enrichmentStages = (): Document[] => [
       UserID: 1,
       ProductName: 1,
       Price: 1,
-      DisplayPrice: {
-        $add: [
-          "$Price",
-          { $round: [{ $multiply: ["$Price", env.BUYER_COMMISSION_RATE] }, 0] },
-        ],
-      },
+      // EffectivePrice + GST (tax-exclusive only) + buyer commission on that
+      // total. Canonical formula lives in shared/utils/pricing.ts.
+      DisplayPrice: displayPriceExpr("$Price", inclusiveFlagExpr("$IsPriceInclusiveOfTax")),
+      GSTAmount: gstAmountExpr("$Price", inclusiveFlagExpr("$IsPriceInclusiveOfTax")),
       // Existing products predate the Quantity field; treat them as single-unit.
       Quantity: { $ifNull: ["$Quantity", 1] },
       OfferID: 1,
