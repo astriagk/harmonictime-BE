@@ -15,6 +15,10 @@ export interface Product {
   // whole stock — the same _id is used for every unit. Units sold are derived by
   // counting the product across paid checkouts (see getEnrichedWithStatus).
   Quantity: number;
+  // Units the seller sold outside the platform (in-person/offline) and marked
+  // manually. Added to on-platform paid checkouts to derive SoldCount/Status —
+  // see statusStages() in product.repository.ts.
+  OfflineSoldCount?: number;
   // Optional promotional offer attached to this product (Offers collection).
   OfferID?: ObjectId | null;
   IsAvailable: boolean;

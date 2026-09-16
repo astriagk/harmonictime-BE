@@ -29,6 +29,10 @@ export const bulkOfferSchema = Joi.object({
   RemoveProductIDs: Joi.array().items(Joi.string()).min(1),
 }).or("AssignProductIDs", "RemoveProductIDs");
 
+export const offlineSaleSchema = Joi.object({
+  Quantity: Joi.number().integer().min(1).default(1),
+});
+
 export const checkAvailabilitySchema = Joi.object({
   items: Joi.array()
     .items(
