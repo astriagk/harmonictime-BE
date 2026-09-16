@@ -35,13 +35,14 @@ export const createProduct = asyncHandler(
     // the configured threshold (default ₹2,00,000), they must have GST details
     // on file before listing new products.
     const sellerObjId = new ObjectId(UserID);
-    const totalGrossSales = await earningRepository.getTotalGrossSales(sellerObjId);
+    const totalGrossSales =
+      await earningRepository.getTotalGrossSales(sellerObjId);
     if (totalGrossSales >= env.SELLER_GST_THRESHOLD) {
       const gstDetails = await gstRepository.findBySeller(sellerObjId);
       if (!gstDetails) {
         throw new ApiError(
           HTTP_STATUS.FORBIDDEN,
-          `Your total sales have crossed ₹${env.SELLER_GST_THRESHOLD.toLocaleString("en-IN")}. Please add your GST details before listing new products.`
+          `Your total sales have crossed ₹${env.SELLER_GST_THRESHOLD.toLocaleString("en-IN")}. Please add your GST details before listing new products.`,
         );
       }
     }
@@ -136,7 +137,7 @@ export const searchProducts = asyncHandler(
       "Products retrieved successfully.",
       products,
     );
-  }
+  },
 );
 
 export const getProductById = asyncHandler(
@@ -207,7 +208,12 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
 
   // OfferID is optional and nullable: a non-empty string must be a valid id
   // (attach/replace the offer); null or "" detaches any existing offer.
-  if (OfferID !== undefined && OfferID !== null && OfferID !== "" && !ObjectId.isValid(OfferID))
+  if (
+    OfferID !== undefined &&
+    OfferID !== null &&
+    OfferID !== "" &&
+    !ObjectId.isValid(OfferID)
+  )
     throw ApiError.badRequest("Invalid OfferID");
 
   // Images the user removed on the edit screen. For each, delete the S3 object
@@ -222,7 +228,7 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
         if (!image || image.ProductID.toString() !== productID) return;
         await deleteFile(image.key || image.ImageURL);
         await productImageRepository.deleteById(imageID);
-      })
+      }),
     );
   }
 
@@ -233,7 +239,8 @@ export const editProduct = asyncHandler(async (req: Request, res: Response) => {
   if (OfferID !== undefined)
     update.OfferID = OfferID ? new ObjectId(OfferID) : null;
   if (IsAvailable !== undefined) update.IsAvailable = IsAvailable;
-  if (IsPriceInclusiveOfTax !== undefined) update.IsPriceInclusiveOfTax = IsPriceInclusiveOfTax;
+  if (IsPriceInclusiveOfTax !== undefined)
+    update.IsPriceInclusiveOfTax = IsPriceInclusiveOfTax;
   if (BrandID !== undefined) update.BrandID = new ObjectId(BrandID);
   if (CollectionID !== undefined)
     update.CollectionID = new ObjectId(CollectionID);
@@ -282,14 +289,14 @@ export const bulkUpdateProductOffer = asyncHandler(
     if (assignIds.length > 0) {
       if (!OfferID || !ObjectId.isValid(OfferID))
         throw ApiError.badRequest(
-          "A valid OfferID is required to assign an offer"
+          "A valid OfferID is required to assign an offer",
         );
       if (!(await offerRepository.findById(OfferID)))
         throw ApiError.notFound("Offer not found");
 
       const result = await productRepository.setOffer(
         assignIds.map((id) => new ObjectId(id)),
-        new ObjectId(OfferID)
+        new ObjectId(OfferID),
       );
       assigned = result.modifiedCount;
     }
@@ -297,7 +304,7 @@ export const bulkUpdateProductOffer = asyncHandler(
     if (removeIds.length > 0) {
       const result = await productRepository.setOffer(
         removeIds.map((id) => new ObjectId(id)),
-        null
+        null,
       );
       removed = result.modifiedCount;
     }
@@ -306,7 +313,7 @@ export const bulkUpdateProductOffer = asyncHandler(
       assigned,
       removed,
     });
-  }
+  },
 );
 
 export const deleteProduct = asyncHandler(
@@ -340,16 +347,28 @@ export const markOfflineSale = asyncHandler(
     const remaining: number = enriched?.RemainingQuantity ?? 0;
     if (quantity > remaining)
       throw ApiError.badRequest(
-        `Only ${remaining} unit(s) remaining — cannot mark ${quantity} as sold offline`
+        `Only ${remaining} unit(s) remaining — cannot mark ${quantity} as sold offline`,
       );
 
-    await productRepository.recordOfflineSale(new ObjectId(productID), quantity);
+    await productRepository.recordOfflineSale(
+      new ObjectId(productID),
+      quantity,
+    );
 
     const [updated] = await productRepository.getEnrichedWithStatus({
       _id: new ObjectId(productID),
     });
+
+    // Mirror the post-checkout behavior: sold out → hide from the marketplace;
+    // stock still remaining → make sure it isn't left incorrectly hidden.
+    await productRepository.setAvailability(
+      [new ObjectId(productID)],
+      (updated?.RemainingQuantity ?? 0) > 0,
+    );
+    updated.IsAvailable = (updated?.RemainingQuantity ?? 0) > 0;
+
     sendResponse(res, HTTP_STATUS.OK, "Offline sale recorded", updated);
-  }
+  },
 );
 
 // Pre-flight stock check for the checkout review page. Accepts a list of
@@ -357,10 +376,12 @@ export const markOfflineSale = asyncHandler(
 // can show "Only N left" warnings and block payment if any item is unavailable.
 export const checkAvailability = asyncHandler(
   async (req: Request, res: Response) => {
-    const { items } = req.body as { items: { ProductID: string; Quantity: number }[] };
+    const { items } = req.body as {
+      items: { ProductID: string; Quantity: number }[];
+    };
 
     const flatIds = items.flatMap(({ ProductID, Quantity }) =>
-      Array(Quantity).fill(ProductID)
+      Array(Quantity).fill(ProductID),
     );
 
     const issues = await productRepository.checkAvailability(flatIds);
@@ -385,6 +406,9 @@ export const checkAvailability = asyncHandler(
     });
 
     const allAvailable = result.every((r) => r.Available);
-    sendResponse(res, HTTP_STATUS.OK, "Availability checked", { allAvailable, items: result });
-  }
+    sendResponse(res, HTTP_STATUS.OK, "Availability checked", {
+      allAvailable,
+      items: result,
+    });
+  },
 );
