@@ -12,6 +12,7 @@ import {
   deleteProduct,
   checkAvailability,
   searchProducts,
+  markOfflineSale,
 } from "./product.controller";
 import {
   createProductSchema,
@@ -19,6 +20,7 @@ import {
   updateProductSchema,
   bulkOfferSchema,
   checkAvailabilitySchema,
+  offlineSaleSchema,
 } from "./product.validation";
 
 const router: Router = Router();
@@ -34,6 +36,7 @@ router.get("/:productID", optionalAuthMiddleware, getProductById);
 router.put("/availability", ...sellerGuard, validate(updateAvailabilitySchema), updateProduct);
 router.put("/bulk-offer", ...sellerGuard, validate(bulkOfferSchema), bulkUpdateProductOffer);
 router.put("/:productID", ...sellerGuard, validate(updateProductSchema), editProduct);
+router.post("/:productID/offline-sale", ...sellerGuard, validate(offlineSaleSchema), markOfflineSale);
 router.delete("/:productID", ...sellerGuard, deleteProduct);
 
 export default router;

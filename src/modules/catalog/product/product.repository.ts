@@ -1,4 +1,4 @@
-import { Document, Filter, ObjectId } from "mongodb";
+import { Document, Filter, ObjectId, UpdateFilter } from "mongodb";
 import { BaseRepository } from "../../../shared/database/base.repository";
 import { COLLECTIONS } from "../../../shared/constants/collections";
 import { displayPriceExpr, gstAmountExpr, inclusiveFlagExpr } from "../../../shared/utils/pricing";
@@ -49,6 +49,7 @@ const enrichmentStages = (): Document[] => [
       GSTAmount: gstAmountExpr("$Price", inclusiveFlagExpr("$IsPriceInclusiveOfTax")),
       // Existing products predate the Quantity field; treat them as single-unit.
       Quantity: { $ifNull: ["$Quantity", 1] },
+      OfflineSoldCount: 1,
       OfferID: 1,
       // Only surface the offer when it is active AND the current time falls
       // within [StartDate, EndDate]. Expired or disabled offers are stripped
@@ -149,7 +150,13 @@ const statusStages = (): Document[] => [
       as: "PaidOrders",
     },
   },
-  { $addFields: { SoldCount: { $sum: "$PaidOrders.count" } } },
+  {
+    $addFields: {
+      SoldCount: {
+        $add: [{ $sum: "$PaidOrders.count" }, { $ifNull: ["$OfflineSoldCount", 0] }],
+      },
+    },
+  },
   {
     $addFields: {
       IsSold: { $gt: ["$SoldCount", 0] },
@@ -184,7 +191,7 @@ class ProductRepository extends BaseRepository<Product> {
   // every unit of a listing, so units sold = how many times this product appears
   // across paid Checkouts (a buyer purchasing the same product twice counts as
   // two). From that:
-  //   SoldCount         → units sold across all paid checkouts
+  //   SoldCount         → units sold across all paid checkouts + OfflineSoldCount
   //   RemainingQuantity → max(Quantity - SoldCount, 0)
   //   IsSold            → at least one unit sold
   //   Status:
@@ -298,6 +305,16 @@ class ProductRepository extends BaseRepository<Product> {
     return this.updateMany(
       { _id: { $in: ids } } as Filter<Product>,
       { $set: { IsAvailable } }
+    );
+  }
+
+  // Record units of an offline (off-platform) sale against a product's stock.
+  // Increments OfflineSoldCount, which statusStages() folds into SoldCount
+  // alongside paid on-platform checkouts.
+  recordOfflineSale(id: ObjectId, quantity: number) {
+    return this.updateOne(
+      { _id: id } as Filter<Product>,
+      { $inc: { OfflineSoldCount: quantity } } as UpdateFilter<Product>
     );
   }
 
