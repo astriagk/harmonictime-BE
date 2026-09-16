@@ -19,6 +19,7 @@ import { reviewRouter } from "../../modules/catalog/review";
 import { userReviewRouter } from "../../modules/users/user_review";
 import { siteContentRouter } from "../../modules/cms/site_content";
 import { blogRouter } from "../../modules/cms/blog";
+import { youtubeVideoRouter } from "../../modules/cms/youtube_video";
 import { contactRouter } from "../../modules/support/contact";
 import { fileUploadRouter } from "../../modules/file-upload";
 
@@ -47,6 +48,7 @@ router.use("/site-content", siteContentRouter);
 // Public reads are open; the write endpoints inside guard themselves with
 // authMiddleware + requireAdmin.
 router.use("/blogs", blogRouter);
+router.use("/youtube-videos", youtubeVideoRouter);
 router.use("/contact", contactRouter);
 router.use("/uploads", fileUploadRouter);
 
