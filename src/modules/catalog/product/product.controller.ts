@@ -317,6 +317,41 @@ export const deleteProduct = asyncHandler(
   },
 );
 
+// Seller records units sold off-platform (in person, another marketplace,
+// etc.) so remaining stock and Status stay accurate. Rejects if it would sell
+// more than the product's remaining quantity. Only the owning seller may call
+// this.
+export const markOfflineSale = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { productID } = req.params;
+    if (!ObjectId.isValid(productID))
+      throw ApiError.badRequest("Invalid ProductID");
+
+    const quantity = Number(req.body.Quantity ?? 1);
+
+    const product = await productRepository.findById(productID);
+    if (!product) throw ApiError.notFound("Product not found");
+    if (req.user?.userId !== product.UserID.toString())
+      throw new ApiError(HTTP_STATUS.FORBIDDEN, "You do not own this product");
+
+    const [enriched] = await productRepository.getEnrichedWithStatus({
+      _id: new ObjectId(productID),
+    });
+    const remaining: number = enriched?.RemainingQuantity ?? 0;
+    if (quantity > remaining)
+      throw ApiError.badRequest(
+        `Only ${remaining} unit(s) remaining — cannot mark ${quantity} as sold offline`
+      );
+
+    await productRepository.recordOfflineSale(new ObjectId(productID), quantity);
+
+    const [updated] = await productRepository.getEnrichedWithStatus({
+      _id: new ObjectId(productID),
+    });
+    sendResponse(res, HTTP_STATUS.OK, "Offline sale recorded", updated);
+  }
+);
+
 // Pre-flight stock check for the checkout review page. Accepts a list of
 // { ProductID, Quantity } items and returns per-item availability so the FE
 // can show "Only N left" warnings and block payment if any item is unavailable.

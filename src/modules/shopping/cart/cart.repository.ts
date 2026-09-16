@@ -54,7 +54,17 @@ class CartRepository extends BaseRepository<CartItem> {
         $addFields: {
           RemainingQuantity: {
             $max: [
-              { $subtract: ["$ProductDetails.Quantity", { $sum: "$_PaidOrders.count" }] },
+              {
+                $subtract: [
+                  "$ProductDetails.Quantity",
+                  {
+                    $add: [
+                      { $sum: "$_PaidOrders.count" },
+                      { $ifNull: ["$ProductDetails.OfflineSoldCount", 0] },
+                    ],
+                  },
+                ],
+              },
               0,
             ],
           },
